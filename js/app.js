@@ -369,7 +369,7 @@
   DS.openStory = id => {
     const s = DS.stories.find(x => x.id === id); if (!s) return;
     const related = DS.packages.filter(p => s.title.toLowerCase().includes(p.destination.toLowerCase()) || s.id.includes(p.destinationId.split('-')[0])).slice(0, 2);
-    DS.modal.open(`<div class="story-body"><div class="story-hero">${DS.picture(s.image, s.title, { w: 900, h: 506, label: s.category })}</div>${s.body}${related.length ? `<hr class="divider"><h3>Related sample packages</h3><div class="grid grid--2">${related.map(p => DS.renderPackageCard(p)).join('')}</div>` : ''}<div class="cluster" style="margin-top:1.5rem"><button type="button" class="btn btn--teal" data-enquiry data-title="Ask a consultant about this" data-message="I read “${esc(s.title)}” and would like advice on planning a similar trip.">Ask a consultant ${DS.icon('arrowRight', 'arrow')}</button></div></div>`, { title: s.title, subtitle: `${s.category} · ${s.readTime} read · ${s.date}`, large: true });
+    DS.modal.open(`<div class="story-body"><div class="story-hero">${DS.picture(s.image, s.title, { w: 900, h: 506, label: s.category })}</div>${s.body}${related.length ? `<hr class="divider"><h3>Related sample packages</h3><div class="grid grid--2">${related.map(p => DS.renderPackageCard(p)).join('')}</div>` : ''}<div class="cluster" style="margin-top:1.5rem"><button type="button" class="btn btn--dark" data-enquiry data-title="Ask a consultant about this" data-message="I read “${esc(s.title)}” and would like advice on planning a similar trip.">Ask a consultant ${DS.icon('arrowRight', 'arrow')}</button></div></div>`, { title: s.title, subtitle: `${s.category} · ${s.readTime} read · ${s.date}`, large: true });
   };
   document.addEventListener('click', e => { const c = e.target.closest('[data-story]'); if (c) DS.openStory(c.dataset.story); });
 
@@ -399,7 +399,7 @@
           <div class="field"><label class="field__label" for="sw-vdest">Where are you applying for?</label><div class="field__control">${DS.icon('globe')}<select class="select" id="sw-vdest" name="dest"><option value="">Choose a destination</option><option value="japan">Japan</option><option value="korea">South Korea</option><option value="schengen">Schengen (Europe)</option><option value="other">Somewhere else</option></select></div></div>
           <div class="field"><label class="field__label" for="sw-vpurpose">Purpose</label><div class="field__control">${DS.icon('tag')}<select class="select" id="sw-vpurpose" name="purpose"><option value="tourism">Tourism</option><option value="family">Visiting family</option><option value="business">Business</option></select></div></div>
           <div class="field"><label class="field__label" for="sw-vdate">Travel period</label><div class="field__control">${DS.icon('calendar')}<input class="input" id="sw-vdate" name="date" type="month"></div></div>
-          <button type="submit" class="btn btn--teal btn--lg search-form__submit">${DS.icon('passport')} Check visa readiness</button>
+          <button type="submit" class="btn btn--dark btn--lg search-form__submit">${DS.icon('passport')} Check visa readiness</button>
           <p class="search-form__hint">${DS.icon('sparkles')}A guided 3-step checker with an illustrative document checklist. No personal documents are requested.</p>
         </form>`;
       } else {
