@@ -13,7 +13,7 @@
   .site-header__inner { gap: var(--s-4); }
   .nav__link::after { left: 8px; right: 8px; }
   .saved-chip > span:first-of-type { display: none; }
-  .saved-chip::after { content: "Saved"; font-size: var(--fs-xs); }
+  .saved-chip::after { content: "My trip"; font-size: var(--fs-xs); }
   .saved-chip { padding: 0 10px; }
   .header-actions .btn--consult { padding-inline: var(--s-4); font-size: var(--fs-xs); }
   .brand__logo { height: 36px; }
@@ -41,6 +41,9 @@
 /* ---------- Tablet & below ---------- */
 @media (max-width: 1023px) {
   :root { --header-h: 62px; }
+  /* Portrait crops put bright rock behind the copy: heavier scrim on tablets and phones */
+  .hero__media::after { background: linear-gradient(180deg, rgba(10,14,17,0.55) 0%, rgba(10,14,17,0.6) 30%, rgba(10,14,17,0.8) 60%, rgba(10,14,17,0.93) 100%); }
+  .hero__tab { width: 96px; }
   .nav { display: none; }
   .header-actions .btn--consult { display: none; }
   .nav-toggle { display: grid; }
@@ -103,9 +106,11 @@
   .search-tabs { -webkit-mask-image: linear-gradient(90deg, #000 82%, transparent); mask-image: linear-gradient(90deg, #000 82%, transparent); }
   .hero { min-height: 0; padding-top: calc(var(--header-h) + var(--s-12)); padding-bottom: calc(var(--s-16) + var(--s-8)); }
   .hero__lede { font-size: var(--fs-base); }
-  /* Portrait crops put bright rock behind the copy: heavier scrim on phones */
-  .hero__media::after { background: linear-gradient(180deg, rgba(10,14,17,0.55) 0%, rgba(10,14,17,0.6) 30%, rgba(10,14,17,0.8) 60%, rgba(10,14,17,0.93) 100%); }
-  .hero__ctas { margin-bottom: var(--s-2); }
+  .hero__controls { margin-top: var(--s-6); align-items: center; }
+  .hero__tab { width: 34px; min-height: 44px; justify-content: center; }
+  .hero__tab[aria-current="true"] { width: 56px; }
+  .hero__tab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .hero__price { margin-bottom: var(--s-4); }
   .hero__ctas .btn { flex: 1 1 auto; }
   .search-widget--float { margin-top: calc(-1 * var(--s-12)); border-radius: var(--r-lg); }
   .search-panel { padding: var(--s-4); }

@@ -381,7 +381,7 @@ window.DS = window.DS || {};
     { id: 'family-travel-tips', category: 'Travel tips', title: 'Travelling with kids: what experienced families do differently', excerpt: 'Slow mornings, one anchor activity a day and a packing list that fits in a backpack.', image: '1469854523086-cc02fe5d8800', readTime: '4 min', date: 'June 2026',
       body: `<p>Families who travel well do less per day and plan the gaps. These are the habits our consultants build into family packages.</p><ul><li><strong>One anchor activity per day.</strong> A theme park, a boat trip or a palace. Everything else is optional.</li><li><strong>Book family rooms, not two doubles.</strong> It is cheaper and nobody is alone.</li><li><strong>Eat early.</strong> Restaurants are empty at 5:30 PM and tired children are easier at 5:30 PM.</li><li><strong>Carry a day kit.</strong> Wipes, a change of clothes, snacks, a power bank and a printed hotel address card.</li><li><strong>Tell your consultant the ages.</strong> Pricing, car seats, strollers and activity suitability all change by age.</li></ul>` },
     { id: 'what-verified-means', category: 'Travel preparation', title: 'What “Dreamspree Verified” will mean on a listing', excerpt: 'A plain explanation of the partner-vetting standard we are proposing, and what you will be able to see before you book.', image: '1450101499163-c8848c66ca85', readTime: '3 min', date: 'October 2026',
-      body: `<p>Booking marketplaces usually remove bad operators after complaints. We are proposing to check partners before they are listed, and to show you the result.</p><h3>What a verified listing would show</h3><ul><li>That business permits and relevant accreditation were checked.</li><li>For transport partners, that vehicle registration and insurance were checked and drivers screened.</li><li>That Dreamspree made a test booking before listing the partner.</li><li>The month of the most recent re-audit.</li></ul><p class="small muted">The Dreamspree Verified programme is a proposed standard shown here as a concept. No partner inspection records are displayed in this prototype.</p>` }
+      body: `<p>We believe every travel partner should be checked before they are listed, not after something goes wrong. We are proposing a written standard for doing that, and showing you the result.</p><h3>What a verified listing would show</h3><ul><li>That business permits and relevant accreditation were checked.</li><li>For transport partners, that vehicle registration and insurance were checked and drivers screened.</li><li>That Dreamspree made a test booking before listing the partner.</li><li>The month of the most recent re-audit.</li></ul><p class="small muted">The Dreamspree Verified programme is a proposed standard shown here as a concept. No partner inspection records are displayed in this prototype.</p>` }
   ];
 
   /* ---------- Visa Readiness Checker (illustrative demo checklists) ---------- */
@@ -509,6 +509,47 @@ window.DS = window.DS || {};
       }
     ]
   };
+
+  /* ---------- Hero campaigns (homepage carousel) ----------
+     The brand slide is the first slide in index.html. Every entry below becomes an
+     extra slide, in this order. To run a campaign, add an object here: no layout
+     changes needed. Prices are SAMPLE DATA, labelled as such on the slide.
+     Fields: id, label (short tab name), eyebrow, title + accent (headline), lede,
+     image (Unsplash ID), alt, priceFrom (optional), primary {label, href},
+     secondary {label, href} OR {label, enquiry: {service, destination, title, message}} */
+  DS.heroIntervalMs = 7000;
+  DS.campaigns = [
+    {
+      id: 'sakura-2027', label: 'Sakura 2027',
+      eyebrow: 'Spring 2027 · Sample campaign',
+      title: 'Cherry blossom season,', accent: 'sorted.',
+      lede: 'Tokyo, Hakone and Kyoto at peak bloom, with your Japan visa handled by a consultant from checklist to approval.',
+      image: '1524413840807-0c3cb6fa808d', alt: 'Cherry blossoms lit up along a canal in Tokyo at night',
+      priceFrom: 78900,
+      primary: { label: 'View the Japan package', href: 'package.html?id=jp-golden-route' },
+      secondary: { label: 'Check visa readiness', href: 'visa.html?dest=japan' }
+    },
+    {
+      id: 'island-summer-2027', label: 'Island summer',
+      eyebrow: 'Summer 2027 · Sample campaign',
+      title: 'Island escapes for', accent: 'the long weekend.',
+      lede: 'Boracay, Palawan, Siargao, Cebu and Bohol, with flights, transfers and island hopping arranged in one booking.',
+      image: '1559494007-9f5847c49d94', alt: 'Sunset over a quiet tropical beach',
+      priceFrom: 13900,
+      primary: { label: 'See island packages', href: 'explore.html?type=domestic' },
+      secondary: { label: 'Ask about group rates', enquiry: { service: 'tours', destination: 'Multiple / undecided', title: 'Group rates for an island trip', message: 'We are a group interested in a summer island trip. Please send group options.' } }
+    },
+    {
+      id: 'family-hk', label: 'Family trip',
+      eyebrow: 'School break · Sample campaign',
+      title: 'Hong Kong Disneyland,', accent: 'all planned.',
+      lede: 'Disneyland, Victoria Peak and dim sum, two hours from Manila. Visa-free for short visits on a Philippine passport.',
+      image: '1536599018102-9f803c140fc1', alt: 'Hong Kong skyline at dusk seen from Victoria Peak',
+      priceFrom: 36900,
+      primary: { label: 'View the family package', href: 'package.html?id=hk-disney-family' },
+      secondary: { label: 'Plan with a consultant', enquiry: { service: 'tours', destination: 'Hong Kong', title: 'Plan a Hong Kong family trip', message: 'We are a family planning a Hong Kong Disneyland trip.' } }
+    }
+  ];
 
   /* ---------- Lookup helpers ---------- */
   DS.getPackage = id => DS.packages.find(p => p.id === id);

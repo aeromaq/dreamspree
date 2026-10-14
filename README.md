@@ -21,7 +21,7 @@ Then visit `http://localhost:8080/`. Opening the files directly (`file://`) also
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Homepage: hero, tabbed search widget, destinations, featured packages, why Dreamspree, visa section, services, how it works, travel stories, consultant CTA |
+| `index.html` | Homepage: campaign hero carousel, tabbed search widget, destinations, featured packages, why Dreamspree, visa section, services, how it works, travel stories, consultant CTA |
 | `explore.html` | Package catalogue with destination rail, filters (type, region, budget, duration, travel type), search, sort, result count and empty state |
 | `package.html?id=…` | Single reusable package template populated from the ID in the URL: gallery with lightbox, tabs, itinerary accordion, inclusions, preparation, policy and FAQs, sticky booking panel with traveller counters and sample total |
 | `visa.html` | Visa Readiness Checker: three-step guided flow producing an illustrative, personalised checklist with progress tracking |
@@ -45,22 +45,24 @@ dreamspree/
 │   ├── packages.js       explore filters/sort and the package detail template
 │   ├── visa.js           visa readiness checker
 │   ├── trip.js           trip builder
+│   ├── hero-carousel.js  homepage campaign carousel
 │   └── animations.js     GSAP 3 + ScrollTrigger motion layer with fallbacks
 ├── assets/img/dreamspree-logo.png
 └── README.md
 ```
 
-Stack: HTML5, CSS3, vanilla JavaScript (ES6+), GSAP 3 and ScrollTrigger from cdnjs, Google Fonts (Roboto Serif, a variable modern serif used for every piece of text). No frameworks, no build tools.
+Stack: HTML5, CSS3, vanilla JavaScript (ES6+), GSAP 3 and ScrollTrigger from cdnjs, Google Fonts (Manrope, a variable sans-serif used for every piece of text). No frameworks, no build tools.
 
 ## Design system (v3)
 
-- **Typography:** Roboto Serif is the primary face for body copy, navigation, buttons, forms, cards and labels (17px body, 1.6 line height). Fraunces is the display face for the hero, section headings and destination titles, set at weight 700 with its soft axis on (`opsz 48, SOFT 100, WONK 0`) so it reads friendly and contemporary rather than high-contrast luxury. Accent words use colour, not italics. Sizes scale with `clamp()`.
+- **Typography:** Manrope, a variable sans-serif (400–800), is used for everything: body copy, navigation, buttons, forms, cards and labels in regular to bold weights, and headings in ExtraBold (800) with tight tracking. There are no serif or decorative faces. Sizes scale with `clamp()`.
 - **Colour:** teal green primary (`--c-primary`), the logo's lime accent (`--c-lime`), the logo's sky blue for notices, coral for price emphasis, near-black ink for dark sections. White and a cool light-green alternate background. Tokens live at the top of `css/styles.css`.
 - **Icons:** one inline SVG set with a size scale (`--icon-xs` 14px in badges, `--icon-sm` 16px inline, `--icon-md` 20px in buttons and fields, `--icon-lg` 24px in feature tiles, `--icon-xl` 28px in step markers). SVGs never shrink inside flex rows.
+- **Navigation:** the Trip Builder button uses a suitcase icon. The heart stays on package cards as the "save" action.
 - **Cards:** package cards reserve the image's top-left for the duration and category badges and a fixed 44px top-right slot for the save button, so they cannot overlap at any width. Destination cards show their tagline, price and package count at all times (no hover-only text), grow with their copy instead of clipping it, and place a scrim directly behind the copy. White text over photography was measured in the rendered pages at 4.5:1 or better.
 - **Grids:** every `fr` column is `minmax(0, …fr)` so long content cannot push a column wider than its share.
 - **Headers:** the homepage keeps an immersive hero; subpages use a compact `page-head` band. Explore shows a destination intro (description, best season, visa status, next step) when a destination is selected.
-- **Motion:** scroll reveals animate opacity and position only, never `visibility`, so content that has not animated in yet stays reachable by keyboard; focusing it completes the reveal.
+- **Motion:** scroll reveals only move content slightly; they never fade it out or hide it. Text stays readable and focusable even before its animation plays, and it appears in full-page screenshots.
 
 ## Editing the demo data
 
@@ -71,6 +73,27 @@ Everything product-like lives in `js/data.js`:
 - `DS.stories` – editorial cards and their full demo copy.
 - `DS.visa.destinations` – illustrative checklists for Japan, South Korea and Schengen; items carry optional `cond` functions that react to the traveller’s answers and a `review` flag for items a consultant should check.
 - `DS.images` and the `images` arrays – Unsplash photo IDs, so photography can be swapped for licensed Dreamspree imagery by changing IDs in one place. Every image has a loading state and a branded fallback if it fails to load.
+
+## Running a hero campaign
+
+The homepage hero is a carousel. Slide 1 is the brand slide, written directly in `index.html` so the page still works without JavaScript. Every other slide comes from `DS.campaigns` in `js/data.js`, in order.
+
+To add a campaign, add an object with:
+
+- `id` and `label`: the label appears on the slide tab, for example "Sakura 2027".
+- `eyebrow`, `title`, `accent` and `lede`: the copy. The accent words render in lime.
+- `image` and `alt`: an Unsplash photo ID and its description.
+- `priceFrom` (optional): shown as "From ₱… per person · sample price".
+- `primary`: the main button, as `{ label, href }`.
+- `secondary`: either a link `{ label, href }` or an enquiry button `{ label, enquiry: { service, destination, title, message } }`.
+
+Slides change every `DS.heroIntervalMs` (7 seconds). Autoplay pauses on hover, on keyboard focus, when the browser tab is hidden, and with the pause button. It is switched off entirely for visitors who prefer reduced motion. Inactive slides are inert, so their links cannot be focused. Campaign buttons carry `data-campaign-cta="<id>"` so analytics can attribute clicks later.
+
+## Content sources
+
+- The About page story, Mission and Vision come from dreamspreetravel.com/about-us. The Mission and Vision statements are reproduced word for word. The story paragraphs are lightly copy-edited for grammar.
+- "More destinations, arranged on request" on Explore and "We also assist with visas for" on the Visa page list the destinations and visa countries named on the live site that have no sample package. Each one opens a pre-filled enquiry.
+- The copy does not name or compare against other companies.
 
 ## What is simulated
 

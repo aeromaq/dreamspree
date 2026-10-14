@@ -461,7 +461,7 @@
     $$('[data-tabs]').forEach(DS.tabs);
     document.addEventListener('click', e => {
       const l = e.target.closest('[data-consult]'); if (!l) return; e.preventDefault();
-      DS.openEnquiry({ service: 'consult', title: 'Talk to a travel consultant', subtitle: 'Real people, not bots. Tell us where you are headed and we will plan around you.' });
+      DS.openEnquiry({ service: 'consult', title: 'Talk to a travel consultant', subtitle: 'A real travel consultant reads every message. Tell us where you are headed and we will plan around you.' });
     });
     const tel = $$('a[href^="tel:"]'); tel.forEach(a => a.setAttribute('rel', 'nofollow'));
   });
