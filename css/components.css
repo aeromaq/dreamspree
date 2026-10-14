@@ -4,7 +4,7 @@
 
 /* ---------- Buttons ---------- */
 .btn {
-  --btn-bg: var(--color-primary); --btn-fg: var(--color-text-primary); --btn-bd: var(--color-primary);
+  --btn-bg: var(--color-cta); --btn-fg: var(--color-text-on-dark); --btn-bd: var(--color-cta);
   display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
   min-height: 46px; padding: 0 var(--s-5); border-radius: var(--r-md);
   background: var(--btn-bg); color: var(--btn-fg); border: 1.5px solid var(--btn-bd);
@@ -16,9 +16,9 @@
 .btn:hover svg.arrow { transform: translateX(3px); }
 .btn:active { transform: translateY(0); }
 .btn:disabled, .btn[aria-disabled="true"] { --btn-bg: var(--color-disabled-bg); --btn-bd: var(--color-disabled-bg); --btn-fg: var(--color-disabled-text); cursor: not-allowed; transform: none; }
-/* Primary: logo green with a dark label (7.9:1). .btn--lime is the same button, kept for markup on dark backgrounds. */
-.btn--primary, .btn--lime { --btn-bg: var(--color-primary); --btn-bd: var(--color-primary); --btn-fg: var(--color-text-primary); }
-.btn--primary:hover, .btn--lime:hover { --btn-bg: var(--color-primary-hover); --btn-bd: var(--color-primary-hover); }
+/* Primary: deep logo-family green with a white label (4.8:1; hover 5.9:1). .btn--lime is the same button, kept for markup on dark backgrounds. */
+.btn--primary, .btn--lime { --btn-bg: var(--color-cta); --btn-bd: var(--color-cta); --btn-fg: var(--color-text-on-dark); }
+.btn--primary:hover, .btn--lime:hover { --btn-bg: var(--color-cta-hover); --btn-bd: var(--color-cta-hover); }
 /* Dark: deep brand green, for secondary emphasis on light backgrounds */
 .btn--dark { --btn-bg: var(--color-brand-dark); --btn-bd: var(--color-brand-dark); --btn-fg: var(--color-text-on-dark); }
 .btn--dark:hover { --btn-bg: var(--color-brand-dark-hover); --btn-bd: var(--color-brand-dark-hover); }
@@ -111,7 +111,7 @@ img.is-loaded { opacity: 1; transition: opacity var(--t-slow) ease; }
 .dest-card__meta strong { color: var(--color-primary); }
 .dest-card__arrow { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: grid; place-items: center; flex: none; transition: background var(--t-fast), color var(--t-fast); }
 .dest-card__arrow svg { width: var(--icon-md); height: var(--icon-md); }
-.dest-card:hover .dest-card__arrow, .dest-card:focus-visible .dest-card__arrow { background: var(--color-primary); color: var(--color-text-primary); }
+.dest-card:hover .dest-card__arrow, .dest-card:focus-visible .dest-card__arrow { background: var(--color-cta); color: var(--color-text-on-dark); }
 
 /* Explore: destination intro shown when a destination filter is active */
 .dest-intro { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: var(--s-5); align-items: center; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--r-lg); overflow: hidden; margin-bottom: var(--s-5); }

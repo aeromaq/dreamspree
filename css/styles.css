@@ -22,6 +22,8 @@
   /* Primary: logo green */
   --color-primary: #8CC63E;               /* fills: primary buttons (with dark text, 7.9:1), indicators, progress */
   --color-primary-hover: #7DB534;
+  --color-cta: #47801E;                   /* filled buttons and CTAs: white label 4.8:1, same green family as the logo */
+  --color-cta-hover: #3E701A;             /* hover / pressed: white label 5.9:1 */
   --color-primary-strong: #4A6A1F;        /* green text, links, icons on light (6.2:1 on white) */
   --color-primary-strong-hover: #374F17;
   --color-primary-light: #EEF6E3;         /* selected / tinted backgrounds */
@@ -229,7 +231,7 @@ p:last-child { margin-bottom: 0; }
 .site-header--over:not(.is-scrolled) .nav__link.is-active::after { background: var(--color-primary); }
 .site-header--over:not(.is-scrolled) .nav-toggle { color: var(--color-text-on-dark); }
 .site-header--over:not(.is-scrolled) .saved-chip { color: var(--color-text-on-dark); border-color: rgba(255,255,255,0.4); background: rgba(var(--scrim-rgb),0.25); }
-.site-header--over:not(.is-scrolled) .btn--consult { --btn-bg: var(--color-primary); --btn-bd: var(--color-primary); --btn-fg: var(--color-text-primary); }
+.site-header--over:not(.is-scrolled) .btn--consult { --btn-bg: var(--color-cta); --btn-bd: var(--color-cta); --btn-fg: var(--color-text-on-dark); }
 
 .site-header__inner { display: flex; align-items: center; gap: var(--s-6); width: 100%; }
 .brand { display: inline-flex; align-items: center; margin-right: auto; text-decoration: none; flex: none; }
