@@ -52,7 +52,7 @@
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
     tl.from('.hero__media img', { scale: 1.1, duration: 1.4, ease: 'power2.out' }, 0)
       .from('[data-hero="eyebrow"]', { autoAlpha: 0, y: 16, duration: 0.6 }, 0.2)
-      .from(lines, { yPercent: 110, duration: 0.8, stagger: 0.1 }, 0.25)
+      .from(lines, { yPercent: 125, duration: 0.8, stagger: 0.1 }, 0.25)
       .from('[data-hero="lede"]', { autoAlpha: 0, y: 20, duration: 0.7 }, 0.75)
       .from('[data-hero="ctas"] > *', { autoAlpha: 0, y: 16, stagger: 0.08, duration: 0.6 }, 0.95)
       .from('[data-hero="search"]', { autoAlpha: 0, y: 40, duration: 0.8 }, 1.05);

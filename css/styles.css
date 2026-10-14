@@ -288,7 +288,10 @@ p:last-child { margin-bottom: 0; }
 .hero__content { max-width: 780px; }
 .hero__title { font-size: var(--fs-3xl); color: var(--color-text-on-dark); margin-bottom: var(--s-5); }
 .hero__title .em { color: var(--color-primary); }
-.hero__line { display: block; overflow: hidden; }
+/* Each headline line is a mask for the reveal animation. The tight 1.06 line-height puts
+   descenders (g, y, p) below the line box, so the mask gets extra room underneath; the
+   matching negative margin keeps line spacing unchanged. */
+.hero__line { display: block; overflow: hidden; padding-bottom: 0.18em; margin-bottom: -0.18em; }
 .hero__lede { font-size: var(--fs-md); line-height: 1.5; color: rgba(255, 255, 255, 0.9); max-width: 56ch; margin-bottom: var(--s-6); }
 .hero__ctas { display: flex; gap: var(--s-3); flex-wrap: wrap; }
 
