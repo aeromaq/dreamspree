@@ -52,13 +52,15 @@ dreamspree/
 
 Stack: HTML5, CSS3, vanilla JavaScript (ES6+), GSAP 3 and ScrollTrigger from cdnjs, Google Fonts (Roboto Serif, a variable modern serif used for every piece of text). No frameworks, no build tools.
 
-## Design system (v2)
+## Design system (v3)
 
-- **Typography:** Roboto Serif throughout, from 800-weight display headings with tight tracking down to 13px UI labels. Body text is 17px at a 1.6 line height; sizes scale with `clamp()`.
-- **Colour:** teal green primary (`--c-primary`), the logo's lime as accent (`--c-lime`), the logo's sky blue for informational notices, coral for price emphasis, and a near-black ink used for text, dark sections and the footer. Backgrounds are white with a cool light-green alternate. All tokens live at the top of `css/styles.css`.
-- **Surfaces:** flat cards with 1px borders and 10–18px radii, shadows only on hover and overlays.
-- **Headers:** the homepage keeps an immersive hero; every subpage uses a compact `page-head` band (breadcrumb, title, one-line description, actions) so filters, steps and packages sit near the top of the viewport.
-- **Logo:** the PNG is a solid green block with white type and is placed without any box, padding or shadow.
+- **Typography:** Roboto Serif is the primary face for body copy, navigation, buttons, forms, cards and labels (17px body, 1.6 line height). Fraunces is the display face for the hero, section headings and destination titles, set at weight 700 with its soft axis on (`opsz 48, SOFT 100, WONK 0`) so it reads friendly and contemporary rather than high-contrast luxury. Accent words use colour, not italics. Sizes scale with `clamp()`.
+- **Colour:** teal green primary (`--c-primary`), the logo's lime accent (`--c-lime`), the logo's sky blue for notices, coral for price emphasis, near-black ink for dark sections. White and a cool light-green alternate background. Tokens live at the top of `css/styles.css`.
+- **Icons:** one inline SVG set with a size scale (`--icon-xs` 14px in badges, `--icon-sm` 16px inline, `--icon-md` 20px in buttons and fields, `--icon-lg` 24px in feature tiles, `--icon-xl` 28px in step markers). SVGs never shrink inside flex rows.
+- **Cards:** package cards reserve the image's top-left for the duration and category badges and a fixed 44px top-right slot for the save button, so they cannot overlap at any width. Destination cards show their tagline, price and package count at all times (no hover-only text), grow with their copy instead of clipping it, and place a scrim directly behind the copy. White text over photography was measured in the rendered pages at 4.5:1 or better.
+- **Grids:** every `fr` column is `minmax(0, …fr)` so long content cannot push a column wider than its share.
+- **Headers:** the homepage keeps an immersive hero; subpages use a compact `page-head` band. Explore shows a destination intro (description, best season, visa status, next step) when a destination is selected.
+- **Motion:** scroll reveals animate opacity and position only, never `visibility`, so content that has not animated in yet stays reachable by keyboard; focusing it completes the reveal.
 
 ## Editing the demo data
 

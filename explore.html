@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" href="assets/img/dreamspree-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:ital,opsz,wght@0,8..144,400;0,8..144,500;0,8..144,600;0,8..144,700;0,8..144,800;1,8..144,400;1,8..144,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,500..900,0..100,0..1&family=Roboto+Serif:opsz,wght@8..144,400..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/responsive.css">
@@ -27,7 +27,7 @@
         <a class="nav__link" href="about.html" data-nav="about">About Dreamspree</a>
       </nav>
       <div class="header-actions">
-        <a class="saved-chip" href="trip-builder.html" aria-label="Trip Builder: saved packages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/></svg><span>Trip Builder</span><span class="saved-chip__count" data-saved-count data-count="0">0</span></a>
+        <a class="saved-chip" href="trip-builder.html" aria-label="Trip Builder: saved packages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/></svg><span>Trip Builder</span><span class="saved-chip__count" data-saved-count data-count="0">0</span></a>
         <button type="button" class="btn btn--primary btn--sm btn--consult" data-consult>Talk to a Consultant</button>
         <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="drawer" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       </div>
@@ -46,6 +46,12 @@
         <a href="trip-builder.html" data-nav="trip">Trip Builder</a>
         <a href="about.html" data-nav="about">About Dreamspree</a>
       </nav>
+      <div class="drawer__dests">
+        <p class="field__label" style="margin:0 0 .5rem">Popular destinations</p>
+        <div class="cluster" style="gap:6px">
+          <a class="chip" href="explore.html?dest=japan">Japan</a><a class="chip" href="explore.html?dest=south-korea">South Korea</a><a class="chip" href="explore.html?dest=taiwan">Taiwan</a><a class="chip" href="explore.html?dest=hong-kong">Hong Kong</a><a class="chip" href="explore.html?dest=vietnam">Vietnam</a><a class="chip" href="explore.html?dest=boracay">Boracay</a><a class="chip" href="explore.html?dest=palawan">Palawan</a><a class="chip" href="explore.html?dest=siargao">Siargao</a><a class="chip" href="explore.html?dest=cebu">Cebu</a><a class="chip" href="explore.html?dest=bohol">Bohol</a>
+        </div>
+      </div>
       <div class="drawer__footer">
         <button type="button" class="btn btn--primary btn--block" data-consult>Talk to a Consultant</button>
         <div class="drawer__contact">Mon–Fri, 9 AM – 7 PM<a href="tel:+639175639499">+63 917 563 9499</a><a href="mailto:info@dreamspreetravel.com">info@dreamspreetravel.com</a></div>
@@ -70,11 +76,12 @@
         <div class="dest-rail" data-dest-rail role="group" aria-label="Filter by destination"></div>
 
         <div class="explore-layout" id="packages" style="margin-top:1rem">
-          <aside class="filters" data-filters aria-label="Package filters"></aside>
+          <aside class="filters" id="filters-panel" data-filters aria-label="Package filters"></aside>
           <div>
+            <section class="dest-intro" data-dest-intro hidden aria-live="polite"></section>
             <p class="notice" data-context hidden style="margin-bottom:1rem"></p>
             <div class="results-bar">
-              <div class="cluster"><button type="button" class="btn btn--ghost btn--sm filters-toggle" data-filters-toggle aria-expanded="false" aria-controls="filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" width="16" height="16"><path d="M3 6h18M7 12h10M10 18h4"/></svg> Filters</button><p class="results-bar__count" data-result-count aria-live="polite"></p></div>
+              <div class="cluster"><button type="button" class="btn btn--ghost btn--sm filters-toggle" data-filters-toggle aria-expanded="false" aria-controls="filters-panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" width="16" height="16"><path d="M3 6h18M7 12h10M10 18h4"/></svg> Filters</button><p class="results-bar__count" data-result-count aria-live="polite"></p></div>
               <div class="field" style="flex-direction:row;align-items:center;gap:.5rem"><label class="field__label" for="sort">Sort</label><select class="select" id="sort" data-sort style="min-height:42px;padding-block:6px"><option value="recommended">Recommended</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="dur-asc">Duration: shortest</option><option value="dur-desc">Duration: longest</option></select></div>
             </div>
             <div class="active-filters" data-active-filters aria-label="Active filters"></div>
@@ -89,7 +96,7 @@
       <div class="container">
         <div class="cta-band" data-reveal>
           <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&h=800&fit=crop&q=60&auto=format" alt="" loading="lazy" decoding="async" aria-hidden="true" data-fallback="">
-          <div class="cta-band__grid"><div><p class="eyebrow">Can't see the trip you want?</p><h2 class="display">Every package here is a <span class="em" style="color:var(--c-sun)">starting point.</span></h2><p class="lede" style="margin:1rem 0 1.5rem">Tell a consultant the destination, dates and budget, and get a custom itinerary with the same transparent inclusions.</p><button type="button" class="btn btn--lime btn--lg" data-enquiry data-title="Request a custom itinerary" data-service="tours">Request a custom trip</button></div></div>
+          <div class="cta-band__grid"><div><p class="eyebrow">Can't see the trip you want?</p><h2 class="display">Every package here is a <span class="em">starting point.</span></h2><p class="lede" style="margin:1rem 0 1.5rem">Tell a consultant the destination, dates and budget, and get a custom itinerary with the same transparent inclusions.</p><button type="button" class="btn btn--lime btn--lg" data-enquiry data-title="Request a custom itinerary" data-service="tours">Request a custom trip</button></div></div>
         </div>
       </div>
     </section>

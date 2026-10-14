@@ -36,8 +36,8 @@
     pop(el) { gsap.fromTo(el, { scale: 0.8 }, { scale: 1, duration: 0.5, ease: 'elastic.out(1, 0.45)', clearProps: 'transform' }); },
     shake(el) { if (!el) return; gsap.fromTo(el, { x: -6 }, { x: 0, duration: 0.5, ease: 'elastic.out(1, 0.3)', clearProps: 'transform' }); },
     countTo(el, value, fmt) { const from = parseFloat(el.dataset.value || 0) || 0; const obj = { v: from }; el.dataset.value = value; gsap.to(obj, { v: value, duration: 0.6, ease: 'power2.out', onUpdate: () => { el.textContent = fmt ? fmt(obj.v) : Math.round(obj.v); } }); gsap.fromTo(el, { scale: 1.06, color: '#148f8c' }, { scale: 1, color: '', duration: 0.6, clearProps: 'color,transform' }); },
-    revealNew(container) { const items = container.children; if (!items.length) return; gsap.fromTo(items, { autoAlpha: 0, y: 28 }, { autoAlpha: 1, y: 0, stagger: 0.07, duration: 0.7, clearProps: 'transform', onComplete: () => ScrollTrigger.refresh() }); },
-    stepIn(el) { gsap.fromTo(el, { autoAlpha: 0, x: 32 }, { autoAlpha: 1, x: 0, duration: 0.5, clearProps: 'transform' }); gsap.from(el.querySelectorAll('[data-step-item]'), { autoAlpha: 0, y: 14, stagger: 0.05, duration: 0.45, delay: 0.1 }); },
+    revealNew(container) { const items = container.children; if (!items.length) return; gsap.fromTo(items, { opacity: 0, y: 24 }, { opacity: 1, y: 0, stagger: 0.05, duration: 0.5, clearProps: 'transform,opacity', onComplete: () => ScrollTrigger.refresh() }); },
+    stepIn(el) { gsap.fromTo(el, { opacity: 0, x: 32 }, { opacity: 1, x: 0, duration: 0.45, clearProps: 'transform,opacity' }); gsap.fromTo(el.querySelectorAll('[data-step-item]'), { opacity: 0, y: 14 }, { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, delay: 0.08, clearProps: 'transform,opacity' }); },
     stepOut(el, cb) { gsap.to(el, { autoAlpha: 0, x: -24, duration: 0.3, ease: 'power2.in', onComplete: () => { gsap.set(el, { clearProps: 'all' }); cb && cb(); } }); },
     progress(bar, pct) { gsap.to(bar, { width: pct + '%', duration: 0.6, ease: 'power2.out' }); }
   };
@@ -67,14 +67,15 @@
   /* ---------- Scroll reveals ---------- */
   function reveals() {
     $$('[data-reveal]').forEach(el => {
-      gsap.fromTo(el, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.6, clearProps: 'transform', scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
+      // opacity (not autoAlpha/visibility) so unrevealed content stays keyboard-focusable
+      gsap.fromTo(el, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, clearProps: 'transform,opacity', scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
     });
     $$('[data-stagger]').forEach(group => {
       const run = () => {
         const items = Array.from(group.children).filter(c => !c.dataset.animated);
         if (!items.length) return;
         items.forEach(i => i.dataset.animated = '1');
-        gsap.fromTo(items, { autoAlpha: 0, y: 26 }, { autoAlpha: 1, y: 0, duration: 0.6, stagger: { each: 0.06, from: 'start' }, clearProps: 'transform', scrollTrigger: { trigger: group, start: 'top 92%', once: true } });
+        gsap.fromTo(items, { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, stagger: { each: 0.06, from: 'start' }, clearProps: 'transform,opacity', scrollTrigger: { trigger: group, start: 'top 92%', once: true } });
       };
       run();
       // Content rendered later (e.g. after a loading state) is picked up too
@@ -95,6 +96,11 @@
     gsap.from(h, { y: -16, autoAlpha: 0, duration: 0.6, clearProps: 'all' });
   }
 
+  // If keyboard focus lands inside content that has not animated in yet, finish its reveal immediately
+  document.addEventListener('focusin', e => {
+    const host = e.target.closest && e.target.closest('[data-reveal], [data-stagger] > *');
+    if (host && parseFloat(getComputedStyle(host).opacity) < 1) { gsap.killTweensOf(host); gsap.set(host, { clearProps: 'opacity,transform' }); }
+  });
   let booted = false;
   document.addEventListener('DOMContentLoaded', init);
   if (document.readyState !== 'loading') init();
