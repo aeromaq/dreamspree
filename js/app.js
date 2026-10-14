@@ -350,8 +350,8 @@
       <div class="card__media">${DS.picture(s.image, s.title, { w: 640, h: 400, label: s.category })}</div>
       <div class="story-card__body"><span class="story-card__cat">${esc(s.category)}</span><h3 class="story-card__title">${esc(s.title)}</h3><p class="story-card__excerpt">${esc(s.excerpt)}</p><div class="story-card__foot"><span>${esc(s.date)}</span><span>${esc(s.readTime)} read</span></div></div></button>`;
   DS.renderServiceCard = s => `<button type="button" class="service-card" data-service-card="${s.id}">
-      <div class="service-card__media">${DS.picture(s.image, s.name, { w: 560, h: 350, label: s.short })}<span class="service-card__icon">${DS.icon(s.icon)}</span></div>
-      <div class="service-card__body"><h3>${esc(s.name)} ${DS.icon('arrowRight')}</h3><p>${esc(s.blurb)}</p></div></button>`;
+      <div class="service-card__media">${DS.picture(s.image, s.name, { w: 560, h: 350, label: s.short })}</div>
+      <div class="service-card__body"><span class="service-card__icon" aria-hidden="true">${DS.icon(s.icon)}</span><h3>${esc(s.name)} ${DS.icon('arrowRight')}</h3><p>${esc(s.blurb)}</p></div></button>`;
   DS.skeletons = n => Array.from({ length: n }, () => `<div class="skeleton-card" aria-hidden="true"><div class="sk-media shimmer"></div><div class="sk-body"><div class="sk-line sk-line--w40 shimmer"></div><div class="sk-line sk-line--w80 shimmer"></div><div class="sk-line sk-line--w60 shimmer"></div></div></div>`).join('');
 
   /* Service routing: services without a dedicated demo flow open an enquiry panel */
