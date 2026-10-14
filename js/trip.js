@@ -49,7 +49,7 @@
           DS.openEnquiry({ service: 'quote', destination: dests.length === 1 ? dests[0] : 'Multiple / undecided', travellers: pax, date: items.find(s => s.date && s.date !== 'custom')?.date || '', summary: rows, title: 'Request a combined quotation', subtitle: 'A consultant turns your saved packages into one itinerary with a single written quotation.', cta: 'Send quotation request', message: `Combined quotation for: ${items.map(s => DS.getPackage(s.id).title).join('; ')}.` });
         });
         $('[data-clear-trip]', summary).addEventListener('click', () => {
-          const box = DS.modal.open(`<p class="muted">Remove all ${items.length} saved package${items.length > 1 ? 's' : ''} from this device?</p><div class="cluster" style="justify-content:flex-end;margin-top:1rem"><button type="button" class="btn btn--ghost" data-modal-close>Keep them</button><button type="button" class="btn btn--coral" data-confirm-clear>Clear all</button></div>`, { title: 'Clear Trip Builder?' });
+          const box = DS.modal.open(`<p class="muted">Remove all ${items.length} saved package${items.length > 1 ? 's' : ''} from this device?</p><div class="cluster" style="justify-content:flex-end;margin-top:1rem"><button type="button" class="btn btn--ghost" data-modal-close>Keep them</button><button type="button" class="btn btn--danger" data-confirm-clear>Clear all</button></div>`, { title: 'Clear Trip Builder?' });
           $('[data-confirm-clear]', box).addEventListener('click', () => { DS.saved.clear(); DS.modal.close(); DS.toast('Trip Builder cleared.'); });
         });
       }

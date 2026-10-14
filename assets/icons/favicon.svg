@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Dreamspree Travel &amp; Tours">
+  <!-- Dreamspree favicon: the logo emblem simplified for tab-size legibility.
+       Logo-green frame, white panel, rising sun, palm and sea wave, in the logo's exact colours
+       (#8CC63E green, #F5EE2C sun, #00ADEF sea). Shapes are bolder than the full logo so they
+       survive at 16px. -->
+  <rect width="64" height="64" fill="#8CC63E"/>
+  <rect x="7" y="7" width="50" height="50" fill="#FFFFFF"/>
+  <!-- rising sun -->
+  <path d="M9 47 A16.5 16.5 0 0 1 42 47 Z" fill="#F5EE2C"/>
+  <!-- palm: trunk and three fronds -->
+  <path d="M39 47 C41 37 41.5 28 38 18.5" fill="none" stroke="#8CC63E" stroke-width="6" stroke-linecap="round"/>
+  <path d="M38 18.5 C30.5 11.5 20 12.5 14.5 22 C22 17 30.5 17.5 38 23.5 Z" fill="#8CC63E"/>
+  <path d="M38 18.5 C45.5 11 56 13.5 58 25 C51.5 18.5 45 18 38 23.5 Z" fill="#8CC63E"/>
+  <path d="M37.5 20 C34.5 12 38.5 6.5 46.5 6 C41 10 39.5 14.5 40 20.5 Z" fill="#8CC63E"/>
+  <!-- sea wave -->
+  <path d="M7 47 C21 40.5 39 39.5 57 44.5 L57 53 C39 47.5 22 48 7 55.5 Z" fill="#00ADEF"/>
+</svg>

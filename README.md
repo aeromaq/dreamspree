@@ -48,6 +48,8 @@ dreamspree/
 │   ├── hero-carousel.js  homepage campaign carousel
 │   └── animations.js     GSAP 3 + ScrollTrigger motion layer with fallbacks
 ├── assets/img/dreamspree-logo.png
+├── assets/icons/            favicon.svg, apple-touch-icon.png, icon-192.png, icon-512.png
+├── favicon.ico · site.webmanifest
 └── README.md
 ```
 
@@ -56,8 +58,9 @@ Stack: HTML5, CSS3, vanilla JavaScript (ES6+), GSAP 3 and ScrollTrigger from cdn
 ## Design system (v3)
 
 - **Typography:** Manrope, a variable sans-serif (400–800), is used for everything: body copy, navigation, buttons, forms, cards and labels in regular to bold weights, and headings in ExtraBold (800) with tight tracking. There are no serif or decorative faces. Sizes scale with `clamp()`.
-- **Colour:** teal green primary (`--c-primary`), the logo's lime accent (`--c-lime`), the logo's sky blue for notices, coral for price emphasis, near-black ink for dark sections. White and a cool light-green alternate background. Tokens live at the top of `css/styles.css`.
+- **Colour:** taken from the logo. Logo green `#8CC63E` is the primary colour, used for primary buttons (with a dark label), indicators and accents on dark backgrounds. A darker `#4A6A1F` carries green text, links and icons on light backgrounds. Deep green `#14301C` covers dark sections, the footer and selected states. Logo sky blue `#00ADEF` / `#006F99` is reserved for information and visa signals. Sun yellow `#F5EE2C` is used sparingly: the saved-trip count and campaign prices on dark. Surfaces are white and a soft green-tinted `#F4F7F1`, and text is `#16241A`. All tokens are `--color-*` variables at the top of `css/styles.css`.
 - **Icons:** one inline SVG set with a size scale (`--icon-xs` 14px in badges, `--icon-sm` 16px inline, `--icon-md` 20px in buttons and fields, `--icon-lg` 24px in feature tiles, `--icon-xl` 28px in step markers). SVGs never shrink inside flex rows.
+- **Logo and favicon:** the logo is shown as supplied, with square corners and no padding, border, shadow or background. The favicon is a simplified version of the logo emblem (green frame, sun, palm and sea) drawn in the logo's exact colours, with bolder shapes so it stays legible at 16px. It ships as SVG, ICO (16/32/48) and PNG touch and app icons.
 - **Navigation:** the Trip Builder button uses a suitcase icon. The heart stays on package cards as the "save" action.
 - **Cards:** package cards reserve the image's top-left for the duration and category badges and a fixed 44px top-right slot for the save button, so they cannot overlap at any width. Destination cards show their tagline, price and package count at all times (no hover-only text), grow with their copy instead of clipping it, and place a scrim directly behind the copy. White text over photography was measured in the rendered pages at 4.5:1 or better.
 - **Grids:** every `fr` column is `minmax(0, …fr)` so long content cannot push a column wider than its share.

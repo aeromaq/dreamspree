@@ -42,7 +42,7 @@
 @media (max-width: 1023px) {
   :root { --header-h: 62px; }
   /* Portrait crops put bright rock behind the copy: heavier scrim on tablets and phones */
-  .hero__media::after { background: linear-gradient(180deg, rgba(10,14,17,0.55) 0%, rgba(10,14,17,0.6) 30%, rgba(10,14,17,0.8) 60%, rgba(10,14,17,0.93) 100%); }
+  .hero__media::after { background: linear-gradient(180deg, rgba(var(--scrim-rgb),0.55) 0%, rgba(var(--scrim-rgb),0.6) 30%, rgba(var(--scrim-rgb),0.8) 60%, rgba(var(--scrim-rgb),0.93) 100%); }
   .hero__tab { width: 96px; }
   .nav { display: none; }
   .header-actions .btn--consult { display: none; }

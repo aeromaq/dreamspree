@@ -21,7 +21,7 @@
 
     /* ----- Destination rail ----- */
     const rail = $('[data-dest-rail]');
-    rail.innerHTML = `<button type="button" class="dest-pill" data-dest="" aria-pressed="${!state.dest}"><span style="width:36px;height:36px;border-radius:50%;background:var(--c-ink);color:#fff;display:grid;place-items:center">${DS.icon('globe')}</span>All destinations</button>` +
+    rail.innerHTML = `<button type="button" class="dest-pill" data-dest="" aria-pressed="${!state.dest}"><span style="width:36px;height:36px;border-radius:50%;background:var(--color-brand-dark);color:var(--color-text-on-dark);display:grid;place-items:center">${DS.icon('globe')}</span>All destinations</button>` +
       DS.destinations.map(d => `<button type="button" class="dest-pill" data-dest="${d.id}" aria-pressed="${state.dest === d.id}"><img src="${DS.img(d.image, 80, 80)}" alt="" width="36" height="36" loading="lazy">${esc(d.name)}</button>`).join('');
     rail.addEventListener('click', e => { const b = e.target.closest('[data-dest]'); if (!b) return; state.dest = b.dataset.dest === state.dest ? '' : b.dataset.dest; syncRail(); apply(); });
     const syncRail = () => $$('[data-dest]', rail).forEach(b => b.setAttribute('aria-pressed', b.dataset.dest === state.dest));
@@ -146,7 +146,7 @@
     if (q.get('date')) { sel.date = 'custom'; sel.custom = q.get('date'); }
 
     /* ----- Header + gallery ----- */
-    const visaBadge = p.type === 'domestic' ? `<span class="badge badge--lime">${DS.icon('sun')}No visa needed</span>` : (dest.visa === 'required' ? `<span class="badge badge--teal">${DS.icon('passport')}Visa assistance included</span>` : `<span class="badge badge--teal">${DS.icon('check')}${dest.visa === 'visa-free' ? 'Visa-free entry' : 'Entry rules checked'}</span>`);
+    const visaBadge = p.type === 'domestic' ? `<span class="badge badge--lime">${DS.icon('sun')}No visa needed</span>` : (dest.visa === 'required' ? `<span class="badge badge--info">${DS.icon('passport')}Visa assistance included</span>` : `<span class="badge badge--info">${DS.icon('check')}${dest.visa === 'visa-free' ? 'Visa-free entry' : 'Entry rules checked'}</span>`);
     $('[data-pkg-head]').innerHTML = `
       <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.html">Home</a></li><li><a href="explore.html">Packages</a></li><li><a href="explore.html?dest=${p.destinationId}">${esc(p.destination)}</a></li><li aria-current="page">${esc(p.title)}</li></ol>
       <div class="pkg-head">
@@ -163,7 +163,7 @@
     $('[data-share]').addEventListener('click', () => DS.share(p.title, location.href));
     $$('[data-gallery]').forEach(b => b.addEventListener('click', () => openLightbox(+b.dataset.gallery)));
     function openLightbox(i) {
-      const render = idx => `<div class="lightbox" style="display:grid;gap:1rem"><div class="ratio ratio--3x2" style="border-radius:var(--r-lg);overflow:hidden;background:var(--c-bg-alt)">${DS.picture(p.images[idx], `${p.destination} photo ${idx + 1}`, { w: 1200, h: 800, label: p.destination })}</div><div class="cluster" style="justify-content:space-between"><button type="button" class="btn btn--ghost btn--sm" data-lb="${(idx - 1 + p.images.length) % p.images.length}">${DS.icon('chevronLeft')} Previous</button><span class="small muted">${idx + 1} of ${p.images.length} · Sample photography (Unsplash)</span><button type="button" class="btn btn--ghost btn--sm" data-lb="${(idx + 1) % p.images.length}">Next ${DS.icon('chevronRight')}</button></div></div>`;
+      const render = idx => `<div class="lightbox" style="display:grid;gap:1rem"><div class="ratio ratio--3x2" style="border-radius:var(--r-lg);overflow:hidden;background:var(--color-surface-muted)">${DS.picture(p.images[idx], `${p.destination} photo ${idx + 1}`, { w: 1200, h: 800, label: p.destination })}</div><div class="cluster" style="justify-content:space-between"><button type="button" class="btn btn--ghost btn--sm" data-lb="${(idx - 1 + p.images.length) % p.images.length}">${DS.icon('chevronLeft')} Previous</button><span class="small muted">${idx + 1} of ${p.images.length} · Sample photography (Unsplash)</span><button type="button" class="btn btn--ghost btn--sm" data-lb="${(idx + 1) % p.images.length}">Next ${DS.icon('chevronRight')}</button></div></div>`;
       const body = DS.modal.open(render(i), { title: p.destination, subtitle: p.title, large: true });
       body.addEventListener('click', e => { const b = e.target.closest('[data-lb]'); if (!b) return; const dir = b.textContent.includes('Next') ? ':last-child' : ''; body.innerHTML = render(+b.dataset.lb); DS.hydrateImages(body); if (DS.motion && DS.motion.tabIn) DS.motion.tabIn(body.firstElementChild); $(`[data-lb]${dir}`, body).focus(); });
       body.addEventListener('keydown', e => { if (e.key === 'ArrowRight') { e.preventDefault(); $('[data-lb]:last-child', body)?.click(); } if (e.key === 'ArrowLeft') { e.preventDefault(); $('[data-lb]', body)?.click(); } });
@@ -176,7 +176,7 @@
         ${[['overview', 'Overview'], ['itinerary', 'Itinerary'], ['inclusions', 'Inclusions'], ['prepare', 'Prepare'], ['policy', 'Policy & FAQs']].map(([id, l], i) => `<button type="button" class="tab" role="tab" id="tab-${id}" aria-controls="panel-${id}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${l}</button>`).join('')}
       </div>
       <section class="tab-panel prose" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
-        <h2>Overview</h2><p class="lede" style="color:var(--c-ink-600)">${esc(p.summary)}</p>
+        <h2>Overview</h2><p class="lede" style="color:var(--color-text-secondary)">${esc(p.summary)}</p>
         <h3>Destination highlights</h3>
         <ul class="highlights">${p.highlights.map(h => `<li>${DS.icon('sparkles')}${esc(h)}</li>`).join('')}</ul>
         <h3>About ${esc(p.destination)}</h3><p>${esc(dest.blurb)} Best time to go: ${esc(dest.bestTime)}.</p>
