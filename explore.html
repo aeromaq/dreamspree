@@ -5,18 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Explore destinations & travel packages · Dreamspree Travel & Tours</title>
   <meta name="description" content="Browse curated Dreamspree sample packages for Japan, South Korea, Taiwan, Hong Kong, Vietnam, Boracay, Palawan, Siargao, Cebu and Bohol. Filter by budget, duration and travel type.">
-  <meta name="theme-color" content="#0d3f63">
+  <meta name="theme-color" content="#121a1f">
   <link rel="icon" type="image/png" href="assets/img/dreamspree-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Serif:ital,opsz,wght@0,8..144,400;0,8..144,500;0,8..144,600;0,8..144,700;0,8..144,800;1,8..144,400;1,8..144,500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body class="page" data-page="explore">
   <a class="skip-link" href="#main">Skip to content</a>
-  <header class="site-header site-header--over">
+  <header class="site-header ">
     <div class="container container--wide site-header__inner">
       <a class="brand" href="index.html" aria-label="Dreamspree Travel & Tours home"><img class="brand__logo" src="assets/img/dreamspree-logo.png" alt="Dreamspree Travel & Tours" width="150" height="60"></a>
       <nav class="nav" aria-label="Primary">
@@ -36,7 +36,7 @@
   <div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Site menu">
     <div class="drawer__backdrop" data-drawer-close></div>
     <div class="drawer__panel">
-      <div class="drawer__head"><img src="assets/img/dreamspree-logo.png" alt="Dreamspree" width="110" height="44" style="height:40px;width:auto"><button type="button" class="icon-btn drawer__close" data-drawer-close aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+      <div class="drawer__head"><img src="assets/img/dreamspree-logo.png" alt="Dreamspree" width="110" height="44" style="height:36px;width:auto"><button type="button" class="icon-btn drawer__close" data-drawer-close aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
       <nav class="drawer__nav" aria-label="Mobile">
         <a href="index.html" data-nav="home">Home</a>
         <a href="explore.html" data-nav="explore">Explore Destinations</a>
@@ -53,21 +53,23 @@
     </div>
   </div>
   <main id="main">
-    <section class="hero hero--page" aria-labelledby="explore-title">
-      <div class="hero__media"><img src="https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?w=2000&h=1000&fit=crop&q=70&auto=format" alt="Aerial view of green islands in turquoise water" fetchpriority="high" decoding="async" data-fallback="Islands"></div>
-      <div class="container hero__content">
-        <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.html">Home</a></li><li aria-current="page">Explore</li></ol>
-        <h1 class="display hero__title" id="explore-title" style="margin-top:1rem">Explore destinations <span class="em">& packages</span></h1>
-        <p class="hero__lede" style="margin-bottom:0">Ten destinations, every sample package with its inclusions and starting price up front. Filter, compare and save to your Trip Builder.</p>
+    <section class="page-head " aria-labelledby="page-title">
+      <div class="container page-head__inner">
+        <div>
+          <ol class="breadcrumbs" aria-label="Breadcrumb"><li><a href="index.html">Home</a></li><li aria-current="page">Explore</li></ol>
+          <h1 class="display" id="page-title">Explore destinations <span class="em">&amp; packages</span></h1>
+          <p class="lede">Ten destinations with every sample package, its inclusions and starting price up front. Filter, compare and save to your Trip Builder.</p>
+        </div>
+        <div class="page-head__actions"><span class="badge badge--demo">Sample prices in PHP</span><button type="button" class="btn btn--ghost" data-enquiry data-title="Request a custom itinerary" data-service="tours">Request a custom trip</button></div>
       </div>
     </section>
 
     <section class="section section--tight" data-explore aria-labelledby="dest-rail-title">
       <div class="container">
-        <h2 id="dest-rail-title" class="eyebrow" style="margin-bottom:.5rem">Choose a destination</h2>
+        <h2 id="dest-rail-title" class="eyebrow" style="margin-bottom:.25rem">Choose a destination</h2>
         <div class="dest-rail" data-dest-rail role="group" aria-label="Filter by destination"></div>
 
-        <div class="explore-layout" id="packages" style="margin-top:1.5rem">
+        <div class="explore-layout" id="packages" style="margin-top:1rem">
           <aside class="filters" data-filters aria-label="Package filters"></aside>
           <div>
             <p class="notice" data-context hidden style="margin-bottom:1rem"></p>

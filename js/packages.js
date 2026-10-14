@@ -141,8 +141,10 @@
           <div class="cluster" style="gap:6px;margin-bottom:.75rem"><span class="badge badge--ocean">${esc(p.category)}</span><span class="badge">${p.type === 'domestic' ? 'Domestic' : 'International'}</span>${visaBadge}<span class="badge badge--demo">Sample package</span></div>
           <h1 class="display">${esc(p.title)}</h1>
           <div class="pkg-head__meta"><span>${DS.icon('pin')}${esc(p.destination)}, ${esc(p.country)}</span><span>${DS.icon('clock')}${p.duration.days} days, ${p.duration.nights} nights</span><span>${DS.icon('users')}${esc(p.groupSize)}</span><span>${DS.icon('calendar')}Next sample departure ${esc(fmtDate(p.departures[0].date))}</span></div>
+          <div class="pkg-head__price"><span class="price">${fmtPHP(p.priceFrom)}</span><small>per person, from · sample price</small></div>
+          <div class="cluster" style="gap:5px;margin-top:.5rem">${DS.keyInclusions(p).map(i => `<span class="badge badge--teal">${DS.icon('check')}${esc(i)}</span>`).join('')}</div>
         </div>
-        <div class="pkg-head__actions"><button type="button" class="btn btn--ghost" data-share>${DS.icon('share')} Share</button><button type="button" class="btn btn--ghost" data-save="${p.id}" aria-pressed="false">${DS.icon('heart')} <span data-save-label>Save</span></button></div>
+        <div class="pkg-head__actions"><button type="button" class="btn btn--ghost" data-share>${DS.icon('share')} Share</button><button type="button" class="btn btn--ghost" data-save="${p.id}" aria-pressed="false">${DS.icon('heart')} <span data-save-label>Save</span></button><a class="btn btn--primary" href="#booking">Request booking ${DS.icon('arrowRight', 'arrow')}</a></div>
       </div>
       <div class="gallery" aria-label="Photo gallery">${p.images.slice(0, 5).map((im, i) => `<button type="button" class="gallery__item" data-gallery="${i}" aria-label="Open photo ${i + 1} of ${p.images.length}">${DS.picture(im, `${p.destination} photo ${i + 1}`, { w: i === 0 ? 1000 : 600, h: i === 0 ? 760 : 400, label: p.destination, eager: i === 0 })}${i === 4 || (i === p.images.length - 1 && i < 4) ? `<span class="badge badge--glass gallery__more">${DS.icon('image')}${p.images.length} photos</span>` : ''}</button>`).join('')}</div>`;
     $('[data-share]').addEventListener('click', () => DS.share(p.title, location.href));
