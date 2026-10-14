@@ -104,8 +104,9 @@
     $$('[data-save]').forEach(btn => {
       const on = DS.saved.has(btn.dataset.save);
       btn.classList.toggle('is-active', on); btn.setAttribute('aria-pressed', on);
-      btn.setAttribute('aria-label', on ? 'Remove from saved trips' : 'Save to Trip Builder');
-      btn.title = btn.getAttribute('aria-label');
+      const name = (DS.getPackage(btn.dataset.save) || {}).title || 'package';
+      btn.setAttribute('aria-label', on ? `Remove ${name} from Trip Builder` : `Save ${name} to Trip Builder`);
+      btn.title = on ? 'Saved to Trip Builder' : 'Save to Trip Builder';
       const label = btn.querySelector('[data-save-label]'); if (label) label.textContent = on ? 'Saved' : 'Save';
     });
   }
@@ -138,8 +139,18 @@
     if (modalRoot) return modalRoot;
     modalRoot = html(`<div class="modal" id="ds-modal" role="dialog" aria-modal="true" aria-labelledby="ds-modal-title"><div class="modal__backdrop" data-modal-close></div><div class="modal__dialog" tabindex="-1"><div class="modal__head"><div><h2 id="ds-modal-title"></h2><p data-modal-sub hidden></p></div><button type="button" class="icon-btn modal__close" data-modal-close aria-label="Close dialog">${DS.icon('x')}</button></div><div class="modal__body"></div></div></div>`);
     document.body.appendChild(modalRoot);
-    modalRoot.addEventListener('click', e => { if (e.target.closest('[data-modal-close]')) DS.modal.close(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && modalRoot.classList.contains('is-open')) { e.preventDefault(); DS.modal.close(); } });
+    modalRoot.addEventListener('click', e => {
+      const closer = e.target.closest('[data-modal-close]'); if (!closer) return;
+      // An accidental backdrop click must not throw away a half-completed form
+      if (closer.classList.contains('modal__backdrop') && isDirty()) { if (DS.motion && DS.motion.shake) DS.motion.shake($('.modal__dialog', modalRoot)); DS.toast('Use Close or Cancel to discard your enquiry.', { duration: 2400 }); return; }
+      DS.modal.close();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape' || !modalRoot.classList.contains('is-open')) return;
+      // Escape inside a dropdown or date picker should only dismiss that picker
+      if (e.target.matches && e.target.matches('select, input[type="date"], input[type="month"]')) return;
+      e.preventDefault(); DS.modal.close();
+    });
     modalRoot.addEventListener('keydown', e => {
       if (e.key === 'Tab') {
         const f = $$(FOCUSABLE, modalRoot).filter(el => el.offsetParent !== null); if (!f.length) return;
@@ -150,6 +161,9 @@
     });
     return modalRoot;
   }
+  // A form inside the modal counts as dirty once the user has typed or changed something
+  function isDirty() { const f = modalRoot && $('form', modalRoot); return !!(f && f.dataset.dirty === 'true'); }
+  document.addEventListener('input', e => { const f = e.target.closest && e.target.closest('.modal form'); if (f) f.dataset.dirty = 'true'; });
   DS.modal = {
     open(content, opts = {}) {
       const root = ensureModal();
@@ -292,13 +306,18 @@
 
   /* ---------- Card renderers ---------- */
   DS.badgeForVisa = v => v === 'required' ? `<span class="badge badge--glass">${DS.icon('passport')}Visa assisted</span>` : v === 'visa-free' ? `<span class="badge badge--glass">${DS.icon('check')}Visa-free</span>` : v === 'check' ? `<span class="badge badge--glass">${DS.icon('info')}Entry rules vary</span>` : `<span class="badge badge--glass">${DS.icon('sun')}Domestic</span>`;
+  /* "Japan, Japan" reads badly: show the country once when destination and country match */
+  DS.placeLabel = p => (p.destination === p.country || p.country.startsWith(p.destination)) ? p.country : `${p.destination}, ${p.country}`;
   DS.renderDestinationCard = (d, opts = {}) => {
-    const from = Math.min(...DS.packagesFor(d.id).map(p => p.priceFrom));
-    return `<a class="dest-card ${opts.wide ? 'dest-card--wide' : ''}" href="explore.html?dest=${d.id}" aria-label="${esc(d.name)}: explore packages">
-      ${DS.picture(d.image, `${d.name}: ${d.tagline}`, { w: 600, h: 750, label: d.name })}
+    const pkgs = DS.packagesFor(d.id), from = Math.min(...pkgs.map(p => p.priceFrom));
+    return `<a class="dest-card ${opts.wide ? 'dest-card--wide' : ''}" href="explore.html?dest=${d.id}">
+      <div class="dest-card__media">${DS.picture(d.image, '', { w: 600, h: 750, label: d.name })}</div>
       <div class="dest-card__top">${DS.badgeForVisa(d.visa)}</div>
-      <div class="dest-card__body"><div class="dest-card__name">${esc(d.name)}</div><p class="dest-card__desc">${esc(d.blurb)}</p>
-      <div class="dest-card__meta"><span>${isFinite(from) ? 'From <strong>' + fmtPHP(from) + '</strong>' : esc(d.tagline)}<br><small>${DS.packagesFor(d.id).length} sample package${DS.packagesFor(d.id).length === 1 ? '' : 's'} · Best ${esc(d.bestTime)}</small></span><span class="dest-card__arrow">${DS.icon('arrowUpRight')}</span></div></div></a>`;
+      <div class="dest-card__body">
+        <h3 class="dest-card__name">${esc(d.name)}</h3>
+        <p class="dest-card__tag">${esc(d.tagline)}</p>
+        <div class="dest-card__meta"><span>From <strong>${fmtPHP(from)}</strong> · ${pkgs.length} package${pkgs.length === 1 ? '' : 's'}</span><span class="dest-card__arrow" aria-hidden="true">${DS.icon('arrowUpRight')}</span></div>
+      </div></a>`;
   };
   /* Short inclusion tags for cards (derived from the full inclusion list) */
   DS.keyInclusions = p => {
@@ -316,13 +335,13 @@
     const incl = DS.keyInclusions(p).map(i => `<span class="badge">${esc(i)}</span>`).join('');
     const next = p.departures[0];
     return `<article class="card pkg-card ${opts.row ? 'pkg-card--row' : ''}" data-pkg="${p.id}">
-      <div class="card__media"><a href="package.html?id=${p.id}" tabindex="-1" aria-hidden="true">${DS.picture(p.images[0], p.title, { w: 640, h: 480, label: p.destination })}</a>
-        <div class="card__tags"><span class="badge badge--glass">${esc(p.category)}</span><span class="badge badge--glass">${p.duration.days}D${p.duration.nights}N</span></div>
-        <button type="button" class="icon-btn card__save" data-save="${p.id}" aria-pressed="false" aria-label="Save to Trip Builder">${DS.icon('heart')}</button></div>
+      <div class="card__media"><a href="package.html?id=${p.id}" tabindex="-1" aria-hidden="true">${DS.picture(p.images[0], '', { w: 640, h: 480, label: p.destination })}</a>
+        <div class="card__tags"><span class="badge badge--glass">${DS.icon('clock')}${p.duration.days} days · ${p.duration.nights} nights</span><span class="badge badge--glass">${esc(p.category)}</span></div>
+        <button type="button" class="icon-btn card__save" data-save="${p.id}" aria-pressed="false" aria-label="Save ${esc(p.title)} to Trip Builder">${DS.icon('heart')}</button></div>
       <div class="pkg-card__body">
-        <div class="pkg-card__loc">${DS.icon('pin')}${esc(p.destination)}, ${esc(p.country)}</div>
+        <div class="pkg-card__loc">${DS.icon('pin')}${esc(DS.placeLabel(p))}</div>
         <h3 class="pkg-card__title"><a href="package.html?id=${p.id}">${esc(p.title)}</a></h3>
-        <div class="pkg-card__meta"><span>${DS.icon('clock')}${p.duration.days} days, ${p.duration.nights} nights</span><span>${DS.icon('calendar')}Next: ${esc(fmtDate(next.date))}</span></div>
+        <div class="pkg-card__meta"><span>${DS.icon('calendar')}Next: ${esc(fmtDate(next.date))}</span><span>${p.departures.length} sample dates</span></div>
         <div class="pkg-card__incl">${incl}</div>
         <div class="pkg-card__foot"><div class="pkg-card__price"><small>From, per person</small><span class="price">${fmtPHP(p.priceFrom)} <em>sample</em></span></div><a class="btn btn--sm btn--primary" href="package.html?id=${p.id}">View details ${DS.icon('arrowRight', 'arrow')}</a></div>
       </div></article>`;
@@ -330,7 +349,7 @@
   DS.renderStoryCard = s => `<button type="button" class="card story-card" data-story="${s.id}" aria-haspopup="dialog">
       <div class="card__media">${DS.picture(s.image, s.title, { w: 640, h: 400, label: s.category })}</div>
       <div class="story-card__body"><span class="story-card__cat">${esc(s.category)}</span><h3 class="story-card__title">${esc(s.title)}</h3><p class="story-card__excerpt">${esc(s.excerpt)}</p><div class="story-card__foot"><span>${esc(s.date)}</span><span>${esc(s.readTime)} read</span></div></div></button>`;
-  DS.renderServiceCard = s => `<button type="button" class="service-card" data-service="${s.id}">
+  DS.renderServiceCard = s => `<button type="button" class="service-card" data-service-card="${s.id}">
       <div class="service-card__media">${DS.picture(s.image, s.name, { w: 560, h: 350, label: s.short })}<span class="service-card__icon">${DS.icon(s.icon)}</span></div>
       <div class="service-card__body"><h3>${esc(s.name)} ${DS.icon('arrowRight')}</h3><p>${esc(s.blurb)}</p></div></button>`;
   DS.skeletons = n => Array.from({ length: n }, () => `<div class="skeleton-card" aria-hidden="true"><div class="sk-media shimmer"></div><div class="sk-body"><div class="sk-line sk-line--w40 shimmer"></div><div class="sk-line sk-line--w80 shimmer"></div><div class="sk-line sk-line--w60 shimmer"></div></div></div>`).join('');
@@ -342,7 +361,9 @@
     if (s.flow === 'visa') { location.href = 'visa.html' + (extra.dest ? '?dest=' + extra.dest : ''); return; }
     DS.openEnquiry({ service: id, title: `${s.name} enquiry`, subtitle: `${s.blurb} A consultant prepares options and sends a quotation.`, ...extra });
   };
-  document.addEventListener('click', e => { const c = e.target.closest('[data-service]'); if (c && !c.closest('.search-tabs')) DS.routeService(c.dataset.service); });
+  // Only explicit service-card buttons route. (Previously this matched any [data-service] ancestor,
+  // including the Flights/Hotels/... search forms, so clicking a field opened the enquiry modal.)
+  document.addEventListener('click', e => { const c = e.target.closest('[data-service-card]'); if (c) DS.routeService(c.dataset.serviceCard); });
 
   /* Story reader */
   DS.openStory = id => {
@@ -356,7 +377,8 @@
   function initSearchWidget() {
     const w = $('[data-search-widget]'); if (!w) return;
     const tabs = $('.search-tabs', w), panel = $('.search-panel', w);
-    tabs.innerHTML = DS.services.map((s, i) => `<button type="button" role="tab" class="search-tab" id="stab-${s.id}" aria-selected="${i === 0}" aria-controls="spanel" data-tab="${s.id}" tabindex="${i === 0 ? 0 : -1}">${DS.icon(s.icon)}${esc(s.name)}</button>`).join('');
+    const TAB_LABEL = { tours: 'Tours & Packages', visa: 'Visa', flights: 'Flights', hotels: 'Hotels', transport: 'Transport', cruises: 'Cruises', insurance: 'Insurance', corporate: 'Corporate' };
+    tabs.innerHTML = DS.services.map((s, i) => `<button type="button" role="tab" class="search-tab" id="stab-${s.id}" aria-selected="${i === 0}" aria-controls="spanel" data-tab="${s.id}" tabindex="${i === 0 ? 0 : -1}">${DS.icon(s.icon)}${esc(TAB_LABEL[s.id] || s.name)}</button>`).join('');
     const destOpts = (sel) => `<option value="">Anywhere</option>` + DS.destinations.map(d => `<option value="${d.id}" ${sel === d.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('');
     const today = new Date().toISOString().slice(0, 10);
     const paxOpts = Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1} traveller${i ? 's' : ''}</option>`).join('');
@@ -382,7 +404,7 @@
         </form>`;
       } else {
         const labels = { flights: ['Route or destination', 'Departure date', 'Passengers'], hotels: ['Destination', 'Check-in', 'Guests'], transport: ['Pick-up area or destination', 'Date', 'Passengers'], cruises: ['Cruise region', 'Preferred month', 'Guests'], insurance: ['Destination', 'Departure date', 'Travellers'], corporate: ['Destination', 'Travel date', 'Delegates'] }[id] || ['Destination', 'Date', 'Travellers'];
-        inner = `<form class="search-form search-form--service" data-flow="enquiry" data-service="${id}" novalidate>
+        inner = `<form class="search-form search-form--service" data-flow="enquiry" data-svc="${id}" novalidate>
           <div class="field"><label class="field__label" for="sw-sdest">${labels[0]}</label><div class="field__control">${DS.icon('pin')}<select class="select" id="sw-sdest" name="dest">${destOpts()}<option value="other">Other</option></select></div></div>
           <div class="field"><label class="field__label" for="sw-sdate">${labels[1]}</label><div class="field__control">${DS.icon('calendar')}<input class="input" id="sw-sdate" name="date" type="${id === 'cruises' ? 'month' : 'date'}" ${id === 'cruises' ? '' : 'min="' + today + '"'}></div></div>
           <div class="field"><label class="field__label" for="sw-spax">${labels[2]}</label><div class="field__control">${DS.icon('users')}<select class="select" id="sw-spax" name="pax">${paxOpts}<option value="13">More than 12</option></select></div></div>
@@ -409,7 +431,7 @@
         location.href = 'visa.html?' + q.toString();
       } else {
         const d = DS.getDestination(data.dest);
-        DS.routeService(f.dataset.service, { destination: d ? d.name : (data.dest === 'other' ? 'Other' : ''), travellers: data.pax, date: /^\d{4}-\d{2}-\d{2}$/.test(data.date || '') ? data.date : '', message: data.date && !/^\d{4}-\d{2}-\d{2}$/.test(data.date) ? `Preferred month: ${data.date}.` : '' });
+        DS.routeService(f.dataset.svc, { destination: d ? d.name : (data.dest === 'other' ? 'Other' : ''), travellers: data.pax, date: /^\d{4}-\d{2}-\d{2}$/.test(data.date || '') ? data.date : '', message: data.date && !/^\d{4}-\d{2}-\d{2}$/.test(data.date) ? `Preferred month: ${data.date}.` : '' });
       }
     });
   }

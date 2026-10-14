@@ -21,7 +21,7 @@
 
     /* ----- Destination rail ----- */
     const rail = $('[data-dest-rail]');
-    rail.innerHTML = `<button type="button" class="dest-pill" data-dest="" aria-pressed="${!state.dest}"><span style="width:36px;height:36px;border-radius:50%;background:var(--c-ocean);color:#fff;display:grid;place-items:center">${DS.icon('globe')}</span>All destinations</button>` +
+    rail.innerHTML = `<button type="button" class="dest-pill" data-dest="" aria-pressed="${!state.dest}"><span style="width:36px;height:36px;border-radius:50%;background:var(--c-ink);color:#fff;display:grid;place-items:center">${DS.icon('globe')}</span>All destinations</button>` +
       DS.destinations.map(d => `<button type="button" class="dest-pill" data-dest="${d.id}" aria-pressed="${state.dest === d.id}"><img src="${DS.img(d.image, 80, 80)}" alt="" width="36" height="36" loading="lazy">${esc(d.name)}</button>`).join('');
     rail.addEventListener('click', e => { const b = e.target.closest('[data-dest]'); if (!b) return; state.dest = b.dataset.dest === state.dest ? '' : b.dataset.dest; syncRail(); apply(); });
     const syncRail = () => $$('[data-dest]', rail).forEach(b => b.setAttribute('aria-pressed', b.dataset.dest === state.dest));
@@ -63,7 +63,19 @@
     }
 
     /* ----- Apply ----- */
-    const results = $('[data-results]'), count = $('[data-result-count]'), active = $('[data-active-filters]'), context = $('[data-context]');
+    const results = $('[data-results]'), count = $('[data-result-count]'), active = $('[data-active-filters]'), context = $('[data-context]'), intro = $('[data-dest-intro]');
+    const VISA_ROUTE = { japan: 'japan', 'south-korea': 'korea' };
+    function renderIntro() {
+      const d = state.dest && DS.getDestination(state.dest);
+      if (!intro) return;
+      if (!d) { intro.hidden = true; intro.innerHTML = ''; return; }
+      const visaLine = d.visa === 'required' ? 'Visa required for Philippine passport holders. Dreamspree prepares the checklist and books the appointment.' : d.visa === 'visa-free' ? 'Visa-free for short visits on a Philippine passport. Your consultant confirms the latest entry rules.' : d.visa === 'check' ? 'Entry rules change. Your consultant confirms what applies to your dates.' : 'Domestic trip, no visa needed.';
+      const cta = VISA_ROUTE[d.id] ? `<a class="btn btn--sm btn--primary" href="visa.html?dest=${VISA_ROUTE[d.id]}">${DS.icon('passport')} Check visa readiness</a>` : `<button type="button" class="btn btn--sm btn--ghost" data-enquiry data-destination="${esc(d.name)}" data-title="Plan a ${esc(d.name)} trip">${DS.icon('headset')} Ask a consultant</button>`;
+      intro.hidden = false;
+      intro.innerHTML = `<div class="dest-intro__media">${DS.picture(d.image, '', { w: 480, h: 360, label: d.name })}</div><div class="dest-intro__body"><p class="eyebrow" style="margin:0">${esc(d.region)} · Best ${esc(d.bestTime)}</p><h2>${esc(d.name)}</h2><p>${esc(d.blurb)}</p>${/visa/i.test(d.blurb) ? '' : `<p class="small"><strong>${esc(visaLine)}</strong></p>`}<div class="cluster" style="gap:8px;margin-top:4px">${cta}<button type="button" class="btn btn--sm btn--link" data-clear-dest>Show all destinations</button></div></div>`;
+      DS.hydrateImages(intro);
+      $('[data-clear-dest]', intro).addEventListener('click', () => { state.dest = ''; syncRail(); apply(); });
+    }
     if (state.pax || state.date) { context.hidden = false; context.innerHTML = `${DS.icon('info')}<span>Showing packages${state.pax ? ` for <strong>${esc(state.pax)} traveller${state.pax === '1' ? '' : 's'}</strong>` : ''}${state.date ? ` departing around <strong>${esc(fmtDate(state.date))}</strong>` : ''}. Open a package to see the sample total for your group.</span>`; }
     let first = true;
     function apply() {
@@ -81,6 +93,7 @@
       });
       const sorters = { 'price-asc': (a, b) => a.priceFrom - b.priceFrom, 'price-desc': (a, b) => b.priceFrom - a.priceFrom, 'dur-asc': (a, b) => a.duration.days - b.duration.days, 'dur-desc': (a, b) => b.duration.days - a.duration.days, recommended: (a, b) => (DS.featuredIds.indexOf(a.id) + 1 || 99) - (DS.featuredIds.indexOf(b.id) + 1 || 99) };
       list.sort(sorters[state.sort] || sorters.recommended);
+      renderIntro();
       count.innerHTML = `<span>${list.length}</span> package${list.length === 1 ? '' : 's'}${list.length !== DS.packages.length ? ` of ${DS.packages.length}` : ''}`;
       renderActive();
       const draw = () => {
@@ -140,7 +153,7 @@
         <div>
           <div class="cluster" style="gap:6px;margin-bottom:.75rem"><span class="badge badge--ocean">${esc(p.category)}</span><span class="badge">${p.type === 'domestic' ? 'Domestic' : 'International'}</span>${visaBadge}<span class="badge badge--demo">Sample package</span></div>
           <h1 class="display">${esc(p.title)}</h1>
-          <div class="pkg-head__meta"><span>${DS.icon('pin')}${esc(p.destination)}, ${esc(p.country)}</span><span>${DS.icon('clock')}${p.duration.days} days, ${p.duration.nights} nights</span><span>${DS.icon('users')}${esc(p.groupSize)}</span><span>${DS.icon('calendar')}Next sample departure ${esc(fmtDate(p.departures[0].date))}</span></div>
+          <div class="pkg-head__meta"><span>${DS.icon('pin')}${esc(DS.placeLabel(p))}</span><span>${DS.icon('clock')}${p.duration.days} days, ${p.duration.nights} nights</span><span>${DS.icon('users')}${esc(p.groupSize)}</span><span>${DS.icon('calendar')}Next sample departure ${esc(fmtDate(p.departures[0].date))}</span></div>
           <div class="pkg-head__price"><span class="price">${fmtPHP(p.priceFrom)}</span><small>per person, from · sample price</small></div>
           <div class="cluster" style="gap:5px;margin-top:.5rem">${DS.keyInclusions(p).map(i => `<span class="badge badge--teal">${DS.icon('check')}${esc(i)}</span>`).join('')}</div>
         </div>
@@ -150,7 +163,7 @@
     $('[data-share]').addEventListener('click', () => DS.share(p.title, location.href));
     $$('[data-gallery]').forEach(b => b.addEventListener('click', () => openLightbox(+b.dataset.gallery)));
     function openLightbox(i) {
-      const render = idx => `<div class="lightbox" style="display:grid;gap:1rem"><div class="ratio ratio--3x2" style="border-radius:var(--r-lg);overflow:hidden;background:var(--c-sand-200)">${DS.picture(p.images[idx], `${p.destination} photo ${idx + 1}`, { w: 1200, h: 800, label: p.destination })}</div><div class="cluster" style="justify-content:space-between"><button type="button" class="btn btn--ghost btn--sm" data-lb="${(idx - 1 + p.images.length) % p.images.length}">${DS.icon('chevronLeft')} Previous</button><span class="small muted">${idx + 1} of ${p.images.length} · Sample photography (Unsplash)</span><button type="button" class="btn btn--ghost btn--sm" data-lb="${(idx + 1) % p.images.length}">Next ${DS.icon('chevronRight')}</button></div></div>`;
+      const render = idx => `<div class="lightbox" style="display:grid;gap:1rem"><div class="ratio ratio--3x2" style="border-radius:var(--r-lg);overflow:hidden;background:var(--c-bg-alt)">${DS.picture(p.images[idx], `${p.destination} photo ${idx + 1}`, { w: 1200, h: 800, label: p.destination })}</div><div class="cluster" style="justify-content:space-between"><button type="button" class="btn btn--ghost btn--sm" data-lb="${(idx - 1 + p.images.length) % p.images.length}">${DS.icon('chevronLeft')} Previous</button><span class="small muted">${idx + 1} of ${p.images.length} · Sample photography (Unsplash)</span><button type="button" class="btn btn--ghost btn--sm" data-lb="${(idx + 1) % p.images.length}">Next ${DS.icon('chevronRight')}</button></div></div>`;
       const body = DS.modal.open(render(i), { title: p.destination, subtitle: p.title, large: true });
       body.addEventListener('click', e => { const b = e.target.closest('[data-lb]'); if (!b) return; const dir = b.textContent.includes('Next') ? ':last-child' : ''; body.innerHTML = render(+b.dataset.lb); DS.hydrateImages(body); if (DS.motion && DS.motion.tabIn) DS.motion.tabIn(body.firstElementChild); $(`[data-lb]${dir}`, body).focus(); });
       body.addEventListener('keydown', e => { if (e.key === 'ArrowRight') { e.preventDefault(); $('[data-lb]:last-child', body)?.click(); } if (e.key === 'ArrowLeft') { e.preventDefault(); $('[data-lb]', body)?.click(); } });
@@ -163,7 +176,7 @@
         ${[['overview', 'Overview'], ['itinerary', 'Itinerary'], ['inclusions', 'Inclusions'], ['prepare', 'Prepare'], ['policy', 'Policy & FAQs']].map(([id, l], i) => `<button type="button" class="tab" role="tab" id="tab-${id}" aria-controls="panel-${id}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${l}</button>`).join('')}
       </div>
       <section class="tab-panel prose" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
-        <h2>Overview</h2><p class="lede" style="color:var(--c-ink-200)">${esc(p.summary)}</p>
+        <h2>Overview</h2><p class="lede" style="color:var(--c-ink-600)">${esc(p.summary)}</p>
         <h3>Destination highlights</h3>
         <ul class="highlights">${p.highlights.map(h => `<li>${DS.icon('sparkles')}${esc(h)}</li>`).join('')}</ul>
         <h3>About ${esc(p.destination)}</h3><p>${esc(dest.blurb)} Best time to go: ${esc(dest.bestTime)}.</p>
