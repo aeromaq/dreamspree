@@ -39,7 +39,11 @@
     revealNew(container) { const items = container.children; if (!items.length) return; gsap.fromTo(items, { opacity: 0, y: 24 }, { opacity: 1, y: 0, stagger: 0.05, duration: 0.5, clearProps: 'transform,opacity', onComplete: () => ScrollTrigger.refresh() }); },
     stepIn(el) { gsap.fromTo(el, { opacity: 0, x: 32 }, { opacity: 1, x: 0, duration: 0.45, clearProps: 'transform,opacity' }); gsap.fromTo(el.querySelectorAll('[data-step-item]'), { opacity: 0, y: 14 }, { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, delay: 0.08, clearProps: 'transform,opacity' }); },
     stepOut(el, cb) { gsap.to(el, { autoAlpha: 0, x: -24, duration: 0.3, ease: 'power2.in', onComplete: () => { gsap.set(el, { clearProps: 'all' }); cb && cb(); } }); },
-    progress(bar, pct) { gsap.to(bar, { width: pct + '%', duration: 0.6, ease: 'power2.out' }); }
+    progress(bar, pct) { gsap.to(bar, { width: pct + '%', duration: 0.6, ease: 'power2.out' }); },
+    heroSlideIn(slide) {
+      gsap.fromTo(slide.querySelectorAll('.hero__content > *'), { y: 18 }, { y: 0, duration: 0.6, stagger: 0.06, delay: 0.15, ease: 'power3.out', clearProps: 'transform' });
+      const img = slide.querySelector('.hero__media img'); if (img) gsap.fromTo(img, { scale: 1.07 }, { scale: 1, duration: (DS.heroIntervalMs || 7000) / 1000 + 1, ease: 'none' });
+    }
   };
 
   /* ---------- Hero ---------- */
@@ -67,24 +71,23 @@
   /* ---------- Scroll reveals ---------- */
   function reveals() {
     $$('[data-reveal]').forEach(el => {
-      // opacity (not autoAlpha/visibility) so unrevealed content stays keyboard-focusable
-      gsap.fromTo(el, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, clearProps: 'transform,opacity', scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
+      // Motion only, never opacity/visibility: content is always readable, focusable and
+      // captured by full-page screenshots even if the reveal has not played yet.
+      gsap.fromTo(el, { y: 22 }, { y: 0, duration: 0.6, clearProps: 'transform', scrollTrigger: { trigger: el, start: 'top 95%', once: true } });
     });
     $$('[data-stagger]').forEach(group => {
       const run = () => {
         const items = Array.from(group.children).filter(c => !c.dataset.animated);
         if (!items.length) return;
         items.forEach(i => i.dataset.animated = '1');
-        gsap.fromTo(items, { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, stagger: { each: 0.06, from: 'start' }, clearProps: 'transform,opacity', scrollTrigger: { trigger: group, start: 'top 92%', once: true } });
+        gsap.fromTo(items, { y: 22 }, { y: 0, duration: 0.6, stagger: { each: 0.05, from: 'start' }, clearProps: 'transform', scrollTrigger: { trigger: group, start: 'top 95%', once: true } });
       };
       run();
       // Content rendered later (e.g. after a loading state) is picked up too
       new MutationObserver(() => requestAnimationFrame(run)).observe(group, { childList: true });
     });
     // Image mask reveal for large editorial media
-    $$('.media-stack__main, .gallery__item:first-child').forEach(el => {
-      gsap.fromTo(el, { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: 0.9, ease: 'power3.inOut', scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
-    });
+    // (Image mask reveals removed: photos are never hidden waiting for a scroll position.)
   }
 
   /* ---------- Micro-interactions: hover states are CSS; GSAP handles feedback (pop, shake, count) ---------- */
