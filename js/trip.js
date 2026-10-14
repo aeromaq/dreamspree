@@ -8,7 +8,8 @@
 
   function initTrip() {
     const root = $('[data-trip]'); if (!root) return;
-    const list = $('[data-trip-list]'), summary = $('[data-trip-summary]'), suggest = $('[data-trip-suggest]');
+    const list = $('[data-trip-list]'), summary = $('[data-trip-summary]'), suggest = $('[data-trip-suggest]'), bar = $('[data-trip-bar]');
+    const toggleBtn = () => `<button type="button" class="trip-summary__toggle" data-summary-toggle aria-expanded="true"><span><strong>Trip summary</strong><br><span class="small muted" data-toggle-sub></span></span>${DS.icon('chevronDown')}</button>`;
     const lineTotal = (s, p) => s.adults * p.priceFrom + s.children * p.priceFrom * p.childRate;
     const dateLabel = s => s.date && s.date !== 'custom' ? fmtDate(s.date) : 'Flexible';
 
@@ -16,7 +17,8 @@
       const items = DS.saved.list();
       if (!items.length) {
         list.innerHTML = `<div class="empty"><div class="empty__icon">${DS.icon('luggage')}</div><h3>Your Trip Builder is empty</h3><p>Save any package with the heart button and it appears here. Combine several packages, set travellers and dates, and request one combined quotation.</p><div class="cluster"><a class="btn btn--primary" href="explore.html">Browse packages</a><a class="btn btn--ghost" href="visa.html">Check visa readiness</a></div></div>`;
-        summary.innerHTML = `<h2>Trip summary</h2><p class="muted small">Nothing saved yet. Totals appear here as you add packages.</p><div class="demo-banner">${DS.icon('info')}<span>Preview of a future Trip Builder. Not a live booking engine.</span></div>`;
+        summary.innerHTML = `${toggleBtn()}<h2>Trip summary</h2><p class="muted small">Nothing saved yet. Totals appear here as you add packages.</p><div class="demo-banner">${DS.icon('info')}<span>Preview of a future Trip Builder. Not a live booking engine.</span></div>`;
+        if (bar) { bar.hidden = true; document.body.classList.remove('has-mobile-bar'); }
       } else {
         list.innerHTML = items.map(s => { const p = DS.getPackage(s.id); return `
           <article class="trip-item" data-id="${p.id}">
@@ -34,12 +36,13 @@
         const total = items.reduce((t, s) => t + lineTotal(s, DS.getPackage(s.id)), 0);
         const pax = items.reduce((t, s) => Math.max(t, s.adults + s.children), 0);
         const days = items.reduce((t, s) => t + DS.getPackage(s.id).duration.days, 0);
-        summary.innerHTML = `<h2>Trip summary</h2>
+        summary.innerHTML = `${toggleBtn()}<h2>Trip summary</h2>
           <div class="trip-summary__rows">${items.map(s => { const p = DS.getPackage(s.id); return `<div><span>${esc(p.destination)} · ${p.duration.days}D</span><span>${fmtPHP(lineTotal(s, p))}</span></div>`; }).join('')}<div><span>Packages</span><span>${items.length}</span></div><div><span>Total travel days</span><span>${days}</span></div><div class="total"><span>Estimated total</span><span data-grand-total data-value="${total}">${fmtPHP(total)}</span></div></div>
           <p class="booking__note">${DS.icon('info')}<span>Sample totals from illustrative prices. Multi-package trips are quoted as one itinerary by a consultant, often with combined flight savings.</span></p>
           <button type="button" class="btn btn--primary btn--lg btn--block" data-quote>Request a combined quotation ${DS.icon('arrowRight', 'arrow')}</button>
           <button type="button" class="btn btn--ghost btn--block" data-clear-trip>Clear Trip Builder</button>
           <ul class="booking__assure"><li>${DS.icon('check')}One consultant, one itinerary, one quotation</li><li>${DS.icon('check')}Visa steps sequenced for ${pax > 1 ? 'the whole group' : 'you'}</li><li>${DS.icon('check')}Saved on this device only; nothing is sent</li></ul>`;
+        if (bar) { bar.hidden = false; document.body.classList.add('has-mobile-bar'); bar.innerHTML = `<div><span class="price">${fmtPHP(total)}</span><small>${items.length} package${items.length > 1 ? 's' : ''} · sample total</small></div><button type="button" class="btn btn--primary" data-bar-quote>Request quotation</button>`; $('[data-bar-quote]', bar).addEventListener('click', () => $('[data-quote]', summary).click()); }
         $('[data-quote]', summary).addEventListener('click', () => {
           const rows = items.map(s => { const p = DS.getPackage(s.id); return `<div><span>${esc(p.title)}</span><strong>${s.adults + s.children} pax · ${dateLabel(s)}</strong></div>`; }).join('') + `<div class="total"><span>Estimated total (sample)</span><strong>${fmtPHP(total)}</strong></div>`;
           const dests = [...new Set(items.map(s => DS.getPackage(s.id).destination))];
@@ -56,7 +59,11 @@
       suggest.innerHTML = sugg.map(p => DS.renderPackageCard(p)).join('');
       DS.hydrateImages(root); document.dispatchEvent(new CustomEvent('ds:badges'));
       $$('[data-save]', root).forEach(b => { const on = DS.saved.has(b.dataset.save); b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', on); });
+      syncToggle();
     }
+    let collapsed = window.matchMedia('(max-width: 1023px)').matches;
+    summary.addEventListener('click', e => { const t = e.target.closest('[data-summary-toggle]'); if (!t) return; collapsed = !collapsed; summary.classList.toggle('is-collapsed', collapsed); t.setAttribute('aria-expanded', String(!collapsed)); });
+    const syncToggle = () => { summary.classList.toggle('is-collapsed', collapsed); const t = $('[data-summary-toggle]', summary); if (t) { t.setAttribute('aria-expanded', String(!collapsed)); const sub = $('[data-toggle-sub]', t); const total = $('[data-grand-total]', summary); if (sub) sub.textContent = total ? `${DS.saved.list().length} package${DS.saved.list().length > 1 ? 's' : ''} · ${total.textContent}` : 'Nothing saved yet'; } };
     list.addEventListener('change', e => {
       const f = e.target.closest('[data-field]'); if (!f) return; const item = f.closest('[data-id]'); const id = item.dataset.id;
       DS.saved.update(id, { [f.dataset.field]: f.dataset.field === 'date' ? f.value : +f.value });

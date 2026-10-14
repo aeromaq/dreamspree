@@ -46,56 +46,48 @@
   function hero() {
     const lines = $$('[data-hero="line"]'); if (!lines.length) return;
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-    tl.from('.hero__media img', { scale: 1.16, duration: 1.8, ease: 'power2.out' }, 0)
+    tl.from('.hero__media img', { scale: 1.1, duration: 1.4, ease: 'power2.out' }, 0)
       .from('[data-hero="eyebrow"]', { autoAlpha: 0, y: 16, duration: 0.6 }, 0.2)
-      .from(lines, { yPercent: 110, duration: 0.9, stagger: 0.12 }, 0.3)
+      .from(lines, { yPercent: 110, duration: 0.8, stagger: 0.1 }, 0.25)
       .from('[data-hero="lede"]', { autoAlpha: 0, y: 20, duration: 0.7 }, 0.75)
       .from('[data-hero="ctas"] > *', { autoAlpha: 0, y: 16, stagger: 0.08, duration: 0.6 }, 0.95)
       .from('[data-hero="search"]', { autoAlpha: 0, y: 40, duration: 0.8 }, 1.05);
-    // Subtle parallax on the hero image while scrolling
-    gsap.to('.hero__media img', { yPercent: 14, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+    // Subtle parallax on the hero image, desktop pointers only (gsap.matchMedia)
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 1024px)', () => { gsap.to('.hero__media img', { yPercent: 10, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } }); });
   }
 
   /* ---------- Page-level hero (inner pages) ---------- */
   function pageHero() {
-    const h = document.querySelector('.hero--page'); if (!h) return;
-    gsap.from(h.querySelectorAll('.hero__content > *'), { autoAlpha: 0, y: 18, stagger: 0.1, duration: 0.7, delay: 0.1 });
-    gsap.from(h.querySelector('.hero__media img'), { scale: 1.12, duration: 1.6, ease: 'power2.out' });
+    const h = document.querySelector('.page-head'); if (!h) return;
+    gsap.from(h.querySelectorAll('.page-head__inner > div > *'), { autoAlpha: 0, y: 12, stagger: 0.07, duration: 0.5 });
+    const a = h.querySelector('.page-head__actions'); if (a) gsap.from(a, { autoAlpha: 0, y: 8, duration: 0.5, delay: 0.25 });
   }
 
   /* ---------- Scroll reveals ---------- */
   function reveals() {
     $$('[data-reveal]').forEach(el => {
-      gsap.fromTo(el, { autoAlpha: 0, y: 32 }, { autoAlpha: 1, y: 0, duration: 0.9, clearProps: 'transform', scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
+      gsap.fromTo(el, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.6, clearProps: 'transform', scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
     });
     $$('[data-stagger]').forEach(group => {
       const run = () => {
         const items = Array.from(group.children).filter(c => !c.dataset.animated);
         if (!items.length) return;
         items.forEach(i => i.dataset.animated = '1');
-        gsap.fromTo(items, { autoAlpha: 0, y: 36 }, { autoAlpha: 1, y: 0, duration: 0.8, stagger: { each: 0.08, from: 'start' }, clearProps: 'transform', scrollTrigger: { trigger: group, start: 'top 92%', once: true } });
+        gsap.fromTo(items, { autoAlpha: 0, y: 26 }, { autoAlpha: 1, y: 0, duration: 0.6, stagger: { each: 0.06, from: 'start' }, clearProps: 'transform', scrollTrigger: { trigger: group, start: 'top 92%', once: true } });
       };
       run();
       // Content rendered later (e.g. after a loading state) is picked up too
       new MutationObserver(() => requestAnimationFrame(run)).observe(group, { childList: true });
     });
     // Image mask reveal for large editorial media
-    $$('.media-stack__main, .cta-band > img, .gallery__item:first-child').forEach(el => {
-      gsap.fromTo(el, { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: 1.1, ease: 'power3.inOut', scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
+    $$('.media-stack__main, .gallery__item:first-child').forEach(el => {
+      gsap.fromTo(el, { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: 0.9, ease: 'power3.inOut', scrollTrigger: { trigger: el, start: 'top 92%', once: true } });
     });
   }
 
-  /* ---------- Micro-interactions ---------- */
-  function micro() {
-    // Magnetic-lite hover on primary buttons (desktop pointer only)
-    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-    document.addEventListener('pointermove', e => {
-      const b = e.target.closest('.btn--lg, .btn--primary, .btn--lime, .btn--teal'); if (!b) return;
-      const r = b.getBoundingClientRect(); const dx = (e.clientX - (r.left + r.width / 2)) / r.width, dy = (e.clientY - (r.top + r.height / 2)) / r.height;
-      gsap.to(b, { x: dx * 6, y: dy * 4 - 2, duration: 0.3, overwrite: 'auto' });
-    });
-    document.addEventListener('pointerout', e => { const b = e.target.closest('.btn--lg, .btn--primary, .btn--lime, .btn--teal'); if (b && !b.contains(e.relatedTarget)) gsap.to(b, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.5)', overwrite: 'auto', clearProps: 'transform' }); });
-  }
+  /* ---------- Micro-interactions: hover states are CSS; GSAP handles feedback (pop, shake, count) ---------- */
+  function micro() {}
 
   /* ---------- Header ---------- */
   function header() {

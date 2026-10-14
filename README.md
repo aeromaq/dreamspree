@@ -50,7 +50,15 @@ dreamspree/
 └── README.md
 ```
 
-Stack: HTML5, CSS3, vanilla JavaScript (ES6+), GSAP 3 and ScrollTrigger from cdnjs, Google Fonts (Fraunces for editorial display type, Manrope for UI). No frameworks, no build tools.
+Stack: HTML5, CSS3, vanilla JavaScript (ES6+), GSAP 3 and ScrollTrigger from cdnjs, Google Fonts (Roboto Serif, a variable modern serif used for every piece of text). No frameworks, no build tools.
+
+## Design system (v2)
+
+- **Typography:** Roboto Serif throughout, from 800-weight display headings with tight tracking down to 13px UI labels. Body text is 17px at a 1.6 line height; sizes scale with `clamp()`.
+- **Colour:** teal green primary (`--c-primary`), the logo's lime as accent (`--c-lime`), the logo's sky blue for informational notices, coral for price emphasis, and a near-black ink used for text, dark sections and the footer. Backgrounds are white with a cool light-green alternate. All tokens live at the top of `css/styles.css`.
+- **Surfaces:** flat cards with 1px borders and 10–18px radii, shadows only on hover and overlays.
+- **Headers:** the homepage keeps an immersive hero; every subpage uses a compact `page-head` band (breadcrumb, title, one-line description, actions) so filters, steps and packages sit near the top of the viewport.
+- **Logo:** the PNG is a solid green block with white type and is placed without any box, padding or shadow.
 
 ## Editing the demo data
 
