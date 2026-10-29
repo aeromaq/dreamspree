@@ -73,16 +73,16 @@ window.DS = window.DS || {};
 
   /* ---------- Destinations ---------- */
   DS.destinations = [
-    { id: 'japan', name: 'Japan', country: 'Japan', type: 'international', region: 'East Asia', tagline: 'Temples, neon and the quiet in between', blurb: 'Cherry blossoms in Kyoto, Shibuya at night and a bullet train in between. Visa required for Philippine passport holders.', image: '1526481280693-3bfa7568e0f3', visa: 'required', bestTime: 'Mar–May · Oct–Nov' },
-    { id: 'south-korea', name: 'South Korea', country: 'South Korea', type: 'international', region: 'East Asia', tagline: 'Palaces by day, Hongdae by night', blurb: 'Seoul’s hanok villages, street food markets and K-culture, with Nami Island a short drive away.', image: '1538669715315-155098f0fb1d', visa: 'required', bestTime: 'Apr–Jun · Sep–Nov' },
-    { id: 'taiwan', name: 'Taiwan', country: 'Taiwan', type: 'international', region: 'East Asia', tagline: 'Night markets and mountain tea', blurb: 'Taipei 101, Jiufen’s lantern-lit lanes and the best night-market food in Asia.', image: '1470004914212-05527e49370b', visa: 'check', bestTime: 'Oct–Apr' },
-    { id: 'hong-kong', name: 'Hong Kong', country: 'Hong Kong SAR', type: 'international', region: 'East Asia', tagline: 'Skyline, dim sum and Disneyland', blurb: 'A short flight from Manila with Victoria Peak, the Star Ferry and a family day at Disneyland.', image: '1536599018102-9f803c140fc1', visa: 'visa-free', bestTime: 'Oct–Dec' },
-    { id: 'vietnam', name: 'Vietnam', country: 'Vietnam', type: 'international', region: 'Southeast Asia', tagline: 'Ha Long Bay to Hoi An lanterns', blurb: 'Limestone bays, Hanoi’s Old Quarter and the lantern town of Hoi An. Visa-free for short Filipino visits.', image: '1528127269322-539801943592', visa: 'visa-free', bestTime: 'Nov–Apr' },
-    { id: 'boracay', name: 'Boracay', country: 'Philippines', type: 'domestic', region: 'Visayas', tagline: 'White Beach, rebooted', blurb: 'Four kilometres of powder-white sand, calmer since the island’s rehabilitation, with sunset sails and island hopping.', image: '1519046904884-53103b34b206', visa: 'none', bestTime: 'Nov–May' },
-    { id: 'palawan', name: 'Palawan', country: 'Philippines', type: 'domestic', region: 'Mimaropa', tagline: 'Lagoons that look unreal', blurb: 'El Nido’s hidden lagoons and Coron’s wreck dives, both reachable on a short hop from Manila.', image: '1518509562904-e7ef99cdcc86', visa: 'none', bestTime: 'Dec–May' },
-    { id: 'siargao', name: 'Siargao', country: 'Philippines', type: 'domestic', region: 'Mindanao', tagline: 'Surf town with a slow heartbeat', blurb: 'Cloud 9, the Magpupungko rock pools and island hopping to Naked, Daku and Guyam.', image: '1505118380757-91f5f5632de0', visa: 'none', bestTime: 'Mar–Oct' },
-    { id: 'cebu', name: 'Cebu', country: 'Philippines', type: 'domestic', region: 'Visayas', tagline: 'Waterfalls, sardines and lechon', blurb: 'Kawasan canyoneering, the Moalboal sardine run and the Queen City’s heritage, all in one trip.', image: '1433086966358-54859d0ed716', visa: 'none', bestTime: 'Jan–May' },
-    { id: 'bohol', name: 'Bohol', country: 'Philippines', type: 'domestic', region: 'Visayas', tagline: 'Chocolate Hills and Panglao calm', blurb: 'Countryside tours past the Chocolate Hills and tarsiers, then quiet beach days on Panglao.', image: '1540202404-a2f29016b523', visa: 'none', bestTime: 'Dec–May' }
+    { id: 'japan', airport: 'NRT', name: 'Japan', country: 'Japan', type: 'international', region: 'East Asia', tagline: 'Temples, neon and the quiet in between', blurb: 'Cherry blossoms in Kyoto, Shibuya at night and a bullet train in between. Visa required for Philippine passport holders.', image: '1526481280693-3bfa7568e0f3', visa: 'required', bestTime: 'Mar–May · Oct–Nov' },
+    { id: 'south-korea', airport: 'ICN', name: 'South Korea', country: 'South Korea', type: 'international', region: 'East Asia', tagline: 'Palaces by day, Hongdae by night', blurb: 'Seoul’s hanok villages, street food markets and K-culture, with Nami Island a short drive away.', image: '1538669715315-155098f0fb1d', visa: 'required', bestTime: 'Apr–Jun · Sep–Nov' },
+    { id: 'taiwan', airport: 'TPE', name: 'Taiwan', country: 'Taiwan', type: 'international', region: 'East Asia', tagline: 'Night markets and mountain tea', blurb: 'Taipei 101, Jiufen’s lantern-lit lanes and the best night-market food in Asia.', image: '1470004914212-05527e49370b', visa: 'check', bestTime: 'Oct–Apr' },
+    { id: 'hong-kong', airport: 'HKG', name: 'Hong Kong', country: 'Hong Kong SAR', type: 'international', region: 'East Asia', tagline: 'Skyline, dim sum and Disneyland', blurb: 'A short flight from Manila with Victoria Peak, the Star Ferry and a family day at Disneyland.', image: '1536599018102-9f803c140fc1', visa: 'visa-free', bestTime: 'Oct–Dec' },
+    { id: 'vietnam', airport: 'HAN', name: 'Vietnam', country: 'Vietnam', type: 'international', region: 'Southeast Asia', tagline: 'Ha Long Bay to Hoi An lanterns', blurb: 'Limestone bays, Hanoi’s Old Quarter and the lantern town of Hoi An. Visa-free for short Filipino visits.', image: '1528127269322-539801943592', visa: 'visa-free', bestTime: 'Nov–Apr' },
+    { id: 'boracay', airport: 'MPH', name: 'Boracay', country: 'Philippines', type: 'domestic', region: 'Visayas', tagline: 'White Beach, rebooted', blurb: 'Four kilometres of powder-white sand, calmer since the island’s rehabilitation, with sunset sails and island hopping.', image: '1519046904884-53103b34b206', visa: 'none', bestTime: 'Nov–May' },
+    { id: 'palawan', airport: 'ENI', name: 'Palawan', country: 'Philippines', type: 'domestic', region: 'Mimaropa', tagline: 'Lagoons that look unreal', blurb: 'El Nido’s hidden lagoons and Coron’s wreck dives, both reachable on a short hop from Manila.', image: '1518509562904-e7ef99cdcc86', visa: 'none', bestTime: 'Dec–May' },
+    { id: 'siargao', airport: 'IAO', name: 'Siargao', country: 'Philippines', type: 'domestic', region: 'Mindanao', tagline: 'Surf town with a slow heartbeat', blurb: 'Cloud 9, the Magpupungko rock pools and island hopping to Naked, Daku and Guyam.', image: '1505118380757-91f5f5632de0', visa: 'none', bestTime: 'Mar–Oct' },
+    { id: 'cebu', airport: 'CEB', name: 'Cebu', country: 'Philippines', type: 'domestic', region: 'Visayas', tagline: 'Waterfalls, sardines and lechon', blurb: 'Kawasan canyoneering, the Moalboal sardine run and the Queen City’s heritage, all in one trip.', image: '1433086966358-54859d0ed716', visa: 'none', bestTime: 'Jan–May' },
+    { id: 'bohol', airport: 'TAG', name: 'Bohol', country: 'Philippines', type: 'domestic', region: 'Visayas', tagline: 'Chocolate Hills and Panglao calm', blurb: 'Countryside tours past the Chocolate Hills and tarsiers, then quiet beach days on Panglao.', image: '1540202404-a2f29016b523', visa: 'none', bestTime: 'Dec–May' }
   ];
 
   /* ---------- Shared policy snippets ---------- */
@@ -104,10 +104,14 @@ window.DS = window.DS || {};
 
   /* ---------- Packages ----------
      priceFrom is optional. Set it to null when a package should not show a price:
-     cards, the package page and the Travel Cart then show "Price on request". */
+     cards, the package page and the Travel Cart then show "Price on request".
+     validUntil is the last date the package can depart (sample). Departures after it
+     are hidden, and custom dates cannot go past it. Each departure ends after
+     duration.nights, so the site shows it as a date range.
+     airport is the arrival airport used to pre-fill flight requests. */
   DS.packages = [
     {
-      id: 'jp-golden-route', title: 'Tokyo, Hakone & Kyoto: The Golden Route', destinationId: 'japan', destination: 'Japan', country: 'Japan', type: 'international', region: 'East Asia',
+      id: 'jp-golden-route', validUntil: '2027-11-30', airport: 'NRT', title: 'Tokyo, Hakone & Kyoto: The Golden Route', destinationId: 'japan', destination: 'Japan', country: 'Japan', type: 'international', region: 'East Asia',
       category: 'Culture', duration: { days: 6, nights: 5 }, priceFrom: 78900, childRate: 0.85, groupSize: 'Private, 2 to 12 travellers',
       images: ['1526481280693-3bfa7568e0f3', '1493976040374-85c8e12f0c0e', '1549693578-d683be217e58', '1578469645742-46cae010e5d4', '1492571350019-22de08371fd3'],
       summary: 'The classic first Japan trip, done properly: two nights in Tokyo, a Fuji-view onsen night in Hakone and two nights in Kyoto, linked by the Shinkansen.',
@@ -129,7 +133,7 @@ window.DS = window.DS || {};
       visaNote: 'Visa required. Dreamspree prepares your checklist and books the appointment.'
     },
     {
-      id: 'jp-osaka-family', title: 'Osaka, Nara & Universal Studios Family Break', destinationId: 'japan', destination: 'Japan', country: 'Japan', type: 'international', region: 'East Asia',
+      id: 'jp-osaka-family', validUntil: '2027-12-31', airport: 'KIX', title: 'Osaka, Nara & Universal Studios Family Break', destinationId: 'japan', destination: 'Japan', country: 'Japan', type: 'international', region: 'East Asia',
       category: 'Family', duration: { days: 5, nights: 4 }, priceFrom: 64500, childRate: 0.8, groupSize: 'Private, 2 to 10 travellers',
       images: ['1590559899731-a382839e5549', '1578637387939-43c525550085', '1493780474015-ba834fd0ce2f', '1524413840807-0c3cb6fa808d'],
       summary: 'A relaxed, kid-paced Kansai trip: Universal Studios with Express Passes, deer feeding in Nara, Osaka Castle and a day trip to Kyoto.',
@@ -150,7 +154,7 @@ window.DS = window.DS || {};
       visaNote: 'Visa required for every traveller, including children.'
     },
     {
-      id: 'kr-seoul-nami', title: 'Seoul City & Nami Island Escape', destinationId: 'south-korea', destination: 'South Korea', country: 'South Korea', type: 'international', region: 'East Asia',
+      id: 'kr-seoul-nami', validUntil: '2027-12-15', airport: 'ICN', title: 'Seoul City & Nami Island Escape', destinationId: 'south-korea', destination: 'South Korea', country: 'South Korea', type: 'international', region: 'East Asia',
       category: 'Culture', duration: { days: 5, nights: 4 }, priceFrom: null, childRate: 0.85, groupSize: 'Join-in, up to 20 travellers',
       images: ['1538669715315-155098f0fb1d', '1583833008338-31a6657917ab', '1517154421773-0529f29ea451', '1548115184-bc6544d06a58', '1534274867514-d5b47ef89ed7'],
       summary: 'Palaces, markets and a hanbok morning in Seoul, plus a full-day trip to Nami Island and the Garden of Morning Calm.',
@@ -171,7 +175,7 @@ window.DS = window.DS || {};
       visaNote: 'Visa required. Group visa processing available for 5 or more travellers.'
     },
     {
-      id: 'tw-taipei-jiufen', title: 'Taipei, Jiufen & Night Markets', destinationId: 'taiwan', destination: 'Taiwan', country: 'Taiwan', type: 'international', region: 'East Asia',
+      id: 'tw-taipei-jiufen', validUntil: '2027-11-30', airport: 'TPE', title: 'Taipei, Jiufen & Night Markets', destinationId: 'taiwan', destination: 'Taiwan', country: 'Taiwan', type: 'international', region: 'East Asia',
       category: 'Leisure', duration: { days: 4, nights: 3 }, priceFrom: 32900, childRate: 0.85, groupSize: 'Private, 2 to 8 travellers',
       images: ['1470004914212-05527e49370b', '1508248467877-aec1b08de376', '1552993873-0dd1110e025f', '1598935898639-81586f7d2129'],
       summary: 'A long-weekend Taipei trip: Taipei 101, a Jiufen and Shifen day with sky lanterns, and nightly market crawls.',
@@ -191,7 +195,7 @@ window.DS = window.DS || {};
       visaNote: 'Entry rules change. Your consultant confirms whether a visa or travel authorisation applies to your dates.'
     },
     {
-      id: 'hk-disney-family', title: 'Hong Kong Disneyland & City Lights', destinationId: 'hong-kong', destination: 'Hong Kong', country: 'Hong Kong SAR', type: 'international', region: 'East Asia',
+      id: 'hk-disney-family', validUntil: '2027-12-31', airport: 'HKG', title: 'Hong Kong Disneyland & City Lights', destinationId: 'hong-kong', destination: 'Hong Kong', country: 'Hong Kong SAR', type: 'international', region: 'East Asia',
       category: 'Family', duration: { days: 4, nights: 3 }, priceFrom: 36900, childRate: 0.8, groupSize: 'Private, 2 to 10 travellers',
       images: ['1536599018102-9f803c140fc1', '1507941097613-9f2157b69235', '1583417319070-4a69db38a482'],
       summary: 'The easiest first international trip for families: a full Disneyland day, Victoria Peak, the Star Ferry and a dim sum lunch, two hours from Manila.',
@@ -211,7 +215,7 @@ window.DS = window.DS || {};
       visaNote: 'Visa-free for short visits on a Philippine passport. Your consultant confirms the latest entry rules.'
     },
     {
-      id: 'vn-hanoi-halong', title: 'Hanoi & Ha Long Bay Overnight Cruise', destinationId: 'vietnam', destination: 'Vietnam', country: 'Vietnam', type: 'international', region: 'Southeast Asia',
+      id: 'vn-hanoi-halong', validUntil: '2027-11-30', airport: 'HAN', title: 'Hanoi & Ha Long Bay Overnight Cruise', destinationId: 'vietnam', destination: 'Vietnam', country: 'Vietnam', type: 'international', region: 'Southeast Asia',
       category: 'Adventure', duration: { days: 5, nights: 4 }, priceFrom: 38900, childRate: 0.85, groupSize: 'Join-in, up to 16 travellers',
       images: ['1528127269322-539801943592', '1555921015-5532091f6026', '1557750255-c76072a7aad1'],
       summary: 'Hanoi’s Old Quarter and egg coffee, a Ninh Binh boat day through limestone karsts and a night on a Ha Long Bay cruise.',
@@ -232,7 +236,7 @@ window.DS = window.DS || {};
       visaNote: 'Visa-free for short visits on a Philippine passport.'
     },
     {
-      id: 'vn-danang-hoian', title: 'Da Nang, Ba Na Hills & Hoi An', destinationId: 'vietnam', destination: 'Vietnam', country: 'Vietnam', type: 'international', region: 'Southeast Asia',
+      id: 'vn-danang-hoian', validUntil: '2027-09-30', airport: 'DAD', title: 'Da Nang, Ba Na Hills & Hoi An', destinationId: 'vietnam', destination: 'Vietnam', country: 'Vietnam', type: 'international', region: 'Southeast Asia',
       category: 'Leisure', duration: { days: 4, nights: 3 }, priceFrom: null, childRate: 0.85, groupSize: 'Private, 2 to 8 travellers',
       images: ['1559592413-7cec4d0cae2b', '1555921015-5532091f6026', '1528127269322-539801943592'],
       summary: 'Golden Bridge at Ba Na Hills, My Khe beach afternoons and lantern-lit evenings in Hoi An’s ancient town.',
@@ -252,7 +256,7 @@ window.DS = window.DS || {};
       visaNote: 'Visa-free for short visits on a Philippine passport.'
     },
     {
-      id: 'ph-boracay-sunset', title: 'Boracay White Beach & Sunset Sail', destinationId: 'boracay', destination: 'Boracay', country: 'Philippines', type: 'domestic', region: 'Visayas',
+      id: 'ph-boracay-sunset', validUntil: '2027-05-31', airport: 'MPH', title: 'Boracay White Beach & Sunset Sail', destinationId: 'boracay', destination: 'Boracay', country: 'Philippines', type: 'domestic', region: 'Visayas',
       category: 'Leisure', duration: { days: 3, nights: 2 }, priceFrom: 13900, childRate: 0.8, groupSize: 'Private, 2 to 20 travellers',
       images: ['1519046904884-53103b34b206', '1509233725247-49e657c54213', '1559494007-9f5847c49d94', '1468413253725-0d5181091126'],
       summary: 'A quick reset on White Beach with a paraw sunset sail, island hopping to Puka Beach and nothing else on the schedule.',
@@ -271,7 +275,7 @@ window.DS = window.DS || {};
       visaNote: 'No visa required.'
     },
     {
-      id: 'ph-elnido-lagoons', title: 'El Nido Lagoons & Island Hopping', destinationId: 'palawan', destination: 'Palawan', country: 'Philippines', type: 'domestic', region: 'Mimaropa',
+      id: 'ph-elnido-lagoons', validUntil: '2027-05-31', airport: 'ENI', title: 'El Nido Lagoons & Island Hopping', destinationId: 'palawan', destination: 'Palawan', country: 'Philippines', type: 'domestic', region: 'Mimaropa',
       category: 'Adventure', duration: { days: 4, nights: 3 }, priceFrom: 24900, childRate: 0.8, groupSize: 'Private, 2 to 12 travellers',
       images: ['1518509562904-e7ef99cdcc86', '1551918120-9739cb430c6d', '1516690561799-46d8f74f9abf', '1506929562872-bb421503ef21', '1552465011-b4e21bf6e79a'],
       summary: 'Tours A and C by private boat, a Nacpan Beach afternoon and three nights in a resort on Corong-Corong bay.',
@@ -291,7 +295,7 @@ window.DS = window.DS || {};
       visaNote: 'No visa required.'
     },
     {
-      id: 'ph-coron-wrecks', title: 'Coron Lakes, Wrecks & Hot Springs', destinationId: 'palawan', destination: 'Palawan', country: 'Philippines', type: 'domestic', region: 'Mimaropa',
+      id: 'ph-coron-wrecks', validUntil: '2027-05-31', airport: 'USU', title: 'Coron Lakes, Wrecks & Hot Springs', destinationId: 'palawan', destination: 'Palawan', country: 'Philippines', type: 'domestic', region: 'Mimaropa',
       category: 'Adventure', duration: { days: 3, nights: 2 }, priceFrom: null, childRate: 0.8, groupSize: 'Join-in, up to 12 travellers',
       images: ['1551918120-9739cb430c6d', '1518509562904-e7ef99cdcc86', '1530053969600-caed2596d242', '1551244072-5d12893278ab'],
       summary: 'Kayangan Lake, Twin Lagoon, the Skeleton Wreck snorkel and a soak in Maquinit Hot Springs on the way back.',
@@ -310,7 +314,7 @@ window.DS = window.DS || {};
       visaNote: 'No visa required.'
     },
     {
-      id: 'ph-siargao-surf', title: 'Siargao Surf & Island Hopping', destinationId: 'siargao', destination: 'Siargao', country: 'Philippines', type: 'domestic', region: 'Mindanao',
+      id: 'ph-siargao-surf', validUntil: '2027-10-31', airport: 'IAO', title: 'Siargao Surf & Island Hopping', destinationId: 'siargao', destination: 'Siargao', country: 'Philippines', type: 'domestic', region: 'Mindanao',
       category: 'Adventure', duration: { days: 4, nights: 3 }, priceFrom: 21900, childRate: 0.8, groupSize: 'Private, 2 to 10 travellers',
       images: ['1505118380757-91f5f5632de0', '1502680390469-be75c86b636f', '1505228395891-9a51e7e86bf6', '1512100356356-de1b84283e18'],
       summary: 'Beginner surf lessons at Cloud 9, the Magpupungko rock pools at low tide and a three-island boat day, with a General Luna base.',
@@ -330,7 +334,7 @@ window.DS = window.DS || {};
       visaNote: 'No visa required.'
     },
     {
-      id: 'ph-cebu-south', title: 'Cebu South: Kawasan, Moalboal & Oslob', destinationId: 'cebu', destination: 'Cebu', country: 'Philippines', type: 'domestic', region: 'Visayas',
+      id: 'ph-cebu-south', validUntil: '2027-06-30', airport: 'CEB', title: 'Cebu South: Kawasan, Moalboal & Oslob', destinationId: 'cebu', destination: 'Cebu', country: 'Philippines', type: 'domestic', region: 'Visayas',
       category: 'Adventure', duration: { days: 4, nights: 3 }, priceFrom: 19900, childRate: 0.8, groupSize: 'Private, 2 to 14 travellers',
       images: ['1433086966358-54859d0ed716', '1551244072-5d12893278ab', '1530053969600-caed2596d242', '1519451241324-20b4ea2c4220'],
       summary: 'Canyoneering to Kawasan Falls, the Moalboal sardine run and Pescador Island, plus a Cebu City heritage afternoon with lechon.',
@@ -350,7 +354,7 @@ window.DS = window.DS || {};
       visaNote: 'No visa required.'
     },
     {
-      id: 'ph-bohol-countryside', title: 'Bohol Countryside & Panglao Beach', destinationId: 'bohol', destination: 'Bohol', country: 'Philippines', type: 'domestic', region: 'Visayas',
+      id: 'ph-bohol-countryside', validUntil: '2027-05-31', airport: 'TAG', title: 'Bohol Countryside & Panglao Beach', destinationId: 'bohol', destination: 'Bohol', country: 'Philippines', type: 'domestic', region: 'Visayas',
       category: 'Family', duration: { days: 3, nights: 2 }, priceFrom: 15900, childRate: 0.8, groupSize: 'Private, 2 to 16 travellers',
       images: ['1540202404-a2f29016b523', '1555400038-63f5ba517a47', '1432405972618-c60b0225b8f9', '1544550581-5f7ceaf7f992'],
       summary: 'The full countryside tour with the Chocolate Hills, tarsiers and a Loboc River lunch cruise, then a beach day on Panglao with Balicasag snorkelling.',
@@ -553,6 +557,171 @@ window.DS = window.DS || {};
     }
   ];
 
+  /* ---------- Airports and places (worldwide search for flights, hotels, insurance) ----------
+     Flights are an airfare-only quotation, so travellers can search any major airport by
+     3-letter code, city or country. Format: CODE|City|Country|Airport. Add rows freely. */
+  DS.airports = `
+MNL|Manila|Philippines|Ninoy Aquino International
+CEB|Cebu|Philippines|Mactan-Cebu International
+CRK|Clark|Philippines|Clark International
+DVO|Davao|Philippines|Francisco Bangoy International
+ILO|Iloilo|Philippines|Iloilo International
+BCD|Bacolod|Philippines|Bacolod-Silay
+MPH|Caticlan (Boracay)|Philippines|Godofredo P. Ramos
+KLO|Kalibo (Boracay)|Philippines|Kalibo International
+PPS|Puerto Princesa|Philippines|Puerto Princesa International
+ENI|El Nido|Philippines|El Nido Airport
+USU|Coron (Busuanga)|Philippines|Francisco B. Reyes
+IAO|Siargao|Philippines|Sayak Airport
+TAG|Panglao (Bohol)|Philippines|Bohol-Panglao International
+DGT|Dumaguete|Philippines|Sibulan Airport
+CGY|Cagayan de Oro|Philippines|Laguindingan
+ZAM|Zamboanga|Philippines|Zamboanga International
+TAC|Tacloban|Philippines|Daniel Z. Romualdez
+LAO|Laoag|Philippines|Laoag International
+GES|General Santos|Philippines|General Santos International
+NRT|Tokyo|Japan|Narita International
+HND|Tokyo|Japan|Haneda
+KIX|Osaka|Japan|Kansai International
+ITM|Osaka|Japan|Itami
+NGO|Nagoya|Japan|Chubu Centrair
+FUK|Fukuoka|Japan|Fukuoka
+CTS|Sapporo|Japan|New Chitose
+OKA|Okinawa|Japan|Naha
+ICN|Seoul|South Korea|Incheon International
+GMP|Seoul|South Korea|Gimpo International
+PUS|Busan|South Korea|Gimhae International
+CJU|Jeju|South Korea|Jeju International
+TPE|Taipei|Taiwan|Taoyuan International
+TSA|Taipei|Taiwan|Songshan
+KHH|Kaohsiung|Taiwan|Kaohsiung International
+HKG|Hong Kong|Hong Kong SAR|Hong Kong International
+MFM|Macau|Macau SAR|Macau International
+PEK|Beijing|China|Capital International
+PKX|Beijing|China|Daxing International
+PVG|Shanghai|China|Pudong International
+CAN|Guangzhou|China|Baiyun International
+SZX|Shenzhen|China|Bao'an International
+XMN|Xiamen|China|Gaoqi International
+CTU|Chengdu|China|Tianfu International
+HAN|Hanoi|Vietnam|Noi Bai International
+SGN|Ho Chi Minh City|Vietnam|Tan Son Nhat International
+DAD|Da Nang|Vietnam|Da Nang International
+PQC|Phu Quoc|Vietnam|Phu Quoc International
+CXR|Nha Trang|Vietnam|Cam Ranh International
+BKK|Bangkok|Thailand|Suvarnabhumi
+DMK|Bangkok|Thailand|Don Mueang
+HKT|Phuket|Thailand|Phuket International
+CNX|Chiang Mai|Thailand|Chiang Mai International
+KBV|Krabi|Thailand|Krabi International
+USM|Koh Samui|Thailand|Samui
+SIN|Singapore|Singapore|Changi
+KUL|Kuala Lumpur|Malaysia|Kuala Lumpur International
+BKI|Kota Kinabalu|Malaysia|Kota Kinabalu International
+PEN|Penang|Malaysia|Penang International
+CGK|Jakarta|Indonesia|Soekarno-Hatta International
+DPS|Bali (Denpasar)|Indonesia|Ngurah Rai International
+PNH|Phnom Penh|Cambodia|Techo International
+SAI|Siem Reap|Cambodia|Siem Reap-Angkor International
+BWN|Bandar Seri Begawan|Brunei|Brunei International
+RGN|Yangon|Myanmar|Yangon International
+VTE|Vientiane|Laos|Wattay International
+DEL|Delhi|India|Indira Gandhi International
+BOM|Mumbai|India|Chhatrapati Shivaji Maharaj International
+MLE|Malé|Maldives|Velana International
+CMB|Colombo|Sri Lanka|Bandaranaike International
+KTM|Kathmandu|Nepal|Tribhuvan International
+DXB|Dubai|United Arab Emirates|Dubai International
+AUH|Abu Dhabi|United Arab Emirates|Zayed International
+DOH|Doha|Qatar|Hamad International
+RUH|Riyadh|Saudi Arabia|King Khalid International
+JED|Jeddah|Saudi Arabia|King Abdulaziz International
+KWI|Kuwait City|Kuwait|Kuwait International
+BAH|Manama|Bahrain|Bahrain International
+MCT|Muscat|Oman|Muscat International
+IST|Istanbul|Turkey|Istanbul Airport
+TLV|Tel Aviv|Israel|Ben Gurion
+AMM|Amman|Jordan|Queen Alia International
+LHR|London|United Kingdom|Heathrow
+LGW|London|United Kingdom|Gatwick
+CDG|Paris|France|Charles de Gaulle
+AMS|Amsterdam|Netherlands|Schiphol
+FRA|Frankfurt|Germany|Frankfurt
+MUC|Munich|Germany|Munich
+ZRH|Zurich|Switzerland|Zurich
+GVA|Geneva|Switzerland|Geneva
+VIE|Vienna|Austria|Vienna International
+FCO|Rome|Italy|Fiumicino
+MXP|Milan|Italy|Malpensa
+VCE|Venice|Italy|Marco Polo
+MAD|Madrid|Spain|Barajas
+BCN|Barcelona|Spain|El Prat
+LIS|Lisbon|Portugal|Humberto Delgado
+ATH|Athens|Greece|Athens International
+PRG|Prague|Czech Republic|Václav Havel
+BUD|Budapest|Hungary|Ferenc Liszt International
+CPH|Copenhagen|Denmark|Kastrup
+ARN|Stockholm|Sweden|Arlanda
+OSL|Oslo|Norway|Gardermoen
+HEL|Helsinki|Finland|Helsinki-Vantaa
+DUB|Dublin|Ireland|Dublin
+BRU|Brussels|Belgium|Brussels
+KEF|Reykjavik|Iceland|Keflavík International
+WAW|Warsaw|Poland|Chopin
+LAX|Los Angeles|United States|Los Angeles International
+SFO|San Francisco|United States|San Francisco International
+SEA|Seattle|United States|Seattle-Tacoma International
+SAN|San Diego|United States|San Diego International
+LAS|Las Vegas|United States|Harry Reid International
+JFK|New York|United States|John F. Kennedy International
+EWR|New York (Newark)|United States|Newark Liberty International
+ORD|Chicago|United States|O'Hare International
+IAD|Washington, D.C.|United States|Dulles International
+BOS|Boston|United States|Logan International
+ATL|Atlanta|United States|Hartsfield-Jackson International
+DFW|Dallas|United States|Dallas/Fort Worth International
+IAH|Houston|United States|George Bush Intercontinental
+MCO|Orlando|United States|Orlando International
+MIA|Miami|United States|Miami International
+HNL|Honolulu|United States|Daniel K. Inouye International
+GUM|Guam|Guam (United States)|Antonio B. Won Pat International
+SPN|Saipan|Northern Mariana Islands|Saipan International
+YVR|Vancouver|Canada|Vancouver International
+YYC|Calgary|Canada|Calgary International
+YYZ|Toronto|Canada|Pearson International
+YUL|Montreal|Canada|Trudeau International
+MEX|Mexico City|Mexico|Benito Juárez International
+CUN|Cancún|Mexico|Cancún International
+GRU|São Paulo|Brazil|Guarulhos International
+EZE|Buenos Aires|Argentina|Ezeiza International
+LIM|Lima|Peru|Jorge Chávez International
+SCL|Santiago|Chile|Arturo Merino Benítez International
+BOG|Bogotá|Colombia|El Dorado International
+SYD|Sydney|Australia|Kingsford Smith
+MEL|Melbourne|Australia|Tullamarine
+BNE|Brisbane|Australia|Brisbane
+PER|Perth|Australia|Perth
+AKL|Auckland|New Zealand|Auckland
+CHC|Christchurch|New Zealand|Christchurch
+ZQN|Queenstown|New Zealand|Queenstown
+NAN|Nadi|Fiji|Nadi International
+JNB|Johannesburg|South Africa|O. R. Tambo International
+CPT|Cape Town|South Africa|Cape Town International
+CAI|Cairo|Egypt|Cairo International
+NBO|Nairobi|Kenya|Jomo Kenyatta International
+CMN|Casablanca|Morocco|Mohammed V International
+RAK|Marrakech|Morocco|Menara
+MRU|Mauritius|Mauritius|Sir Seewoosagur Ramgoolam International
+SEZ|Mahé|Seychelles|Seychelles International`.trim().split('\n').map(r => { const [code, city, country, name] = r.split('|'); return { code, city, country, name }; });
+  // Hotel and corporate destinations: every airport city plus resort areas with no airport of their own
+  DS.places = [...new Map([
+    ...DS.airports.map(a => [`${a.city.replace(/ \(.*\)$/, '')}, ${a.country}`, a.country]),
+    ...['Boracay', 'Coron', 'Panglao, Bohol', 'Baguio', 'Tagaytay', 'Vigan', 'Batanes'].map(c => [`${c}, Philippines`, 'Philippines']),
+    ...['Kyoto', 'Hakone', 'Nara'].map(c => [`${c}, Japan`, 'Japan']), ['Hoi An, Vietnam', 'Vietnam'], ['Ha Long Bay, Vietnam', 'Vietnam'], ['Nami Island, South Korea', 'South Korea']
+  ]).keys()].map(label => ({ label }));
+  // Insurance cover is priced by where you go: countries plus the common multi-country areas
+  DS.countries = ['Schengen area (Europe)', 'Multiple countries', ...[...new Set(DS.airports.map(a => a.country))].sort()].map(label => ({ label }));
+
   /* ---------- Travel Cart catalogue ----------
      What a traveller can add to the Travel Cart besides packages. Every price is
      optional: leave `fee` null and the item shows "Price on request", quoted by a
@@ -565,8 +734,25 @@ window.DS = window.DS || {};
       hotel: { label: 'Hotel', icon: 'bed', blurb: 'Hand-picked stays to match your package.' },
       transport: { label: 'Transport', icon: 'car', blurb: 'Airport transfers, day tours and private vans.' },
       cruise: { label: 'Cruise', icon: 'ship', blurb: 'Cruise itineraries with pre- and post-cruise plans.' },
-      insurance: { label: 'Travel insurance', icon: 'shield', blurb: 'Cover explained in plain language before you fly.' }
+      insurance: { label: 'Travel insurance', icon: 'shield', blurb: 'Cover explained in plain language before you fly.' },
+      custom: { label: 'Custom trip', icon: 'sparkles', blurb: 'Tell us what to include and a consultant designs the trip.' }
     },
+    // What a custom trip can include (the traveller ticks what they want)
+    customIncludes: [
+      { id: 'flights', label: 'Flights', icon: 'plane' },
+      { id: 'flight-reservation', label: 'Flight reservation (for visa)', icon: 'file' },
+      { id: 'hotel', label: 'Hotel', icon: 'bed' },
+      { id: 'airport-transfers', label: 'Airport transfers', icon: 'car' },
+      { id: 'city-tour', label: 'City tour', icon: 'map' },
+      { id: 'activities', label: 'Activities & day tours', icon: 'compass' },
+      { id: 'theme-parks', label: 'Theme park tickets', icon: 'star' },
+      { id: 'island-hopping', label: 'Island hopping', icon: 'sun' },
+      { id: 'private-car', label: 'Private car with driver', icon: 'car' },
+      { id: 'visa', label: 'Visa assistance', icon: 'passport' },
+      { id: 'insurance', label: 'Travel insurance', icon: 'shield' },
+      { id: 'meals', label: 'Meals', icon: 'tag' }
+    ],
+    travelStyles: ['Relaxed', 'Balanced', 'Packed itinerary'],
     visa: [
       { id: 'japan', name: 'Japan', fee: 2500, destinationId: 'japan' },
       { id: 'korea', name: 'South Korea', fee: 2000, destinationId: 'south-korea' },
@@ -587,6 +773,14 @@ window.DS = window.DS || {};
   /* ---------- Lookup helpers ---------- */
   /* Prices are optional: a package with priceFrom null is shown as "Price on request" */
   DS.hasPrice = p => !!p && typeof p.priceFrom === 'number' && p.priceFrom > 0;
+  /* Dates are ISO strings (YYYY-MM-DD) and handled at midday UTC so time zones never shift a day */
+  DS.addDays = (iso, n) => { if (!iso) return ''; const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+  DS.daysBetween = (a, b) => (a && b) ? Math.round((new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) / 864e5) : 0;
+  DS.todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  /* Departures a traveller can still book: not in the past and within the package validity.
+     Each comes back with its return date (departure + nights). */
+  DS.departuresFor = p => p.departures.filter(d => d.date >= DS.todayISO() && (!p.validUntil || d.date <= p.validUntil)).map(d => ({ ...d, ret: DS.addDays(d.date, p.duration.nights) }));
+  DS.getAirport = code => DS.airports.find(a => a.code === code);
   DS.getPackage = id => DS.packages.find(p => p.id === id);
   DS.getDestination = id => DS.destinations.find(d => d.id === id);
   DS.packagesFor = destId => DS.packages.filter(p => p.destinationId === destId);

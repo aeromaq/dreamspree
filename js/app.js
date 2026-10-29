@@ -310,7 +310,7 @@
     : `<div class="pkg-card__price"><small>Quoted by a consultant</small><span class="price price--request">Price on request</span></div>`;
   DS.renderPackageCard = (p, opts = {}) => {
     const incl = DS.keyInclusions(p).map(i => `<span class="badge">${esc(i)}</span>`).join('');
-    const next = p.departures[0];
+    const next = DS.departuresFor(p)[0];
     return `<article class="card pkg-card ${opts.row ? 'pkg-card--row' : ''}" data-pkg="${p.id}">
       <div class="card__media"><a href="package.html?id=${p.id}" tabindex="-1" aria-hidden="true">${DS.picture(p.images[0], '', { w: 640, h: 480, label: p.destination })}</a>
         <div class="card__tags"><span class="badge badge--glass">${DS.icon('clock')}${p.duration.days} days · ${p.duration.nights} nights</span><span class="badge badge--glass">${esc(p.category)}</span></div>
@@ -318,7 +318,7 @@
       <div class="pkg-card__body">
         <div class="pkg-card__loc">${DS.icon('pin')}${esc(DS.placeLabel(p))}</div>
         <h3 class="pkg-card__title"><a href="package.html?id=${p.id}">${esc(p.title)}</a></h3>
-        <div class="pkg-card__meta"><span>${DS.icon('calendar')}Next: ${esc(fmtDate(next.date))}</span><span>${p.departures.length} sample dates</span></div>
+        <div class="pkg-card__meta"><span>${DS.icon('calendar')}${next ? (opts.match ? `<strong class="pkg-card__match">${esc(opts.match)}</strong>` : `Next: ${esc(DS.fmtRange(next.date, next.ret))}`) : 'Dates on request'}</span>${p.validUntil ? `<span>Valid until ${esc(fmtDate(p.validUntil))}</span>` : ''}</div>
         <div class="pkg-card__incl">${incl}</div>
         <div class="pkg-card__foot">${DS.priceBlock(p)}<a class="btn btn--sm btn--primary" href="package.html?id=${p.id}">View details ${DS.icon('arrowRight', 'arrow')}</a></div>
       </div></article>`;
@@ -353,20 +353,25 @@
   };
   document.addEventListener('click', e => { const c = e.target.closest('[data-story]'); if (c) DS.openStory(c.dataset.story); });
 
-  /* ---------- Shared form pieces: month list, destination list, traveller picker ---------- */
-  /* Next 12 months as YYYY-MM values (readable labels instead of a raw date field) */
-  DS.monthOptions = (sel = '', anyLabel = 'Any month') => {
-    const now = new Date(); const out = [`<option value="">${esc(anyLabel)}</option>`];
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      const v = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      out.push(`<option value="${v}" ${sel === v ? 'selected' : ''}>${d.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}</option>`);
-    }
-    return out.join('');
-  };
+  /* ---------- Shared form pieces: months, destinations, travellers, dates, places ---------- */
+  /* Next n months as YYYY-MM values (readable labels instead of a raw date field) */
+  const nextMonths = (n = 18) => { const now = new Date(); return Array.from({ length: n }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() + i, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }); };
+  DS.monthOptions = (sel = '', anyLabel = 'Any month') => [`<option value="">${esc(anyLabel)}</option>`, ...nextMonths(12).map(v => `<option value="${v}" ${sel === v ? 'selected' : ''}>${DS.fmtMonth(v)}</option>`)].join('');
   DS.fmtMonth = v => { if (!/^\d{4}-\d{2}$/.test(v || '')) return v || ''; const [y, m] = v.split('-'); return new Date(+y, +m - 1, 1).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' }); };
-  /* Destinations for one trip type, grouped by region. Trip type comes first in every
-     form, so the list never mixes Boracay with Japan. */
+  DS.fmtMonthShort = v => { if (!/^\d{4}-\d{2}$/.test(v || '')) return v || ''; const [y, m] = v.split('-'); return new Date(+y, +m - 1, 1).toLocaleDateString('en-PH', { month: 'short', year: 'numeric' }); };
+  const asDate = iso => new Date(iso + 'T00:00:00');
+  /* "Mar 18 – 23, 2027", "Mar 28 – Apr 2, 2027", "Dec 28, 2026 – Jan 2, 2027" */
+  DS.fmtRange = (a, b) => {
+    if (!a) return ''; if (!b) return fmtDate(a);
+    const x = asDate(a), y = asDate(b), md = { month: 'short', day: 'numeric' };
+    if (x.getFullYear() !== y.getFullYear()) return `${fmtDate(a)} – ${fmtDate(b)}`;
+    if (x.getMonth() === y.getMonth()) return `${x.toLocaleDateString('en-PH', md)} – ${y.getDate()}, ${y.getFullYear()}`;
+    return `${x.toLocaleDateString('en-PH', md)} – ${y.toLocaleDateString('en-PH', md)}, ${y.getFullYear()}`;
+  };
+  DS.weekday = iso => asDate(iso).toLocaleDateString('en-PH', { weekday: 'short' });
+
+  /* Destinations for one trip type, grouped by region. Trip type comes first in the
+     Tours form, so the list never mixes Boracay with Japan. */
   DS.destOptions = (type, sel = '', opts = {}) => {
     const list = DS.destinations.filter(d => !type || d.type === type);
     const regions = [...new Set(list.map(d => d.region))];
@@ -376,131 +381,494 @@
       regions.map(r => `<optgroup label="${esc(r)}">${list.filter(d => d.region === r).map(d => `<option value="${d.id}" ${sel === d.id ? 'selected' : ''}>${esc(d.name)}${count(d)}</option>`).join('')}</optgroup>`).join('') +
       (opts.other ? `<option value="other" ${sel === 'other' ? 'selected' : ''}>Somewhere else</option>` : '');
   };
-  DS.paxLabel = (a, c, noun = 'traveller') => {
-    if (noun !== 'traveller') { const n = a + c; return `${n} ${noun}${n === 1 ? '' : 's'}`; }
-    return `${a} adult${a === 1 ? '' : 's'}${c ? `, ${c} child${c === 1 ? '' : 'ren'}` : ''}`;
+  DS.paxLabel = (a, c, noun = 'traveller', rooms) => {
+    const r = rooms ? ` · ${rooms} room${rooms === 1 ? '' : 's'}` : '';
+    if (noun !== 'traveller') { const n = a + c; return `${n} ${noun}${n === 1 ? '' : 's'}${r}`; }
+    return `${a} adult${a === 1 ? '' : 's'}${c ? `, ${c} child${c === 1 ? '' : 'ren'}` : ''}${r}`;
   };
-  /* Traveller picker: a button that opens a small panel with adult/child counters.
-     Values travel in hidden inputs named adults/children so FormData just works. */
+  /* Traveller picker: a button that opens a small panel with adult/child (and optional room)
+     counters. Values travel in hidden inputs named adults/children/rooms so FormData just works. */
   let paxSeq = 0;
+  const counterRow = (key, title, sub, val, noun) => `<div class="counter-row"><div><strong>${title}</strong><span>${sub}</span></div><div class="counter"><button type="button" class="counter__btn" data-pax-step="${key}" data-d="-1" aria-label="Fewer ${noun}">${DS.icon('minus')}</button><span class="counter__val" data-pax-val="${key}" aria-live="polite">${val}</span><button type="button" class="counter__btn" data-pax-step="${key}" data-d="1" aria-label="More ${noun}">${DS.icon('plus')}</button></div></div>`;
   DS.paxPicker = (o = {}) => {
-    const id = 'pax-' + (++paxSeq), a = o.adults ?? 2, c = o.children ?? 0, max = o.max || 12;
+    const id = 'pax-' + (++paxSeq), a = o.adults ?? 2, c = o.children ?? 0, max = o.max || 12, rooms = o.rooms;
     return `<div class="field pax" data-pax data-max="${max}" data-noun="${esc(o.noun || 'traveller')}">
       <span class="field__label" id="${id}-l">${esc(o.label || 'Travellers')}</span>
-      <button type="button" class="pax__btn" id="${id}-b" aria-haspopup="true" aria-expanded="false" aria-controls="${id}-p" aria-labelledby="${id}-l ${id}-b">${DS.icon('users')}<span data-pax-text>${esc(DS.paxLabel(a, c, o.noun))}</span>${DS.icon('chevronDown', 'pax__chev')}</button>
+      <button type="button" class="pax__btn" id="${id}-b" aria-haspopup="true" aria-expanded="false" aria-controls="${id}-p" aria-labelledby="${id}-l ${id}-b">${DS.icon('users')}<span data-pax-text>${esc(DS.paxLabel(a, c, o.noun, rooms))}</span>${DS.icon('chevronDown', 'pax__chev')}</button>
       <div class="pax__pop" id="${id}-p" hidden>
-        <div class="counter-row"><div><strong>Adults</strong><span>12 years and above</span></div><div class="counter"><button type="button" class="counter__btn" data-pax-step="adults" data-d="-1" aria-label="Fewer adults">${DS.icon('minus')}</button><span class="counter__val" data-pax-val="adults" aria-live="polite">${a}</span><button type="button" class="counter__btn" data-pax-step="adults" data-d="1" aria-label="More adults">${DS.icon('plus')}</button></div></div>
-        <div class="counter-row"><div><strong>Children</strong><span>2 to 11 years</span></div><div class="counter"><button type="button" class="counter__btn" data-pax-step="children" data-d="-1" aria-label="Fewer children">${DS.icon('minus')}</button><span class="counter__val" data-pax-val="children" aria-live="polite">${c}</span><button type="button" class="counter__btn" data-pax-step="children" data-d="1" aria-label="More children">${DS.icon('plus')}</button></div></div>
+        ${counterRow('adults', 'Adults', '12 years and above', a, 'adults')}
+        ${counterRow('children', 'Children', '2 to 11 years', c, 'children')}
+        ${rooms ? counterRow('rooms', 'Rooms', 'We suggest the room mix', rooms, 'rooms') : ''}
         <button type="button" class="btn btn--sm btn--dark btn--block" data-pax-done>Done</button>
       </div>
-      <input type="hidden" name="adults" value="${a}"><input type="hidden" name="children" value="${c}">
+      <input type="hidden" name="adults" value="${a}"><input type="hidden" name="children" value="${c}">${rooms ? `<input type="hidden" name="rooms" value="${rooms}">` : ''}
     </div>`;
   };
   const paxSync = root => {
-    const a = +$('input[name="adults"]', root).value, c = +$('input[name="children"]', root).value, max = +root.dataset.max;
-    $('[data-pax-val="adults"]', root).textContent = a; $('[data-pax-val="children"]', root).textContent = c;
-    $('[data-pax-text]', root).textContent = DS.paxLabel(a, c, root.dataset.noun);
-    $$('[data-pax-step]', root).forEach(b => { const k = b.dataset.paxStep, n = (k === 'adults' ? a : c) + +b.dataset.d; b.disabled = (k === 'adults' ? n < 1 : n < 0) || a + c + +b.dataset.d > max && +b.dataset.d > 0; });
+    const val = k => { const i = $(`input[name="${k}"]`, root); return i ? +i.value : 0; };
+    const a = val('adults'), c = val('children'), r = val('rooms'), max = +root.dataset.max;
+    ['adults', 'children', 'rooms'].forEach(k => { const el = $(`[data-pax-val="${k}"]`, root); if (el) el.textContent = val(k); });
+    $('[data-pax-text]', root).textContent = DS.paxLabel(a, c, root.dataset.noun, r || undefined);
+    $$('[data-pax-step]', root).forEach(b => {
+      const k = b.dataset.paxStep, d = +b.dataset.d, n = val(k) + d;
+      if (k === 'rooms') { b.disabled = n < 1 || n > Math.max(1, a + c) || n > 9; return; }
+      b.disabled = (k === 'adults' ? n < 1 : n < 0) || (d > 0 && a + c + d > max);
+    });
   };
   const paxClose = (root, focus) => { const pop = $('.pax__pop', root); if (pop.hidden) return; pop.hidden = true; $('.pax__btn', root).setAttribute('aria-expanded', 'false'); if (focus) $('.pax__btn', root).focus(); };
   document.addEventListener('click', e => {
     const open = $$('[data-pax]').filter(r => !$('.pax__pop', r).hidden);
-    const btn = e.target.closest('.pax__btn');
+    const btn = e.target.closest('.pax__btn:not(.when__btn)');
     open.forEach(r => { if (!r.contains(e.target)) paxClose(r); });
     if (btn) { const root = btn.closest('[data-pax]'), pop = $('.pax__pop', root), show = pop.hidden; pop.hidden = !show; btn.setAttribute('aria-expanded', String(show)); if (show) { const r = btn.getBoundingClientRect(); pop.classList.toggle('pax__pop--up', !!btn.closest('.modal') && r.bottom + 270 > window.innerHeight && r.top > 280); paxSync(root); $('[data-pax-step="adults"][data-d="1"]', root).focus(); } return; }
     const step = e.target.closest('[data-pax-step]');
-    if (step && !step.disabled) { const root = step.closest('[data-pax]'), inp = $(`input[name="${step.dataset.paxStep}"]`, root); inp.value = +inp.value + +step.dataset.d; paxSync(root); inp.dispatchEvent(new Event('change', { bubbles: true })); if (DS.motion && DS.motion.pop) DS.motion.pop($(`[data-pax-val="${step.dataset.paxStep}"]`, root)); return; }
+    if (step && !step.disabled) { const root = step.closest('[data-pax]'), inp = $(`input[name="${step.dataset.paxStep}"]`, root); inp.value = +inp.value + +step.dataset.d; const rooms = $('input[name="rooms"]', root); if (rooms) { const ppl = +$('input[name="adults"]', root).value + +$('input[name="children"]', root).value; if (+rooms.value > ppl) rooms.value = Math.max(1, ppl); } paxSync(root); inp.dispatchEvent(new Event('change', { bubbles: true })); if (DS.motion && DS.motion.pop) DS.motion.pop($(`[data-pax-val="${step.dataset.paxStep}"]`, root)); return; }
     const done = e.target.closest('[data-pax-done]'); if (done) paxClose(done.closest('[data-pax]'), true);
   });
   // Escape closes only the open picker (and must not also close a surrounding modal)
   document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; const r = e.target.closest && e.target.closest('[data-pax]'); if (r && !$('.pax__pop', r).hidden) { e.stopPropagation(); paxClose(r, true); } }, true);
 
+  /* ---------- Date picker with modes ----------
+     One control for "when": exact dates (departure + return), a month, or flexible
+     (number of nights, optionally in a month). Each form turns on the modes that make
+     sense for it. Values travel in hidden inputs: when, depart, ret, month, nights, retopen.
+     In a modal it renders inline (no popover inside a popover). */
+  const MODE_LABEL = { dates: 'Exact dates', month: 'Month', flex: 'Flexible' };
+  let whenSeq = 0;
+  DS.whenText = (v = {}, o = {}) => {
+    const when = v.when || (v.depart ? 'dates' : v.month ? 'month' : v.nights ? 'flex' : '');
+    const n = +v.nights || 0;
+    if (when === 'dates' && v.depart) return v.ret ? DS.fmtRange(v.depart, v.ret) : `From ${fmtDate(v.depart)}${o.oneWay ? ' · one way' : ' · return open'}`;
+    if (when === 'month' && v.month) return DS.fmtMonth(v.month);
+    if (when === 'flex' && n) return `${n} night${n === 1 ? '' : 's'} · ${v.month ? DS.fmtMonthShort(v.month) : 'any month'}`;
+    return o.placeholder || 'Dates to confirm';
+  };
+  const monthChips = (list, sel) => list.length ? list.map(m => `<button type="button" class="when__month" data-when-month="${m.value}" aria-pressed="${m.value === sel}"><strong>${DS.fmtMonthShort(m.value)}</strong>${m.count ? `<small>${m.count} departure${m.count === 1 ? '' : 's'}</small>` : ''}</button>`).join('') : '<p class="when__help">No scheduled departures for this choice yet. Pick exact dates or try a custom trip.</p>';
+  const suggestHTML = (s, v) => s && s.items && s.items.length ? `<div class="when__suggest"><span class="when__sub">${esc(s.heading || 'Scheduled departures')}</span><ul>${s.items.map(d => `<li><button type="button" class="when__dep" data-when-pick data-d="${d.depart}" data-r="${d.ret}" aria-pressed="${v.depart === d.depart && v.ret === d.ret}"><strong>${DS.fmtRange(d.depart, d.ret)}</strong><span>${esc(d.title)}</span></button></li>`).join('')}</ul></div>` : (s && s.empty ? `<p class="when__help when__help--muted">${s.empty}</p>` : '');
+  DS.whenPicker = (o = {}) => {
+    const id = o.id || 'when-' + (++whenSeq), modes = o.modes || ['dates'];
+    const v = { ...(o.value || {}) };
+    if (!v.when) v.when = v.depart ? 'dates' : (v.month && modes.includes('month')) ? 'month' : (v.nights && modes.includes('flex')) ? 'flex' : '';
+    const mode = modes.includes(v.when) ? v.when : modes[0];
+    const L = { depart: 'Departure', ret: 'Return', ...(o.labels || {}) };
+    const min = o.min || DS.todayISO(), retOpen = v.retopen === '1' || v.retopen === true;
+    const months = o.months || nextMonths(18).map(value => ({ value }));
+    const nights = +v.nights || o.nights || 4;
+    const panel = (m, inner) => `<div class="when__panel" data-when-panel="${m}" ${m === mode ? '' : 'hidden'}>${inner}</div>`;
+    const text = DS.whenText(v, { placeholder: o.placeholder, oneWay: o.oneWay });
+    const pop = `${modes.length > 1 ? `<div class="seg seg--when" role="radiogroup" aria-label="How do you want to set dates?">${modes.map(m => `<label class="seg__opt"><input type="radio" name="_mode-${id}" value="${m}" data-when-mode ${m === mode ? 'checked' : ''}><span>${MODE_LABEL[m]}</span></label>`).join('')}</div>` : ''}
+      ${modes.includes('dates') ? panel('dates', `<div data-when-suggest>${suggestHTML(o.suggest, v)}</div>
+        <div class="when__dates">
+          <div class="field"><label class="field__label" for="${id}-d">${L.depart}</label><input class="input" type="date" id="${id}-d" data-when-depart min="${min}" ${o.max ? `max="${o.max}"` : ''} value="${esc(v.when === 'dates' ? v.depart || '' : '')}"><span class="field__error" aria-live="polite"></span></div>
+          <div class="field" data-when-retfield ${o.oneWay || retOpen ? 'hidden' : ''}><label class="field__label" for="${id}-r">${L.ret}</label><input class="input" type="date" id="${id}-r" data-when-ret min="${esc(v.depart || min)}" value="${esc(v.when === 'dates' ? v.ret || '' : '')}"><span class="field__error" aria-live="polite"></span></div>
+        </div>
+        ${o.retOptional ? `<label class="checkbox when__open"><input type="checkbox" data-when-retopen ${retOpen ? 'checked' : ''}><span>${esc(o.retOpenLabel || 'Return date not decided yet')}</span></label>` : ''}
+        ${o.datesHelp ? `<p class="when__help">${o.datesHelp}</p>` : ''}`) : ''}
+      ${modes.includes('month') ? panel('month', `<div class="when__months" data-when-months>${monthChips(months, v.when === 'month' ? v.month : '')}</div>${o.monthHelp ? `<p class="when__help">${o.monthHelp}</p>` : ''}`) : ''}
+      ${modes.includes('flex') ? panel('flex', `<div class="counter-row"><div><strong>Trip length</strong><span>Nights away</span></div><div class="counter"><button type="button" class="counter__btn" data-when-step="-1" aria-label="Fewer nights">${DS.icon('minus')}</button><span class="counter__val" data-when-nights aria-live="polite">${nights}</span><button type="button" class="counter__btn" data-when-step="1" aria-label="More nights">${DS.icon('plus')}</button></div></div>
+        <div class="field"><label class="field__label" for="${id}-fm">Around</label><select class="select" id="${id}-fm" data-when-flexmonth>${[`<option value="">Any month</option>`, ...nextMonths(18).map(m => `<option value="${m}" ${v.when === 'flex' && v.month === m ? 'selected' : ''}>${DS.fmtMonth(m)}</option>`)].join('')}</select></div>
+        <p class="when__help">Your consultant suggests the best dates for the trip length.</p>`) : ''}
+      ${o.inline ? '' : `<div class="when__foot"><button type="button" class="btn btn--link btn--sm" data-when-clear>Clear</button><button type="button" class="btn btn--sm btn--dark" data-when-done>Done</button></div>`}`;
+    const hidden = ['when', 'depart', 'ret', 'month', 'nights', 'retopen'].map(k => `<input type="hidden" name="${o.prefix || ''}${k}" data-when-val="${k}" value="${esc(k === 'when' ? (v.when || '') : k === 'retopen' ? (retOpen ? '1' : '') : v[k] || '')}">`).join('');
+    return `<div class="field when ${o.inline ? 'when--inline field--full' : ''}" data-when id="${id}" data-placeholder="${esc(o.placeholder || '')}" ${o.oneWay ? 'data-oneway="1"' : ''} data-flex-nights="${nights}">
+      ${o.inline ? `<span class="field__label">${esc(o.label || 'Travel dates')}</span>` : `<span class="field__label" id="${id}-l">${esc(o.label || 'Travel dates')}</span>
+      <button type="button" class="pax__btn when__btn" id="${id}-b" aria-haspopup="true" aria-expanded="false" aria-controls="${id}-p" aria-labelledby="${id}-l ${id}-b">${DS.icon('calendar')}<span data-when-text>${esc(text)}</span>${DS.icon('chevronDown', 'pax__chev')}</button>`}
+      <div class="when__pop" id="${id}-p" ${o.inline ? '' : 'hidden'}>${pop}</div>
+      ${hidden}<span class="field__error when__error" aria-live="polite"></span></div>`;
+  };
+  const wv = (root, k) => $(`[data-when-val="${k}"]`, root);
+  const whenMode = root => { const r = $('[data-when-mode]:checked', root); return r ? r.value : ($('[data-when-panel]', root) || {}).dataset?.whenPanel || 'dates'; };
+  DS.whenValues = root => Object.fromEntries(['when', 'depart', 'ret', 'month', 'nights', 'retopen'].map(k => [k, wv(root, k).value]));
+  function whenSync(root) {
+    const mode = whenMode(root), set = (k, val) => { wv(root, k).value = val || ''; };
+    ['depart', 'ret', 'month', 'nights', 'retopen'].forEach(k => set(k, ''));
+    if (mode === 'dates') {
+      const d = $('[data-when-depart]', root).value, open = $('[data-when-retopen]', root), oneWay = root.dataset.oneway === '1';
+      const r = (oneWay || (open && open.checked)) ? '' : $('[data-when-ret]', root).value;
+      set('depart', d); set('ret', r); set('retopen', open && open.checked ? '1' : '');
+      set('when', d ? 'dates' : '');
+      if (d && r) set('nights', String(DS.daysBetween(d, r)));
+      $$('[data-when-pick]', root).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.d === d && b.dataset.r === r)));
+    } else if (mode === 'month') {
+      const m = $('[data-when-month][aria-pressed="true"]', root);
+      set('month', m ? m.dataset.whenMonth : ''); set('when', m ? 'month' : '');
+    } else {
+      set('nights', $('[data-when-nights]', root).textContent); set('month', $('[data-when-flexmonth]', root).value); set('when', 'flex');
+    }
+    const t = $('[data-when-text]', root); if (t) t.textContent = DS.whenText(DS.whenValues(root), { placeholder: root.dataset.placeholder, oneWay: root.dataset.oneway === '1' });
+    root.classList.remove('is-invalid');
+    root.dispatchEvent(new CustomEvent('ds:when', { bubbles: true }));
+  }
+  DS.whenSync = whenSync;
+  /* Tours: the destination decides which months and departures are offered */
+  DS.whenSetMonths = (root, list) => { const box = $('[data-when-months]', root); if (!box) return; const cur = wv(root, 'month').value; box.innerHTML = monthChips(list, whenMode(root) === 'month' ? cur : ''); whenSync(root); };
+  DS.whenSetSuggest = (root, s) => { const box = $('[data-when-suggest]', root); if (!box) return; box.innerHTML = suggestHTML(s, DS.whenValues(root)); };
+  DS.whenSetOneWay = (root, on) => { root.dataset.oneway = on ? '1' : ''; const f = $('[data-when-retfield]', root); if (f) f.hidden = on; whenSync(root); };
+  const whenOpen = root => {
+    const pop = $('.when__pop', root), btn = $('.when__btn', root); if (!btn) return;
+    pop.hidden = false; btn.setAttribute('aria-expanded', 'true');
+    pop.classList.remove('when__pop--up', 'when__pop--right');
+    const r = pop.getBoundingClientRect();
+    if (r.right > window.innerWidth - 8) pop.classList.add('when__pop--right');
+    const inModal = !!btn.closest('.modal');
+    if (inModal && r.bottom > window.innerHeight - 8 && btn.getBoundingClientRect().top > r.height + 16) pop.classList.add('when__pop--up');
+    // On the page, bring a popover that opens below the fold into view
+    else if (!inModal && r.bottom > window.innerHeight - 8) window.scrollBy({ top: Math.min(r.bottom - window.innerHeight + 16, btn.getBoundingClientRect().top - 80), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    const first = $('[data-when-mode]:checked', pop) || $('input, button', pop); if (first) first.focus({ preventScroll: true });
+  };
+  const whenClose = (root, focus) => { const pop = $('.when__pop', root), btn = $('.when__btn', root); if (!btn || pop.hidden) return; pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); if (focus) btn.focus(); };
+  DS.whenOpen = whenOpen;
+  /* Validation shared by every form that has a date picker */
+  DS.whenValidate = (root, o = {}) => {
+    const v = DS.whenValues(root), mode = whenMode(root);
+    const err = (sel, msg) => {
+      if (!root.classList.contains('when--inline')) whenOpen(root);
+      const inp = $(sel, root), f = inp ? inp.closest('.field') : root;
+      f.classList.add('is-invalid'); const e = $('.field__error', f); if (e) e.textContent = msg;
+      root.classList.add('is-invalid'); const top = $('.when__error', root); if (top) top.textContent = msg;
+      if (inp) inp.focus(); if (DS.motion && DS.motion.shake) DS.motion.shake(f);
+      return false;
+    };
+    $$('.field.is-invalid', root).forEach(f => f.classList.remove('is-invalid')); const top = $('.when__error', root); if (top) top.textContent = '';
+    if (mode === 'dates') {
+      const d = $('[data-when-depart]', root).value, r = $('[data-when-ret]', root).value;
+      const needRet = o.requireRet && root.dataset.oneway !== '1' && !($('[data-when-retopen]', root) || {}).checked;
+      if (o.requireDepart && !d) return err('[data-when-depart]', o.departMsg || 'Choose a departure date.');
+      if (d && d < DS.todayISO()) return err('[data-when-depart]', 'Choose a date from today onwards.');
+      if (needRet && d && !r) return err('[data-when-ret]', o.retMsg || 'Choose a return date.');
+      if (d && r && r < d && root.dataset.oneway !== '1') return err('[data-when-ret]', `${o.retLabel || 'Return'} date must be after ${o.departLabel || 'departure'}.`);
+    }
+    if (mode === 'month' && o.requireDepart && !v.month) return err('[data-when-month]', 'Choose a month.');
+    return true;
+  };
+  document.addEventListener('click', e => {
+    $$('[data-when]').forEach(r => { if (!r.contains(e.target)) whenClose(r); });
+    const root = e.target.closest('[data-when]'); if (!root) return;
+    if (e.target.closest('.when__btn')) { const pop = $('.when__pop', root); pop.hidden ? (document.querySelectorAll('[data-pax]').forEach(p => paxClose(p)), whenOpen(root)) : whenClose(root); return; }
+    const pick = e.target.closest('[data-when-pick]');
+    if (pick) { $('[data-when-depart]', root).value = pick.dataset.d; const r = $('[data-when-ret]', root); r.min = pick.dataset.d; r.value = pick.dataset.r; const open = $('[data-when-retopen]', root); if (open) { open.checked = false; $('[data-when-retfield]', root).hidden = root.dataset.oneway === '1'; } whenSync(root); whenClose(root, true); return; }
+    const m = e.target.closest('[data-when-month]');
+    if (m) { const on = m.getAttribute('aria-pressed') !== 'true'; $$('[data-when-month]', root).forEach(b => b.setAttribute('aria-pressed', 'false')); m.setAttribute('aria-pressed', String(on)); whenSync(root); if (on) whenClose(root, true); return; }
+    const step = e.target.closest('[data-when-step]');
+    if (step) { const el = $('[data-when-nights]', root), n = Math.min(30, Math.max(1, +el.textContent + +step.dataset.whenStep)); el.textContent = n; $$('[data-when-step]', root).forEach(b => { b.disabled = (+b.dataset.whenStep < 0 && n <= 1) || (+b.dataset.whenStep > 0 && n >= 30); }); whenSync(root); if (DS.motion && DS.motion.pop) DS.motion.pop(el); return; }
+    if (e.target.closest('[data-when-clear]')) {
+      $$('[data-when-depart], [data-when-ret]', root).forEach(i => { i.value = ''; }); const open = $('[data-when-retopen]', root); if (open) open.checked = false;
+      const rf = $('[data-when-retfield]', root); if (rf) rf.hidden = root.dataset.oneway === '1';
+      $$('[data-when-month]', root).forEach(b => b.setAttribute('aria-pressed', 'false'));
+      const fm = $('[data-when-flexmonth]', root); if (fm) fm.value = '';
+      const nn = $('[data-when-nights]', root); if (nn) nn.textContent = root.dataset.flexNights;
+      // "Clear" returns to the first mode so the summary reads as unset
+      const firstMode = $('[data-when-mode]', root); if (firstMode && !firstMode.checked) { firstMode.checked = true; showPanel(root); }
+      whenSync(root); if (whenMode(root) === 'flex') { wv(root, 'when').value = ''; wv(root, 'nights').value = ''; const t = $('[data-when-text]', root); if (t) t.textContent = DS.whenText({}, { placeholder: root.dataset.placeholder }); }
+      return;
+    }
+    if (e.target.closest('[data-when-done]')) { if (DS.whenValidate(root)) whenClose(root, true); }
+  });
+  const showPanel = root => { const mode = whenMode(root); $$('[data-when-panel]', root).forEach(p => { p.hidden = p.dataset.whenPanel !== mode; }); };
+  document.addEventListener('change', e => {
+    const root = e.target.closest && e.target.closest('[data-when]'); if (!root) return;
+    if (e.target.matches('[data-when-mode]')) { showPanel(root); whenSync(root); if (DS.motion && DS.motion.tabIn) DS.motion.tabIn($(`[data-when-panel="${e.target.value}"]`, root)); return; }
+    if (e.target.matches('[data-when-retopen]')) { const f = $('[data-when-retfield]', root); f.hidden = e.target.checked || root.dataset.oneway === '1'; if (e.target.checked) $('[data-when-ret]', root).value = ''; whenSync(root); return; }
+    if (e.target.matches('[data-when-depart]')) {
+      const d = e.target.value, r = $('[data-when-ret]', root);
+      r.min = d || r.min; if (d && r.value && r.value < d) r.value = '';
+      whenSync(root); if (d && !r.value && !$('[data-when-retfield]', root).hidden) r.focus();
+      return;
+    }
+    if (e.target.matches('[data-when-ret], [data-when-flexmonth]')) whenSync(root);
+  });
+  document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; const r = e.target.closest && e.target.closest('[data-when]'); if (r && $('.when__btn', r) && !$('.when__pop', r).hidden) { e.stopPropagation(); whenClose(r, true); } }, true);
+
+  /* ---------- Place search (airports, cities, countries) ----------
+     A combobox: type a 3-letter code, a city or a country and pick from the list.
+     Anything typed that is not on the list is kept as written, because flights, hotels
+     and insurance are quoted worldwide by a consultant. */
+  const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  const cityOf = a => `${a.city.replace(/ \(.*\)$/, '')}, ${a.country}`;
+  DS.airportCity = code => { const a = DS.getAirport(code); return a ? cityOf(a) : ''; };
+  DS.placeText = (source, v) => { if (source === 'airports') { const a = DS.getAirport(v); return a ? `${a.city} (${a.code})` : (v || ''); } return v || ''; };
+  const POPULAR = { airports: ['MNL', 'NRT', 'ICN', 'HKG', 'SIN', 'TPE', 'DXB', 'LAX'], places: ['Tokyo, Japan', 'Seoul, South Korea', 'Hong Kong, Hong Kong SAR', 'Singapore, Singapore', 'Boracay, Philippines', 'El Nido, Philippines'], countries: ['Japan', 'South Korea', 'Schengen area (Europe)', 'United States', 'Singapore', 'Multiple countries'] };
+  DS.searchPlaces = (source, q, limit = 8) => {
+    const n = norm(q);
+    if (source === 'airports') {
+      if (!n) return POPULAR.airports.map(DS.getAirport);
+      return DS.airports.map(a => {
+        const city = norm(a.city), country = norm(a.country), code = a.code.toLowerCase();
+        const score = code === n ? 0 : city.startsWith(n) ? 1 : country.startsWith(n) ? 2 : code.startsWith(n) && n.length < 3 ? 3 : (city.includes(n) || norm(a.name).includes(n)) ? 4 : country.includes(n) ? 5 : 99;
+        return { a, score };
+      }).filter(x => x.score < 99).sort((x, y) => x.score - y.score).slice(0, limit).map(x => x.a);
+    }
+    const list = source === 'countries' ? DS.countries : DS.places;
+    if (!n) return POPULAR[source].map(label => ({ label }));
+    return list.map(p => { const l = norm(p.label); return { p, score: l.startsWith(n) ? 0 : l.includes(', ' + n) ? 1 : l.includes(n) ? 2 : 99 }; }).filter(x => x.score < 99).sort((x, y) => x.score - y.score).slice(0, limit).map(x => x.p);
+  };
+  let comboSeq = 0;
+  DS.placeField = (o = {}) => {
+    const id = o.id || 'combo-' + (++comboSeq);
+    return `<div class="field combo ${o.full ? 'field--full' : ''}" data-combo="${o.source || 'places'}" ${o.required ? 'data-required="1"' : ''}>
+      <label class="field__label" for="${id}">${esc(o.label || 'Destination')}</label>
+      <div class="field__control">${DS.icon(o.icon || 'pin')}<input class="input combo__input" id="${id}" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${id}-list" autocomplete="off" spellcheck="false" placeholder="${esc(o.placeholder || 'Search')}" value="${esc(DS.placeText(o.source, o.value))}">
+      <ul class="combo__list" id="${id}-list" role="listbox" aria-label="${esc(o.label || 'Destination')} suggestions" hidden></ul></div>
+      <input type="hidden" name="${o.name || 'place'}" value="${esc(o.value || '')}">
+      ${o.help ? `<span class="field__help">${o.help}</span>` : ''}<span class="field__error" aria-live="polite"></span></div>`;
+  };
+  const comboParts = root => ({ input: $('.combo__input', root), list: $('.combo__list', root), hidden: $('input[type="hidden"]', root), source: root.dataset.combo });
+  function comboRender(root) {
+    const { input, list, source } = comboParts(root), q = input.value;
+    const res = DS.searchPlaces(source, q);
+    const head = !norm(q) ? `<li class="combo__head" role="presentation">${source === 'airports' ? 'Popular airports' : 'Popular choices'}</li>` : '';
+    list.innerHTML = head + (res.length ? res.map((r, i) => source === 'airports'
+      ? `<li role="option" id="${input.id}-o${i}" class="combo__opt" data-value="${r.code}" data-label="${esc(`${r.city} (${r.code})`)}" aria-selected="false"><span class="combo__code">${r.code}</span><span class="combo__main"><strong>${esc(r.city)}</strong><small>${esc(r.name)} · ${esc(r.country)}</small></span></li>`
+      : `<li role="option" id="${input.id}-o${i}" class="combo__opt" data-value="${esc(r.label)}" data-label="${esc(r.label)}" aria-selected="false">${DS.icon(source === 'countries' ? 'globe' : 'pin')}<span class="combo__main"><strong>${esc(r.label)}</strong></span></li>`).join('')
+      : `<li class="combo__empty" role="presentation">${source === 'airports' ? `No airport matches “${esc(q)}”. Keep it as typed and your consultant will check it.` : `Not on our list: we will use “${esc(q)}” as typed.`}</li>`);
+    list.hidden = false; input.setAttribute('aria-expanded', 'true'); input.removeAttribute('aria-activedescendant');
+  }
+  const comboClose = root => { const { input, list } = comboParts(root); list.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); };
+  function comboPick(root, opt) {
+    const { input, hidden } = comboParts(root);
+    input.value = opt.dataset.label; hidden.value = opt.dataset.value;
+    root.classList.remove('is-invalid'); comboClose(root);
+    hidden.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  DS.comboSet = (root, value) => { const { input, hidden, source } = comboParts(root); hidden.value = value || ''; input.value = DS.placeText(source, value); };
+  // Suggestions open on click, typing or ArrowDown, not on focus alone, so a form that
+  // focuses its first field does not open with a list covering it
+  document.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('.combo__input')) e.target.select(); });
+  document.addEventListener('click', e => { if (e.target.matches && e.target.matches('.combo__input')) { const root = e.target.closest('[data-combo]'); if ($('.combo__list', root).hidden) comboRender(root); } });
+  document.addEventListener('input', e => {
+    if (!e.target.matches || !e.target.matches('.combo__input')) return;
+    const root = e.target.closest('[data-combo]'), { hidden } = comboParts(root);
+    hidden.value = e.target.value.trim(); // free text is allowed until something is picked
+    root.classList.remove('is-invalid'); comboRender(root);
+  });
+  document.addEventListener('focusout', e => {
+    if (!e.target.matches || !e.target.matches('.combo__input')) return;
+    const root = e.target.closest('[data-combo]');
+    setTimeout(() => {
+      if (root.contains(document.activeElement)) return;
+      const { input, hidden, source } = comboParts(root), n = norm(input.value);
+      // A typed code or an exact name counts as picking it
+      if (source === 'airports' && n) { const a = DS.airports.find(x => x.code.toLowerCase() === n) || (DS.airports.filter(x => norm(x.city) === n).length === 1 && DS.airports.find(x => norm(x.city) === n)); if (a) { hidden.value = a.code; input.value = `${a.city} (${a.code})`; } }
+      else if (n) { const list = source === 'countries' ? DS.countries : DS.places; const p = list.find(x => norm(x.label) === n || norm(x.label.split(',')[0]) === n); if (p) { hidden.value = p.label; input.value = p.label; } }
+      comboClose(root);
+    }, 120);
+  });
+  document.addEventListener('mousedown', e => { const opt = e.target.closest('.combo__opt'); if (opt) { e.preventDefault(); comboPick(opt.closest('[data-combo]'), opt); } });
+  document.addEventListener('keydown', e => {
+    if (!e.target.matches || !e.target.matches('.combo__input')) return;
+    const root = e.target.closest('[data-combo]'), { list, input } = comboParts(root), opts = $$('.combo__opt', list);
+    if (e.key === 'Escape' && !list.hidden) { e.preventDefault(); e.stopPropagation(); comboClose(root); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); if (list.hidden) comboRender(root); if (!opts.length) return;
+      const cur = opts.findIndex(o => o.getAttribute('aria-selected') === 'true');
+      const next = e.key === 'ArrowDown' ? (cur + 1) % opts.length : (cur <= 0 ? opts.length - 1 : cur - 1);
+      opts.forEach((o, i) => o.setAttribute('aria-selected', String(i === next)));
+      input.setAttribute('aria-activedescendant', opts[next].id); opts[next].scrollIntoView({ block: 'nearest' });
+      return;
+    }
+    if (e.key === 'Enter' && !list.hidden) { const sel = opts.find(o => o.getAttribute('aria-selected') === 'true') || (opts.length === 1 && norm(input.value) ? opts[0] : null); if (sel) { e.preventDefault(); comboPick(root, sel); } else comboClose(root); }
+    if (e.key === 'Tab' && !list.hidden) { const sel = opts.find(o => o.getAttribute('aria-selected') === 'true'); if (sel) comboPick(root, sel); }
+  }, true);
+  DS.comboError = (root, msg) => { root.classList.add('is-invalid'); const e = $('.field__error', root); if (e) e.textContent = msg; const i = $('.combo__input', root); i.focus(); if (DS.motion && DS.motion.shake) DS.motion.shake(root); };
+
+  /* ---------- Package departures ----------
+     Every scheduled departure shows as a date range (departure + nights). "Another date"
+     opens departure and return fields and turns the booking into a custom trip. */
+  DS.departureList = (p, sel = {}, o = {}) => {
+    const deps = DS.departuresFor(p), name = o.name || 'dep', today = DS.todayISO();
+    const custom = !!sel.custom || (!!sel.date && !deps.some(d => d.date === sel.date)) || !deps.length;
+    const cur = custom ? 'custom' : (sel.date || deps[0].date);
+    const dur = `${p.duration.days} days, ${p.duration.nights} nights`;
+    return `<fieldset class="dep-list" data-dep-list data-nights="${p.duration.nights}" data-valid="${p.validUntil || ''}">
+      <legend class="field__label">${esc(o.legend || 'Departure date')}</legend>
+      <div class="dep-list__opts">
+      ${deps.map(d => `<label class="dep-opt"><input type="radio" name="${name}" value="${d.date}" ${cur === d.date ? 'checked' : ''}><span class="dep-opt__radio" aria-hidden="true"></span><span class="dep-opt__body"><strong>${DS.fmtRange(d.date, d.ret)}</strong><small>${DS.weekday(d.date)} to ${DS.weekday(d.ret)} · ${dur}</small></span><span class="dep-opt__note">${esc(d.note)}</span></label>`).join('')}
+      <label class="dep-opt dep-opt--custom"><input type="radio" name="${name}" value="custom" ${cur === 'custom' ? 'checked' : ''}><span class="dep-opt__radio" aria-hidden="true"></span><span class="dep-opt__body"><strong>Another date</strong><small>Pick your own departure and return</small></span><span class="dep-opt__note dep-opt__note--custom">${DS.icon('sparkles')}Custom trip</span></label>
+      </div>
+      <div class="dep-custom" data-dep-custom ${cur === 'custom' ? '' : 'hidden'}>
+        <div class="dep-custom__fields">
+          <div class="field"><label class="field__label" for="${name}-d">Departure</label><input class="input" type="date" id="${name}-d" data-dep-depart min="${today}" ${p.validUntil ? `max="${p.validUntil}"` : ''} value="${esc(custom ? sel.date || '' : '')}"><span class="field__error" aria-live="polite"></span></div>
+          <div class="field"><label class="field__label" for="${name}-r">Return</label><input class="input" type="date" id="${name}-r" data-dep-ret min="${esc(custom && sel.date ? sel.date : today)}" value="${esc(custom ? sel.ret || '' : '')}"><span class="field__error" aria-live="polite"></span></div>
+        </div>
+        <p class="dep-custom__note">${DS.icon('sparkles')}<span>Your own dates make this a <strong>custom trip</strong>. Your consultant checks flights and hotels for those dates and quotes the price.</span></p>
+      </div>
+      ${p.validUntil ? `<p class="dep-valid">${DS.icon('clock')}<span>Valid for departures until <strong>${fmtDate(p.validUntil)}</strong> (sample)</span></p>` : ''}
+    </fieldset>`;
+  };
+  DS.readDeparture = root => {
+    const r = $('.dep-list__opts input:checked', root);
+    if (!r || r.value === 'custom') return { date: $('[data-dep-depart]', root).value, ret: $('[data-dep-ret]', root).value, custom: true };
+    return { date: r.value, ret: DS.addDays(r.value, +root.dataset.nights), custom: false };
+  };
+  DS.validateDeparture = root => {
+    const v = DS.readDeparture(root); if (!v.custom) return true;
+    $$('.field.is-invalid', root).forEach(f => f.classList.remove('is-invalid'));
+    const fail = (sel, msg) => { const i = $(sel, root), f = i.closest('.field'); f.classList.add('is-invalid'); $('.field__error', f).textContent = msg; i.focus(); if (DS.motion && DS.motion.shake) DS.motion.shake(f); return false; };
+    if (!v.date) return fail('[data-dep-depart]', 'Choose your departure date.');
+    if (v.date < DS.todayISO()) return fail('[data-dep-depart]', 'Choose a date from today onwards.');
+    if (root.dataset.valid && v.date > root.dataset.valid) return fail('[data-dep-depart]', `This package is valid for departures until ${fmtDate(root.dataset.valid)}.`);
+    if (!v.ret) return fail('[data-dep-ret]', 'Choose your return date.');
+    if (v.ret <= v.date) return fail('[data-dep-ret]', 'Return date must be after departure.');
+    return true;
+  };
+  document.addEventListener('change', e => {
+    const root = e.target.closest && e.target.closest('[data-dep-list]'); if (!root) return;
+    if (e.target.matches('.dep-list__opts input')) {
+      const box = $('[data-dep-custom]', root), on = e.target.value === 'custom';
+      box.hidden = !on; if (on) { if (DS.motion && DS.motion.tabIn) DS.motion.tabIn(box); $('[data-dep-depart]', root).focus(); }
+    }
+    if (e.target.matches('[data-dep-depart]')) {
+      // Return defaults to the package length; the traveller can still change it
+      const d = e.target.value, r = $('[data-dep-ret]', root);
+      r.min = d || r.min; if (d && (!r.value || r.value <= d)) r.value = DS.addDays(d, +root.dataset.nights);
+    }
+    root.dispatchEvent(new CustomEvent('ds:dep', { bubbles: true }));
+  });
+
   /* ---------- Search widget (homepage) ----------
-     Trip type comes first; the destination list is rebuilt from it. Tours searches the
-     catalogue; every other service adds a request to the Travel Cart. */
+     Each tab asks only what that service needs. Tours: trip type, then a destination,
+     then dates that follow the destination's departures. Flights, hotels, insurance and
+     corporate travel are worldwide (no trip type). Everything except Tours goes into
+     the Travel Cart (corporate travel stays a proposal request). */
   function initSearchWidget() {
     const w = $('[data-search-widget]'); if (!w) return;
     const tabs = $('.search-tabs', w), panel = $('.search-panel', w);
     const TAB_LABEL = { tours: 'Tours & Packages', visa: 'Visa', flights: 'Flights', hotels: 'Hotels', transport: 'Transport', cruises: 'Cruises', insurance: 'Insurance', corporate: 'Corporate' };
     const KIND = { flights: 'flight', hotels: 'hotel', transport: 'transport', cruises: 'cruise', insurance: 'insurance', visa: 'visa' };
     tabs.innerHTML = DS.services.map((s, i) => `<button type="button" role="tab" class="search-tab" id="stab-${s.id}" aria-selected="${i === 0}" aria-controls="spanel" data-tab="${s.id}" tabindex="${i === 0 ? 0 : -1}">${DS.icon(s.icon)}${esc(TAB_LABEL[s.id] || s.name)}</button>`).join('');
-    const today = new Date().toISOString().slice(0, 10);
-    const st = { type: 'international' };
+    const today = DS.todayISO();
+    const st = { type: 'international', trip: 'return' };
     const C = DS.cartCatalog;
+    const typeHelp = () => { const n = DS.destinations.filter(d => d.type === st.type).length; return st.type === 'domestic' ? `${n} Philippine destinations, no visa needed` : `${n} destinations across Asia, visa help included`; };
     const typeField = () => `<div class="field trip-type" role="radiogroup" aria-labelledby="sw-type-l"><span class="field__label" id="sw-type-l">${DS.icon('compass')}Trip type</span><div class="seg seg--type">
         <label class="seg__opt"><input type="radio" name="type" value="international" ${st.type === 'international' ? 'checked' : ''}><span>${DS.icon('globe')}International</span></label>
         <label class="seg__opt"><input type="radio" name="type" value="domestic" ${st.type === 'domestic' ? 'checked' : ''}><span>${DS.icon('sun')}Domestic</span></label></div><span class="trip-type__help" data-type-help>${typeHelp()}</span></div>`;
-    const typeHelp = () => { const n = DS.destinations.filter(d => d.type === st.type).length; return st.type === 'domestic' ? `${n} Philippine destinations, no visa needed` : `${n} destinations across Asia, visa help included`; };
+    const tripField = () => `<div class="field trip-type" role="radiogroup" aria-labelledby="sw-trip-l"><span class="field__label" id="sw-trip-l">${DS.icon('plane')}Flight</span><div class="seg seg--type">
+        <label class="seg__opt"><input type="radio" name="trip" value="return" ${st.trip === 'return' ? 'checked' : ''}><span>Round trip</span></label>
+        <label class="seg__opt"><input type="radio" name="trip" value="oneway" ${st.trip === 'oneway' ? 'checked' : ''}><span>One way</span></label></div><span class="trip-type__help">Airfare only, to any airport in the world</span></div>`;
     const sel = (id, label, icon, options, name) => `<div class="field"><label class="field__label" for="${id}">${label}</label><div class="field__control">${DS.icon(icon)}<select class="select" id="${id}" name="${name}">${options}</select></div></div>`;
     const date = (id, label, name) => `<div class="field"><label class="field__label" for="${id}">${label}</label><div class="field__control">${DS.icon('calendar')}<input class="input" id="${id}" name="${name}" type="date" min="${today}"></div></div>`;
     const addBtn = `<button type="submit" class="btn btn--primary btn--lg search-form__submit" data-action="cart">${DS.icon('bagPlus')} Add to Travel Cart</button>`;
     const hint = (icon, text) => `<p class="search-form__hint">${DS.icon(icon)}<span>${text}</span></p>`;
-    const destSel = (id, label, other) => sel(id, label, 'pin', DS.destOptions(st.type, '', { other }), 'dest');
+    const alt = (attr, icon, strong, text) => `<button type="button" class="search-form__alt" ${attr}>${DS.icon(icon)}<span><strong>${strong}</strong>${text ? ` ${text}` : ''}</span>${DS.icon('arrowRight', 'arrow')}</button>`;
+
+    /* Tours: months and departures that exist for the chosen trip type and destination */
+    const tourPkgs = dest => DS.packages.filter(p => p.type === st.type && (!dest || p.destinationId === dest));
+    const tourMonths = dest => {
+      const m = {}; tourPkgs(dest).forEach(p => DS.departuresFor(p).forEach(d => { const k = d.date.slice(0, 7); m[k] = (m[k] || 0) + 1; }));
+      return Object.keys(m).sort().map(value => ({ value, count: m[value] }));
+    };
+    const tourSuggest = dest => {
+      const d = DS.getDestination(dest);
+      if (!d) return { empty: 'Choose a destination to see its scheduled departures, or enter any dates.' };
+      const items = tourPkgs(dest).flatMap(p => DS.departuresFor(p).map(x => ({ depart: x.date, ret: x.ret, title: `${p.title.split(':')[0]} · ${p.duration.days}D${p.duration.nights}N` }))).sort((a, b) => a.depart.localeCompare(b.depart));
+      return { heading: `Scheduled departures for ${d.name}`, items };
+    };
     const FORMS = {
-      tours: () => ({ cols: 3, type: true, body: destSel('sw-dest', 'Destination') + sel('sw-month', 'Travel month', 'calendar', DS.monthOptions(), 'month') + DS.paxPicker({ label: 'Travellers' }),
+      tours: () => ({ cols: 3, top: typeField(), body: sel('sw-dest', 'Destination', 'pin', DS.destOptions(st.type, '', { counts: true }), 'dest') +
+          DS.whenPicker({ id: 'sw-when', label: 'Travel dates', modes: ['dates', 'month', 'flex'], months: tourMonths(''), suggest: tourSuggest(''), placeholder: 'Any dates', datesHelp: 'Dates that do not match a scheduled departure are quoted as a custom trip.', monthHelp: 'Months with scheduled departures. Prefer another month? Build a custom trip.' }) +
+          DS.paxPicker({ label: 'Travellers' }),
         cta: `<button type="submit" class="btn btn--primary btn--lg search-form__submit" data-action="search">${DS.icon('search')} Search packages</button>`,
-        hint: hint('sparkles', 'Choose a trip type first: the destination list follows it. Prices are sample data, and some packages are priced on request.') }),
-      visa: () => ({ cols: 3, body: sel('sw-visa', 'Visa for', 'passport', C.visa.map(v => `<option value="${v.id}">${esc(v.name)}</option>`).join(''), 'country') + sel('sw-vmonth', 'Travel month', 'calendar', DS.monthOptions('', 'Not decided yet'), 'month') + DS.paxPicker({ label: 'Applicants', adults: 1, noun: 'applicant' }),
-        cta: addBtn, hint: hint('passport', 'Visa assistance is for international trips. Want to see the documents first? <a href="visa.html">Run the Visa Readiness Checker</a>.') }),
-      flights: () => ({ cols: 4, type: true, body: sel('sw-from', 'From', 'plane', C.origins.map(o => `<option value="${o.id}">${esc(o.name)}</option>`).join(''), 'origin') + destSel('sw-to', 'To', true).replace(/<option value="">[^<]*<\/option>/, '<option value="">Where to?</option>') + date('sw-fdate', 'Departure', 'depart') + DS.paxPicker({ label: 'Passengers', noun: 'passenger' }),
-        cta: addBtn, hint: hint('headset', 'Fares are found and booked by your consultant. Add return dates and cabin class in your cart.') }),
-      hotels: () => ({ cols: 3, type: true, body: destSel('sw-hdest', 'Destination') + date('sw-hin', 'Check-in', 'checkin') + DS.paxPicker({ label: 'Guests', noun: 'guest' }),
-        cta: addBtn, hint: hint('bed', 'Set nights, rooms and hotel class in your cart. Your consultant sends options that match your package.') }),
-      transport: () => ({ cols: 3, type: true, body: destSel('sw-tdest', 'Destination') + date('sw-tdate', 'Date', 'date') + DS.paxPicker({ label: 'Passengers', noun: 'passenger' }),
-        cta: addBtn, hint: hint('car', 'Airport transfer by default. Switch to a day tour or a private van in your cart.') }),
-      cruises: () => ({ cols: 3, body: sel('sw-region', 'Cruise region', 'ship', C.cruiseRegions.map(r => `<option>${esc(r)}</option>`).join(''), 'region') + sel('sw-cmonth', 'Sailing month', 'calendar', DS.monthOptions('', 'Flexible'), 'month') + DS.paxPicker({ label: 'Guests', noun: 'guest' }),
-        cta: addBtn, hint: hint('ship', 'Cruise fares are quoted by your consultant, with pre- and post-cruise plans.') }),
-      insurance: () => ({ cols: 3, type: true, body: destSel('sw-idest', 'Destination') + date('sw-idate', 'Departure', 'depart') + DS.paxPicker({ label: 'Travellers' }),
-        cta: addBtn, hint: hint('shield', 'Cover is explained in plain language before you buy. Choose standard or comprehensive in your cart.') }),
-      corporate: () => ({ cols: 3, type: true, body: destSel('sw-cdest', 'Destination') + sel('sw-codate', 'Travel month', 'calendar', DS.monthOptions('', 'Not decided yet'), 'month') + DS.paxPicker({ label: 'Delegates', noun: 'delegate', adults: 10, max: 60 }),
+        foot: hint('sparkles', 'Pick a destination and the dates follow its departures. Prices are sample data.') + alt('data-custom-trip', 'sparkles', 'Build a custom trip', 'Choose what to include') }),
+      visa: () => ({ cols: 3, body: sel('sw-visa', 'Visa for', 'passport', C.visa.map(v => `<option value="${v.id}">${esc(v.name)}</option>`).join(''), 'country') +
+          DS.whenPicker({ id: 'sw-vwhen', label: 'Travel dates', modes: ['dates', 'month'], retOptional: true, placeholder: 'Not decided yet', datesHelp: 'Not sure yet? Leave the dates empty. Your consultant plans the application around them later.' }) +
+          DS.paxPicker({ label: 'Applicants', adults: 1, noun: 'applicant' }),
+        cta: addBtn, foot: hint('passport', 'Want to see the documents first? <a href="visa.html">Run the Visa Readiness Checker</a>.') }),
+      flights: () => ({ cols: 4, top: tripField(), body: DS.placeField({ id: 'sw-from', name: 'origin', label: 'From', source: 'airports', icon: 'plane', value: 'MNL', placeholder: 'City, airport or code' }) +
+          DS.placeField({ id: 'sw-to', name: 'to', label: 'To', source: 'airports', icon: 'pin', placeholder: 'City, airport or code', required: true }) +
+          DS.whenPicker({ id: 'sw-fwhen', label: 'Dates', modes: ['dates'], oneWay: st.trip === 'oneway', placeholder: 'Add dates' }) +
+          DS.paxPicker({ label: 'Passengers', noun: 'passenger' }),
+        cta: addBtn, foot: hint('headset', 'Type a city, a country or a 3-letter code such as NRT. Your consultant finds and books the fare; choose the cabin in your cart.') }),
+      hotels: () => ({ cols: 3, body: DS.placeField({ id: 'sw-hcity', name: 'city', label: 'Destination', source: 'places', placeholder: 'City or area', required: true }) +
+          DS.whenPicker({ id: 'sw-hwhen', label: 'Check-in – check-out', labels: { depart: 'Check-in', ret: 'Check-out' }, modes: ['dates'], placeholder: 'Add dates' }) +
+          DS.paxPicker({ label: 'Guests and rooms', noun: 'guest', rooms: 1 }),
+        cta: addBtn, foot: hint('bed', 'Hotel class and preferences are set in your cart.') + alt('data-hotels-multi', 'plus', 'Add another city', 'for a multi-city stay') }),
+      transport: () => ({ cols: 3, top: typeField(), body: sel('sw-tdest', 'Destination', 'pin', DS.destOptions(st.type), 'dest') + date('sw-tdate', 'Date', 'date') + DS.paxPicker({ label: 'Passengers', noun: 'passenger' }),
+        cta: addBtn, foot: hint('car', 'Airport transfer by default. Switch to a day tour or a private van in your cart.') }),
+      cruises: () => ({ cols: 3, body: sel('sw-region', 'Cruise region', 'ship', C.cruiseRegions.map(r => `<option>${esc(r)}</option>`).join(''), 'region') +
+          DS.whenPicker({ id: 'sw-cwhen', label: 'Sailing dates', modes: ['month', 'dates', 'flex'], placeholder: 'Flexible', labels: { depart: 'Sail from', ret: 'Back by' } }) + DS.paxPicker({ label: 'Guests', noun: 'guest' }),
+        cta: addBtn, foot: hint('ship', 'Cruise fares are quoted by your consultant, with pre- and post-cruise plans.') }),
+      insurance: () => ({ cols: 3, body: DS.placeField({ id: 'sw-idest', name: 'dest', label: 'Destination', source: 'countries', icon: 'globe', placeholder: 'Country or region' }) +
+          DS.whenPicker({ id: 'sw-iwhen', label: 'Travel dates', modes: ['dates'], placeholder: 'Add dates' }) + DS.paxPicker({ label: 'Travellers' }),
+        cta: addBtn, foot: hint('shield', 'Cover is explained in plain language before you buy. Choose standard or comprehensive in your cart.') }),
+      corporate: () => ({ cols: 3, body: DS.placeField({ id: 'sw-cdest', name: 'dest', label: 'Destination', source: 'places', placeholder: 'City, or several cities' }) +
+          DS.whenPicker({ id: 'sw-cowhen', label: 'Travel dates', modes: ['dates', 'month', 'flex'], placeholder: 'Not decided yet' }) +
+          DS.paxPicker({ label: 'Delegates', noun: 'delegate', adults: 10, max: 60 }),
         cta: `<button type="submit" class="btn btn--dark btn--lg search-form__submit" data-action="enquiry">${DS.icon('briefcase')} Request a proposal</button>`,
-        hint: hint('briefcase', 'Corporate and group travel gets a dedicated consultant and a written proposal.') })
+        foot: hint('briefcase', 'Corporate and group travel gets a dedicated consultant and a written proposal.') })
     };
     let current = 'tours';
     const render = id => {
       current = id;
       const f = FORMS[id]();
-      panel.innerHTML = `<form class="search-form ${f.type ? 'has-type' : ''}" style="--cols:${f.cols}" data-tabform="${id}" novalidate>${f.type ? typeField() : ''}${f.body}${f.cta}${f.hint}</form>`;
-      // Tours lists show how many sample packages each destination has
-      if (id === 'tours') $('#sw-dest', panel).innerHTML = DS.destOptions(st.type, '', { counts: true });
+      panel.innerHTML = `<form class="search-form ${f.top ? 'has-type' : ''}" style="--cols:${f.cols}" data-tabform="${id}" novalidate>${f.top || ''}${f.body}${f.cta}<div class="search-form__foot">${f.foot}</div></form>`;
       panel.id = 'spanel'; panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', 'stab-' + id);
       if (DS.motion && DS.motion.tabIn) DS.motion.tabIn(panel);
     };
     DS.tabs(w); w.addEventListener('ds:tab', e => render(e.detail.tab.dataset.tab));
     render('tours');
-    // Trip type change: rebuild every destination list in the form, keep other values
+    const syncTourDates = form => {
+      const root = $('#sw-when', form); if (!root) return;
+      const dest = $('#sw-dest', form).value;
+      DS.whenSetMonths(root, tourMonths(dest)); DS.whenSetSuggest(root, tourSuggest(dest));
+    };
     w.addEventListener('change', e => {
-      if (e.target.name !== 'type') return;
-      st.type = e.target.value;
-      const form = e.target.form;
-      const help = $('[data-type-help]', form); if (help) help.textContent = typeHelp();
-      $$('select[name="dest"]', form).forEach(s => {
-        const flights = s.id === 'sw-to';
-        s.innerHTML = DS.destOptions(st.type, '', { counts: current === 'tours', other: flights });
-        if (flights) s.options[0].textContent = 'Where to?';
-        if (DS.motion && DS.motion.pop) DS.motion.pop(s.closest('.field__control'));
-      });
+      const form = e.target.form || e.target.closest('form');
+      // Trip type: rebuild the destination list (and, for Tours, the months and departures)
+      if (e.target.name === 'type') {
+        st.type = e.target.value;
+        const help = $('[data-type-help]', form); if (help) help.textContent = typeHelp();
+        $$('select[name="dest"]', form).forEach(s => { s.innerHTML = DS.destOptions(st.type, '', { counts: current === 'tours' }); if (DS.motion && DS.motion.pop) DS.motion.pop(s.closest('.field__control')); });
+        syncTourDates(form);
+      }
+      if (e.target.id === 'sw-dest') syncTourDates(form);
+      if (e.target.name === 'trip') { st.trip = e.target.value; DS.whenSetOneWay($('#sw-fwhen', form), st.trip === 'oneway'); }
+    });
+    // Secondary actions under the form
+    w.addEventListener('click', e => {
+      const form = $('form', panel);
+      if (e.target.closest('[data-custom-trip]')) {
+        const v = { adults: 2, children: 0 };
+        if (form && current === 'tours') { const data = Object.fromEntries(new FormData(form).entries()); const d = DS.getDestination(data.dest); Object.assign(v, data, { where: d ? d.name + (d.country !== d.name ? ', ' + d.country : '') : '' }); }
+        if (DS.cart) DS.cart.openForm('custom', { values: v });
+      }
+      if (e.target.closest('[data-hotels-multi]')) {
+        const data = Object.fromEntries(new FormData(form).entries());
+        if (DS.cart) DS.cart.openHotels({ rows: [{ city: data.city, depart: data.depart, ret: data.ret }, { city: '', depart: data.ret, ret: '' }], adults: +data.adults || 2, children: +data.children || 0, rooms: +data.rooms || 1 });
+      }
     });
     w.addEventListener('submit', e => {
-      e.preventDefault(); const f = e.target; const data = Object.fromEntries(new FormData(f).entries());
+      e.preventDefault(); const f = e.target; const data = Object.fromEntries([...new FormData(f).entries()].filter(([k]) => !k.startsWith('_')));
       const action = (e.submitter && e.submitter.dataset.action) || 'search';
       const adults = +data.adults || 1, children = +data.children || 0;
+      const whenRoot = $('[data-when]', f);
       if (action === 'search') {
-        const q = new URLSearchParams(); if (data.dest) q.set('dest', data.dest); if (data.type) q.set('type', data.type); if (data.month) q.set('month', data.month); q.set('adults', adults); if (children) q.set('children', children);
+        if (whenRoot && !DS.whenValidate(whenRoot)) return;
+        const q = new URLSearchParams(); if (data.dest) q.set('dest', data.dest); if (data.type) q.set('type', data.type);
+        ['when', 'depart', 'ret', 'month', 'nights'].forEach(k => { if (data[k]) q.set(k, data[k]); });
+        q.set('adults', adults); if (children) q.set('children', children);
         location.href = 'explore.html?' + q.toString(); return;
       }
       if (action === 'enquiry') {
-        const d = DS.getDestination(data.dest);
-        DS.routeService('corporate', { destination: d ? d.name : 'Multiple / undecided', travellers: adults + children, message: data.month ? `Planned travel month: ${DS.fmtMonth(data.month)}.` : '' }); return;
+        if (whenRoot && !DS.whenValidate(whenRoot)) return;
+        DS.routeService('corporate', { destination: data.dest ? 'Other' : 'Multiple / undecided', travellers: adults + children, message: [data.dest ? `Destination: ${data.dest}.` : '', data.when ? `Travel dates: ${DS.whenText(data)}.` : ''].filter(Boolean).join(' ') }); return;
       }
       const kind = KIND[current];
-      if (kind === 'flight' && !data.dest) { DS.toast('Choose where you are flying to.', { type: 'error' }); $('#sw-to', f).focus(); return; }
+      if (kind === 'flight') {
+        if (!data.to) { DS.comboError($('#sw-to', f).closest('[data-combo]'), 'Enter where you are flying to.'); return; }
+        if (!DS.whenValidate(whenRoot, { requireDepart: true, requireRet: true })) return;
+      }
+      if (kind === 'hotel') {
+        if (!data.city) { DS.comboError($('#sw-hcity', f).closest('[data-combo]'), 'Enter a city or area.'); return; }
+        if (!DS.whenValidate(whenRoot, { retLabel: 'Check-out', departLabel: 'check-in' })) return;
+      }
+      if (whenRoot && !DS.whenValidate(whenRoot)) return;
       const details = { ...data, adults, children }; delete details.type;
-      if (kind === 'hotel') Object.assign(details, { nights: 3, rooms: 1, stars: 'Any' });
-      if (kind === 'flight') Object.assign(details, { to: data.dest, cabin: 'Economy', ret: '' });
+      if (kind === 'hotel') Object.assign(details, { rooms: +data.rooms || 1, stars: 'Any' });
+      if (kind === 'flight') Object.assign(details, { cabin: 'Economy', trip: st.trip });
       if (kind === 'transport') details.service = 'Airport transfer';
       if (kind === 'cruise') details.cabin = 'Ocean view';
-      if (kind === 'insurance') Object.assign(details, { plan: 'Standard cover', ret: '' });
+      if (kind === 'insurance') details.plan = 'Standard cover';
       if (DS.cart) DS.cart.addAndShow(kind, details);
     });
   }
@@ -513,6 +881,8 @@
     if (feat) { feat.innerHTML = DS.skeletons(3); setTimeout(() => { feat.innerHTML = DS.featuredIds.map(id => DS.renderPackageCard(DS.getPackage(id))).join(''); DS.hydrateImages(feat); refreshSavedBadges(); if (DS.motion && DS.motion.revealNew) DS.motion.revealNew(feat); }, 420); }
     if (stories) stories.innerHTML = DS.stories.map(DS.renderStoryCard).join('');
     if (services) services.innerHTML = DS.services.map(DS.renderServiceCard).join('');
+    const chips = $('[data-custom-chips]');
+    if (chips) chips.innerHTML = DS.cartCatalog.customIncludes.map(x => `<label class="incl-chip"><input type="checkbox" name="incl" value="${x.id}"><span>${DS.icon(x.icon)}${esc(x.label)}</span></label>`).join('');
     initSearchWidget();
   }
 
