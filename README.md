@@ -21,9 +21,9 @@ Then visit `http://localhost:8080/`. Opening the files directly (`file://`) also
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Homepage: campaign hero carousel, tabbed search panel (trip type first, then destination, month and travellers; service tabs add requests to the Travel Cart), destinations, featured packages, why Dreamspree, visa section, services, how it works, travel stories, consultant CTA |
+| `index.html` | Homepage: campaign hero carousel, tabbed search panel (each service asks only what it needs; see below), destinations, featured packages, why Dreamspree, visa section, "Build a custom trip" section, services, how it works, travel stories, consultant CTA |
 | `explore.html` | Package catalogue with destination rail, filters (type, region, budget, duration, travel type), search, sort, result count and empty state |
-| `package.html?id=…` | Single reusable package template populated from the ID in the URL: gallery with lightbox, tabs, itinerary accordion, inclusions, preparation, policy and FAQs, sticky booking panel with traveller counters, sample total (or "Price on request") and Add to Travel Cart |
+| `package.html?id=…` | Single reusable package template populated from the ID in the URL: gallery with lightbox, tabs, itinerary accordion, inclusions, preparation, policy and FAQs, sticky booking panel with departures shown as date ranges, package validity, an "Another date" option that turns the booking into a custom trip, traveller counters, sample total (or "Price on request") and Add to Travel Cart |
 | `visa.html` | Visa Readiness Checker: three-step guided flow producing an illustrative, personalised checklist with progress tracking |
 | `cart.html` | Travel Cart: packages, visa assistance, flights, hotels, transport, cruises and insurance in one list; edit or remove items, see priced and on-request items, then send one quotation request in a three-step checkout (cart → your details → request sent) |
 | `trip-builder.html` | Redirect to `cart.html` for old links |
@@ -64,7 +64,16 @@ Stack: HTML5, CSS3, vanilla JavaScript (ES6+), GSAP 3 and ScrollTrigger from cdn
 - **Icons:** one inline SVG set with a size scale (`--icon-xs` 14px in badges, `--icon-sm` 16px inline, `--icon-md` 20px in buttons and fields, `--icon-lg` 24px in feature tiles, `--icon-xl` 28px in step markers). SVGs never shrink inside flex rows.
 - **Logo and favicon:** the logo is shown as supplied, with square corners and no padding, border, shadow or background. The favicon is a simplified version of the logo emblem (green frame, sun, palm and sea) drawn in the logo's exact colours, with bolder shapes so it stays legible at 16px. It ships as SVG, ICO (16/32/48) and PNG touch and app icons.
 - **Navigation:** the header's Travel Cart button (shopping-bag icon with an item count) opens the mini cart. Package cards carry the same bag icon as their add-to-cart button.
-- **Search panel:** trip type (International or Domestic) is the first row and drives the destination list, so domestic and international destinations never mix. All fields share one height, labels sit on one line, and travellers are chosen in a small adults/children picker instead of a long dropdown.
+- **Search panel:** each tab asks only what that service needs. All fields share one height, labels sit on one line, and travellers are chosen in a small adults/children picker instead of a long dropdown.
+  - *Tours & Packages:* trip type (International or Domestic) first, then a destination, then travel dates. The date picker follows the destination: it lists that destination's scheduled departures as date ranges and only the months that have departures. "Build a custom trip" sits under the form.
+  - *Visa:* visa country, travel dates (exact dates or a month; "Return date not decided yet" hides the return; leaving it empty reads "Not decided yet") and applicants.
+  - *Flights:* round trip or one way, then From and To. Both search any of 150+ airports worldwide by 3-letter code, city or country; anything not on the list is kept as typed for the consultant. No trip type, because it is an airfare-only quotation.
+  - *Hotels:* city or area (worldwide search), check-in and check-out, guests and rooms. "Add another city" opens a multi-city form with one row per city; each row becomes its own hotel item and starts on the previous check-out.
+  - *Insurance and Corporate:* worldwide destination search, departure and return dates. Corporate sends a proposal request.
+  - *Cruises:* region, then a month, exact dates or a flexible length.
+- **Date picker:** one control with up to three modes, switched on per form: *Exact dates* (departure and return), *Month*, and *Flexible* (number of nights, optionally around a month). On the homepage it opens as a popover; inside forms it is shown inline. Searches carry the dates to Explore, where packages that depart on those dates come first and are marked "fits your dates", and on to the package page.
+- **Package departures:** every departure is shown as a range (departure + the package's nights), with weekdays and its seasonal note. "Another date" opens departure and return fields; the return defaults to the package length, departures past `validUntil` are refused, and the booking becomes a *custom trip* priced on request.
+- **Custom trips:** travellers say where (optional), when, and tick what to include (flights, flight reservation for a visa, hotel, airport transfers, city tour, activities, theme parks, island hopping, private car, visa, insurance, meals), plus pace, hotel class, budget and notes. It opens from the Tours tab, the homepage section (ticks carry over), Explore and the Travel Cart, and lands in the cart as its own item.
 - **Cards:** package cards reserve the image's top-left for the duration and category badges and a fixed 44px top-right slot for the add-to-cart button, so they cannot overlap at any width. Destination cards show their tagline, price and package count at all times (no hover-only text), grow with their copy instead of clipping it, and place a scrim directly behind the copy. White text over photography was measured in the rendered pages at 4.5:1 or better.
 - **Grids:** every `fr` column is `minmax(0, …fr)` so long content cannot push a column wider than its share.
 - **Headers:** the homepage keeps an immersive hero; subpages use a compact `page-head` band. Explore shows a destination intro (description, best season, visa status, next step) when a destination is selected.
@@ -74,9 +83,11 @@ Stack: HTML5, CSS3, vanilla JavaScript (ES6+), GSAP 3 and ScrollTrigger from cdn
 
 Everything product-like lives in `js/data.js`:
 
-- `DS.packages` – 13 sample packages across the ten priority destinations. Each uses the same schema (`id`, `title`, `destinationId`, `type`, `category`, `duration`, `priceFrom`, `childRate`, `images`, `summary`, `highlights`, `inclusions`, `exclusions`, `itinerary`, `accommodation`, `preparation`, `cancellation`, `faqs`, `departures`, `visaNote`).
+- `DS.packages` – 13 sample packages across the ten priority destinations. Each uses the same schema (`id`, `title`, `destinationId`, `type`, `category`, `duration`, `priceFrom`, `childRate`, `images`, `summary`, `highlights`, `inclusions`, `exclusions`, `itinerary`, `accommodation`, `preparation`, `cancellation`, `faqs`, `departures`, `visaNote`, `validUntil`, `airport`).
+- `validUntil` is the last date a package can depart. Departures after it are hidden and custom dates cannot go past it. Each departure ends after `duration.nights`, so it is displayed as a date range. `airport` pre-fills flight requests.
 - Prices are optional: set `priceFrom: null` and the package shows "Price on request" on cards, the package page and in the Travel Cart. Price-on-request packages sort last by price and are hidden while a budget limit is set. Three sample packages use this.
-- `DS.cartCatalog` – what can be added to the Travel Cart besides packages: visa countries with optional sample service fees, flight origins, cabin classes, hotel classes, transport services, cruise regions and insurance plans. Leave a `fee` as `null` to make it "Price on request".
+- `DS.cartCatalog` – what can be added to the Travel Cart besides packages: visa countries with optional sample service fees, flight origins, cabin classes, hotel classes, transport services, cruise regions, insurance plans, and the custom-trip options (`customIncludes`, `travelStyles`). Leave a `fee` as `null` to make it "Price on request".
+- `DS.airports` – the worldwide airport list behind the Flights search (code, city, country, airport name), one line per airport. `DS.places` (hotel and corporate cities) and `DS.countries` (insurance) are built from it, plus a few resort areas without their own airport.
 - `DS.destinations` – the ten destinations with visa status, region and best-season notes.
 - `DS.stories` – editorial cards and their full demo copy.
 - `DS.visa.destinations` – illustrative checklists for Japan, South Korea and Schengen; items carry optional `cond` functions that react to the traveller’s answers and a `review` flag for items a consultant should check.
@@ -100,7 +111,7 @@ Slides change every `DS.heroIntervalMs` (7 seconds). Autoplay pauses on hover, o
 ## Content sources
 
 - The About page story, Mission and Vision come from dreamspreetravel.com/about-us. The Mission and Vision statements are reproduced word for word. The story paragraphs are lightly copy-edited for grammar.
-- "More destinations, arranged on request" on Explore and "We also assist with visas for" on the Visa page list the destinations and visa countries named on the live site that have no sample package. Each one opens a pre-filled enquiry.
+- "More destinations, arranged on request" on Explore and "We also assist with visas for" on the Visa page list the destinations and visa countries named on the live site that have no sample package. On Explore each one starts a custom trip for that place; on the Visa page each opens a pre-filled enquiry.
 - The copy does not name or compare against other companies.
 
 ## What is simulated
@@ -113,7 +124,7 @@ Slides change every `DS.heroIntervalMs` (7 seconds). Autoplay pauses on hover, o
 
 ## Accessibility and motion
 
-Semantic landmarks and headings, skip link, keyboard-operable tabs (arrow keys), accordions, counters and modals with focus trapping and focus return, visible focus states, labelled inputs with inline error messages, `aria-live` regions for results and totals. Animations use transform and opacity, respect `prefers-reduced-motion`, and content stays fully visible if GSAP fails to load.
+Semantic landmarks and headings, skip link, keyboard-operable tabs (arrow keys), accordions, counters and modals with focus trapping and focus return, visible focus states, labelled inputs with inline error messages, place search built as an ARIA combobox (arrow keys, Enter, Escape), date and traveller pickers that close with Escape without closing the surrounding dialog, `aria-live` regions for results and totals. Animations use transform and opacity, respect `prefers-reduced-motion`, and content stays fully visible if GSAP fails to load.
 
 ## Security note
 

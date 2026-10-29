@@ -16,8 +16,13 @@
     const categories = [...new Set(DS.packages.map(p => p.category))];
     const state = {
       q: q.get('q') || '', dest: q.get('dest') || '', type: q.get('type') ? [q.get('type')] : [], region: [], budget: MAX, duration: 'any', category: [], sort: q.get('sort') || 'recommended',
-      pax: q.get('pax') || '', date: q.get('date') || '', month: q.get('month') || '', adults: q.get('adults') || '', children: q.get('children') || ''
+      pax: q.get('pax') || '', date: q.get('date') || '', month: q.get('month') || '', adults: q.get('adults') || '', children: q.get('children') || '',
+      when: q.get('when') || '', depart: q.get('depart') || '', ret: q.get('ret') || '', nights: q.get('nights') || ''
     };
+    // Flexible search ("5 nights, any month") pre-sets the duration filter
+    if (state.when === 'flex' && +state.nights) { const days = +state.nights + 1; state.duration = days <= 3 ? 'short' : days <= 5 ? 'mid' : 'long'; }
+    const DATE_KEYS = ['when', 'depart', 'ret', 'month', 'nights'];
+    const hasDates = () => !!(state.depart || state.month);
     // Search sends adults/children; older links send pax
     if (!state.pax && state.adults) state.pax = String(+state.adults + (+state.children || 0));
 
@@ -38,7 +43,7 @@
         <label class="checkbox"><input type="checkbox" name="type" value="international" ${state.type.includes('international') ? 'checked' : ''}><span>International</span></label></div>
       <div class="filter-group"><span class="field__label">Region</span>${regions.map(r => `<label class="checkbox"><input type="checkbox" name="region" value="${esc(r)}"><span>${esc(r)}</span></label>`).join('')}</div>
       <div class="filter-group"><label class="field__label" for="f-budget">Budget per person (up to)</label><input class="range" id="f-budget" type="range" min="10000" max="${MAX}" step="1000" value="${MAX}" aria-valuetext="${fmtPHP(MAX)}"><div class="range-out"><span>₱10,000</span><span data-budget-out>${fmtPHP(MAX)}</span></div></div>
-      <div class="filter-group"><label class="field__label" for="f-dur">Trip duration</label><select class="select" id="f-dur"><option value="any">Any length</option><option value="short">Up to 3 days</option><option value="mid">4 to 5 days</option><option value="long">6 days or more</option></select></div>
+      <div class="filter-group"><label class="field__label" for="f-dur">Trip duration</label><select class="select" id="f-dur">${[['any', 'Any length'], ['short', 'Up to 3 days'], ['mid', '4 to 5 days'], ['long', '6 days or more']].map(([v, l]) => `<option value="${v}" ${state.duration === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="filter-group"><span class="field__label">Travel type</span><div class="cluster" style="gap:6px">${categories.map(c => `<button type="button" class="chip" data-cat="${esc(c)}" aria-pressed="false">${esc(c)}</button>`).join('')}</div></div>
       <p class="small muted" style="margin:0">All packages are sample data for this prototype. Prices are illustrative, per person, in PHP. Packages priced on request are hidden while a budget limit is set.</p>`;
     $('#f-q', filters).addEventListener('input', debounce(e => { state.q = e.target.value.trim(); apply(); }, 180));
@@ -78,9 +83,15 @@
       DS.hydrateImages(intro);
       $('[data-clear-dest]', intro).addEventListener('click', () => { state.dest = ''; syncRail(); apply(); });
     }
-    const when = state.month ? DS.fmtMonth(state.month) : state.date ? fmtDate(state.date) : '';
+    const when = (state.when || state.depart || state.month) ? DS.whenText(state) : state.date ? fmtDate(state.date) : '';
     const who = state.adults ? DS.paxLabel(+state.adults || 1, +state.children || 0) : state.pax ? `${state.pax} traveller${state.pax === '1' ? '' : 's'}` : '';
-    if (who || when) { context.hidden = false; context.innerHTML = `${DS.icon('info')}<span>Showing packages${who ? ` for <strong>${esc(who)}</strong>` : ''}${when ? ` travelling around <strong>${esc(when)}</strong>` : ''}. Open a package to see dates and add it to your Travel Cart with your group.</span>`; }
+    if (who || when) { context.hidden = false; context.innerHTML = `${DS.icon('info')}<span>Showing packages${who ? ` for <strong>${esc(who)}</strong>` : ''}${when ? `, <strong>${esc(when)}</strong>` : ''}. ${hasDates() ? 'Packages that depart on your dates come first. Different dates? Choose “Another date” on a package to make it a custom trip.' : 'Open a package to see its departures and add it to your Travel Cart.'}</span>`; }
+    /* A package "matches" when one of its departures falls in the chosen month, or within 3 days of the chosen departure date */
+    const matchFor = p => {
+      if (!hasDates()) return null;
+      const d = DS.departuresFor(p).find(x => state.depart ? Math.abs(DS.daysBetween(x.date, state.depart)) <= 3 : x.date.startsWith(state.month));
+      return d ? `${DS.fmtRange(d.date, d.ret)} · fits your dates` : null;
+    };
     let first = true;
     function apply() {
       let list = DS.packages.filter(p => {
@@ -98,23 +109,25 @@
       const pv = (p, hi) => DS.hasPrice(p) ? p.priceFrom : (hi ? -1 : Infinity); // priced on request sorts last
       const sorters = { 'price-asc': (a, b) => pv(a) - pv(b), 'price-desc': (a, b) => pv(b, 1) - pv(a, 1), 'dur-asc': (a, b) => a.duration.days - b.duration.days, 'dur-desc': (a, b) => b.duration.days - a.duration.days, recommended: (a, b) => (DS.featuredIds.indexOf(a.id) + 1 || 99) - (DS.featuredIds.indexOf(b.id) + 1 || 99) };
       list.sort(sorters[state.sort] || sorters.recommended);
+      if (hasDates() && state.sort === 'recommended') list.sort((a, b) => (matchFor(b) ? 1 : 0) - (matchFor(a) ? 1 : 0));
       renderIntro();
       count.innerHTML = `<span>${list.length}</span> package${list.length === 1 ? '' : 's'}${list.length !== DS.packages.length ? ` of ${DS.packages.length}` : ''}`;
       renderActive();
       const draw = () => {
         if (!list.length) {
-          results.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty__icon">${DS.icon('search')}</div><h3>No packages match those filters</h3><p>Try widening your budget or duration, or ask a consultant to design a custom itinerary for you.</p><div class="cluster"><button type="button" class="btn btn--primary" data-clear-empty>Clear all filters</button><button type="button" class="btn btn--ghost" data-enquiry data-title="Request a custom itinerary" data-service="tours" data-message="None of the sample packages matched my filters. I am looking for: ">Request a custom trip</button></div></div>`;
+          results.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty__icon">${DS.icon('search')}</div><h3>No packages match those filters</h3><p>Try widening your budget or duration, or ask a consultant to design a custom itinerary for you.</p><div class="cluster"><button type="button" class="btn btn--primary" data-clear-empty>Clear all filters</button><button type="button" class="btn btn--ghost" data-custom-trip>${DS.icon('sparkles')} Build a custom trip</button></div></div>`;
           $('[data-clear-empty]', results).addEventListener('click', clearAll);
         } else {
-          results.innerHTML = list.map(p => DS.renderPackageCard(p)).join('');
-          if (state.pax || state.date || state.month) $$('a[href^="package.html"]', results).forEach(a => { const u = new URL(a.getAttribute('href'), location.href); if (state.adults) { u.searchParams.set('adults', state.adults); if (+state.children) u.searchParams.set('children', state.children); } else if (state.pax) u.searchParams.set('pax', state.pax); if (state.month) u.searchParams.set('month', state.month); else if (state.date) u.searchParams.set('date', state.date); a.setAttribute('href', u.pathname.split('/').pop() + u.search); });
+          results.innerHTML = list.map(p => DS.renderPackageCard(p, { match: matchFor(p) })).join('');
+          // Carry the group and dates into each package page
+          if (state.pax || state.adults || state.date || hasDates()) $$('a[href^="package.html"]', results).forEach(a => { const u = new URL(a.getAttribute('href'), location.href); if (state.adults) { u.searchParams.set('adults', state.adults); if (+state.children) u.searchParams.set('children', state.children); } else if (state.pax) u.searchParams.set('pax', state.pax); DATE_KEYS.forEach(k => { if (state[k]) u.searchParams.set(k, state[k]); }); if (!hasDates() && state.date) u.searchParams.set('date', state.date); a.setAttribute('href', u.pathname.split('/').pop() + u.search); });
         }
         DS.hydrateImages(results); if (DS.cart) DS.cart.refresh();
         if (DS.motion && DS.motion.revealNew) DS.motion.revealNew(results);
       };
       if (first) { first = false; results.innerHTML = DS.skeletons(4); setTimeout(draw, 380); } else draw();
       // Keep the URL shareable
-      const u = new URLSearchParams(); if (state.dest) u.set('dest', state.dest); if (state.type.length === 1) u.set('type', state.type[0]); if (state.q) u.set('q', state.q); if (state.sort !== 'recommended') u.set('sort', state.sort); if (state.adults) { u.set('adults', state.adults); if (+state.children) u.set('children', state.children); } else if (state.pax) u.set('pax', state.pax); if (state.month) u.set('month', state.month); else if (state.date) u.set('date', state.date);
+      const u = new URLSearchParams(); if (state.dest) u.set('dest', state.dest); if (state.type.length === 1) u.set('type', state.type[0]); if (state.q) u.set('q', state.q); if (state.sort !== 'recommended') u.set('sort', state.sort); if (state.adults) { u.set('adults', state.adults); if (+state.children) u.set('children', state.children); } else if (state.pax) u.set('pax', state.pax); DATE_KEYS.forEach(k => { if (state[k]) u.set(k, state[k]); }); if (!hasDates() && state.date) u.set('date', state.date);
       history.replaceState(null, '', location.pathname + (u.toString() ? '?' + u : '') + location.hash);
     }
     function renderActive() {
@@ -149,13 +162,16 @@
     const dest = DS.getDestination(p.destinationId);
     const priced = DS.hasPrice(p);
     const clamp = (v, lo, hi, dflt) => Math.min(hi, Math.max(lo, parseInt(v, 10) || dflt));
-    const sel = { adults: clamp(q.get('adults') || q.get('pax'), 1, 12, 2), children: clamp(q.get('children'), 0, 8, 0), date: p.departures[0].date, custom: '' };
-    const month = q.get('month');
-    if (month) { const m = p.departures.find(x => x.date.startsWith(month)); if (m) sel.date = m.date; else { sel.date = 'custom'; sel.custom = month + '-01'; } }
-    else if (q.get('date')) { sel.date = 'custom'; sel.custom = q.get('date'); }
+    const deps = DS.departuresFor(p);
+    const sel = { adults: clamp(q.get('adults') || q.get('pax'), 1, 12, 2), children: clamp(q.get('children'), 0, 8, 0), date: deps.length ? deps[0].date : '', ret: deps.length ? deps[0].ret : '', custom: !deps.length };
+    /* Dates from the search: a scheduled departure within 3 days is picked; any other
+       exact dates become a custom trip; a month picks that month's departure */
+    const depart = q.get('depart') || q.get('date'), month = q.get('month');
+    if (depart) { const m = deps.find(x => Math.abs(DS.daysBetween(x.date, depart)) <= 3); if (m) Object.assign(sel, { date: m.date, ret: m.ret, custom: false }); else Object.assign(sel, { date: depart, ret: q.get('ret') || DS.addDays(depart, p.duration.nights), custom: true }); }
+    else if (month) { const m = deps.find(x => x.date.startsWith(month)); if (m) Object.assign(sel, { date: m.date, ret: m.ret, custom: false }); }
     // Already in the Travel Cart: start from what the traveller chose last time
     const cartItem = DS.cart && DS.cart.findPackage(p.id);
-    if (cartItem) { const d = cartItem.d || {}; sel.adults = clamp(d.adults, 1, 12, 2); sel.children = clamp(d.children, 0, 8, 0); if (d.date && p.departures.some(x => x.date === d.date)) sel.date = d.date; else if (d.date) { sel.date = 'custom'; sel.custom = d.date; } }
+    if (cartItem) { const d = cartItem.d || {}; sel.adults = clamp(d.adults, 1, 12, 2); sel.children = clamp(d.children, 0, 8, 0); if (d.date) { const m = !d.custom && deps.find(x => x.date === d.date); Object.assign(sel, m ? { date: m.date, ret: m.ret, custom: false } : { date: d.date, ret: d.ret || DS.addDays(d.date, p.duration.nights), custom: true }); } }
 
     /* ----- Header + gallery ----- */
     const visaBadge = p.type === 'domestic' ? `<span class="badge badge--lime">${DS.icon('sun')}No visa needed</span>` : (dest.visa === 'required' ? `<span class="badge badge--info">${DS.icon('passport')}Visa assistance included</span>` : `<span class="badge badge--info">${DS.icon('check')}${dest.visa === 'visa-free' ? 'Visa-free entry' : 'Entry rules checked'}</span>`);
@@ -165,7 +181,7 @@
         <div>
           <div class="cluster" style="gap:6px;margin-bottom:.75rem"><span class="badge badge--ocean">${esc(p.category)}</span><span class="badge">${p.type === 'domestic' ? 'Domestic' : 'International'}</span>${visaBadge}<span class="badge badge--demo">Sample package</span></div>
           <h1 class="display">${esc(p.title)}</h1>
-          <div class="pkg-head__meta"><span>${DS.icon('pin')}${esc(DS.placeLabel(p))}</span><span>${DS.icon('clock')}${p.duration.days} days, ${p.duration.nights} nights</span><span>${DS.icon('users')}${esc(p.groupSize)}</span><span>${DS.icon('calendar')}Next sample departure ${esc(fmtDate(p.departures[0].date))}</span></div>
+          <div class="pkg-head__meta"><span>${DS.icon('pin')}${esc(DS.placeLabel(p))}</span><span>${DS.icon('clock')}${p.duration.days} days, ${p.duration.nights} nights</span><span>${DS.icon('users')}${esc(p.groupSize)}</span><span>${DS.icon('calendar')}${deps.length ? `Next sample departure ${esc(DS.fmtRange(deps[0].date, deps[0].ret))}` : 'Dates on request'}</span>${p.validUntil ? `<span>${DS.icon('history')}Valid until ${esc(fmtDate(p.validUntil))}</span>` : ''}</div>
           ${priced ? `<div class="pkg-head__price"><span class="price">${fmtPHP(p.priceFrom)}</span><small>per person, from · sample price</small></div>` : `<div class="pkg-head__price"><span class="price price--request">Price on request</span><small>quoted by a consultant for your dates and group</small></div>`}
           <div class="cluster" style="gap:5px;margin-top:.5rem">${DS.keyInclusions(p).map(i => `<span class="badge badge--teal">${DS.icon('check')}${esc(i)}</span>`).join('')}</div>
         </div>
@@ -219,43 +235,48 @@
 
     /* ----- Booking panel ----- */
     const panel = $('[data-booking]');
-    const depOpts = p.departures.map(d => `<option value="${d.date}" ${sel.date === d.date ? 'selected' : ''}>${fmtDate(d.date)} · ${esc(d.note)}</option>`).join('') + `<option value="custom" ${sel.date === 'custom' ? 'selected' : ''}>Another date (request)</option>`;
     panel.innerHTML = `
       <div>${priced ? `<div class="booking__price"><span class="price">${fmtPHP(p.priceFrom)}</span><small>per person, from</small></div><span class="badge badge--demo">Illustrative sample price</span>` : `<div class="booking__price"><span class="price price--request">Price on request</span></div><span class="badge">Quoted for your dates and group</span>`}</div>
-      <div class="field"><label class="field__label" for="bk-date">Departure date</label><div class="field__control">${DS.icon('calendar')}<select class="select" id="bk-date">${depOpts}</select></div></div>
-      <div class="field" data-custom-date ${sel.date === 'custom' ? '' : 'hidden'}><label class="field__label" for="bk-custom">Preferred date</label><input class="input" id="bk-custom" type="date" min="${new Date().toISOString().slice(0, 10)}" value="${esc(sel.custom)}"><span class="field__help">Custom dates are quoted by a consultant.</span></div>
+      ${DS.departureList(p, sel, { name: 'bk-dep' })}
       <div>
         <div class="counter-row"><div><strong>Adults</strong><span>12 years and above</span></div><div class="counter"><button type="button" class="counter__btn" data-ctr="adults" data-d="-1" aria-label="Fewer adults">${DS.icon('minus')}</button><span class="counter__val" data-val="adults" aria-live="polite">${sel.adults}</span><button type="button" class="counter__btn" data-ctr="adults" data-d="1" aria-label="More adults">${DS.icon('plus')}</button></div></div>
         <div class="counter-row"><div><strong>Children</strong><span>2 to 11 years${priced ? ` · ${Math.round(p.childRate * 100)}% of adult rate (sample)` : ''}</span></div><div class="counter"><button type="button" class="counter__btn" data-ctr="children" data-d="-1" aria-label="Fewer children">${DS.icon('minus')}</button><span class="counter__val" data-val="children" aria-live="polite">${sel.children}</span><button type="button" class="counter__btn" data-ctr="children" data-d="1" aria-label="More children">${DS.icon('plus')}</button></div></div>
       </div>
-      ${priced ? `<div class="booking__total" aria-live="polite"><div><span data-line-adults></span><span data-sub-adults></span></div><div data-row-children hidden><span data-line-children></span><span data-sub-children></span></div><div class="total"><span>Estimated total</span><span data-total data-value="0">₱0</span></div></div>
-      <p class="booking__note">${DS.icon('info')}<span>Estimate only. Final pricing depends on dates, airfare and room configuration and is confirmed in writing by your consultant. No payment is taken on this prototype.</span></p>` : `<p class="booking__note booking__note--request">${DS.icon('info')}<span>This package is priced on request. Add it to your Travel Cart with your dates and group, and your consultant sends the price in your quotation.</span></p>`}
+      ${priced ? `<div class="booking__total" data-total-box aria-live="polite"><div><span data-line-adults></span><span data-sub-adults></span></div><div data-row-children hidden><span data-line-children></span><span data-sub-children></span></div><div class="total"><span>Estimated total</span><span data-total data-value="0">₱0</span></div></div>
+      <p class="booking__note" data-est-note>${DS.icon('info')}<span>Estimate only. Final pricing depends on dates, airfare and room configuration and is confirmed in writing by your consultant. No payment is taken on this prototype.</span></p>
+      <p class="booking__note booking__note--request" data-custom-note hidden>${DS.icon('sparkles')}<span>Custom trip: the sample price applies to scheduled departures only. Your consultant quotes your dates.</span></p>` : `<p class="booking__note booking__note--request">${DS.icon('info')}<span>This package is priced on request. Add it to your Travel Cart with your dates and group, and your consultant sends the price in your quotation.</span></p>`}
       <button type="button" class="btn btn--primary btn--lg btn--block" data-pkg-add>${DS.icon('bagPlus')} <span data-pkg-add-label>Add to Travel Cart</span></button>
       <p class="booking__incart" data-incart hidden>${DS.icon('bagCheck')}<span>In your Travel Cart. <button type="button" class="btn btn--link btn--sm" data-cart-open>View cart</button></span></p>
       <button type="button" class="btn btn--ghost btn--block" data-request-booking>Request a quotation for this package only</button>
       <button type="button" class="btn btn--link booking__consult" data-enquiry data-service="consult" data-destination="${esc(p.destination)}" data-title="Talk to a consultant about this trip" data-message="I am looking at “${esc(p.title)}” and have a few questions.">${DS.icon('headset')} Talk to a consultant</button>
       <ul class="booking__assure"><li>${DS.icon('check')}No payment until a consultant confirms</li><li>${DS.icon('check')}Add visa, flights or a hotel in your cart</li><li>${DS.icon('check')}One quotation for the whole trip</li></ul>`;
     const limits = { adults: [1, 12], children: [0, 8] };
+    const depList = $('[data-dep-list]', panel);
+    const isCustom = () => DS.readDeparture(depList).custom;
     function calc(animate) {
       $$('[data-ctr]', panel).forEach(b => { const k = b.dataset.ctr, n = sel[k] + +b.dataset.d; b.disabled = n < limits[k][0] || n > limits[k][1]; });
       if (!priced) return 0;
+      // Custom dates have no sample price: show the request note instead of a total
+      const custom = isCustom(), mb = $('[data-mobile-total]');
+      $('[data-total-box]', panel).hidden = custom; $('[data-est-note]', panel).hidden = custom; $('[data-custom-note]', panel).hidden = !custom;
+      if (custom) { if (mb) { mb.textContent = 'Custom trip'; mb.classList.add('price--request'); } return 0; }
+      if (mb) mb.classList.remove('price--request');
       const a = sel.adults * p.priceFrom, c = sel.children * p.priceFrom * p.childRate, total = a + c;
       $('[data-line-adults]', panel).textContent = `${sel.adults} adult${sel.adults > 1 ? 's' : ''} × ${fmtPHP(p.priceFrom)}`; $('[data-sub-adults]', panel).textContent = fmtPHP(a);
       $('[data-row-children]', panel).hidden = !sel.children; $('[data-line-children]', panel).textContent = `${sel.children} child${sel.children > 1 ? 'ren' : ''} × ${fmtPHP(p.priceFrom * p.childRate)}`; $('[data-sub-children]', panel).textContent = fmtPHP(c);
       const t = $('[data-total]', panel); if (animate && DS.motion && DS.motion.countTo) DS.motion.countTo(t, total, fmtPHP); else { t.textContent = fmtPHP(total); t.dataset.value = total; }
-      const mb = $('[data-mobile-total]'); if (mb) mb.textContent = fmtPHP(total);
+      if (mb) mb.textContent = fmtPHP(total);
       return total;
     }
     panel.addEventListener('click', e => { const b = e.target.closest('[data-ctr]'); if (!b || b.disabled) return; sel[b.dataset.ctr] += +b.dataset.d; $(`[data-val="${b.dataset.ctr}"]`, panel).textContent = sel[b.dataset.ctr]; if (DS.motion && DS.motion.pop) DS.motion.pop($(`[data-val="${b.dataset.ctr}"]`, panel)); calc(true); });
-    $('#bk-date', panel).addEventListener('change', e => { sel.date = e.target.value; $('[data-custom-date]', panel).hidden = sel.date !== 'custom'; if (sel.date === 'custom') $('#bk-custom', panel).focus(); });
-    $('#bk-custom', panel).addEventListener('change', e => { sel.custom = e.target.value; });
-    calc(false);
+    panel.addEventListener('ds:dep', () => calc(false));
 
-    const dateLabel = () => sel.date === 'custom' ? (sel.custom ? fmtDate(sel.custom) + ' (custom request)' : 'Flexible / to be confirmed') : fmtDate(sel.date);
+    const dateLabel = () => { const d = DS.readDeparture(depList); return d.date ? `${DS.fmtRange(d.date, d.ret)}${d.custom ? ' (custom trip)' : ''}` : 'Dates to be confirmed'; };
     /* Add to Travel Cart with the chosen date and group (or update it if already there) */
     function addToCart() {
       if (!DS.cart) return;
-      const d = { date: sel.date === 'custom' ? sel.custom : sel.date, adults: sel.adults, children: sel.children };
+      if (!DS.validateDeparture(depList)) { depList.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+      const d = { ...DS.readDeparture(depList), adults: sel.adults, children: sel.children };
       const existing = DS.cart.findPackage(p.id);
       if (existing) { DS.cart.update(existing.uid, d); DS.cart.open(); DS.toast('Travel Cart updated with your dates and group.'); }
       else DS.cart.addAndShow('package', d, p.id);
@@ -269,13 +290,14 @@
     document.addEventListener('click', e => { if (e.target.closest('[data-pkg-add]')) { e.preventDefault(); addToCart(); } });
     document.addEventListener('ds:cart', syncCartState);
     function requestBooking() {
-      const total = calc(false);
-      const summary = `<div><span>Package</span><strong>${esc(p.title)}</strong></div><div><span>Departure</span><strong>${esc(dateLabel())}</strong></div><div><span>Travellers</span><strong>${sel.adults} adult${sel.adults > 1 ? 's' : ''}${sel.children ? `, ${sel.children} child${sel.children > 1 ? 'ren' : ''}` : ''}</strong></div><div class="total"><span>${priced ? 'Estimated total (sample)' : 'Price'}</span><strong>${priced ? fmtPHP(total) : 'On request'}</strong></div>`;
-      DS.openEnquiry({ service: 'booking', destination: p.destination, travellers: sel.adults + sel.children, date: sel.date === 'custom' ? sel.custom : sel.date, summary, title: 'Request a quotation for this package', subtitle: 'A consultant checks availability and confirms the final price. Nothing is charged and no reservation is made on this prototype.', cta: 'Send quotation request', message: `Quotation request for “${p.title}”, departing ${dateLabel()}, ${sel.adults} adult(s)${sel.children ? ` and ${sel.children} child(ren)` : ''}.` });
+      if (!DS.validateDeparture(depList)) return;
+      const total = calc(false), custom = isCustom();
+      const summary = `<div><span>Package</span><strong>${esc(p.title)}</strong></div><div><span>Departure</span><strong>${esc(dateLabel())}</strong></div><div><span>Travellers</span><strong>${sel.adults} adult${sel.adults > 1 ? 's' : ''}${sel.children ? `, ${sel.children} child${sel.children > 1 ? 'ren' : ''}` : ''}</strong></div><div class="total"><span>${priced && !custom ? 'Estimated total (sample)' : 'Price'}</span><strong>${priced && !custom ? fmtPHP(total) : 'On request'}</strong></div>`;
+      DS.openEnquiry({ service: 'booking', destination: p.destination, travellers: sel.adults + sel.children, date: DS.readDeparture(depList).date, summary, title: 'Request a quotation for this package', subtitle: 'A consultant checks availability and confirms the final price. Nothing is charged and no reservation is made on this prototype.', cta: 'Send quotation request', message: `Quotation request for “${p.title}”, departing ${dateLabel()}, ${sel.adults} adult(s)${sel.children ? ` and ${sel.children} child(ren)` : ''}.` });
     }
     $('[data-request-booking]', panel).addEventListener('click', requestBooking);
     const mbar = $('[data-mobile-bar]'); if (mbar) { mbar.innerHTML = `<div><span class="${priced ? 'price' : 'price price--request'}" data-mobile-total>${priced ? fmtPHP(calc(false)) : 'Price on request'}</span><small>${priced ? 'Sample total · ' : ''}<a href="#booking">change dates</a></small></div><button type="button" class="btn btn--primary" data-pkg-add>${DS.icon('bagPlus')} <span data-pkg-add-label>Add to Travel Cart</span></button>`; document.body.classList.add('has-mobile-bar'); }
-    syncCartState();
+    syncCartState(); calc(false);
 
     /* ----- Related ----- */
     const related = DS.packages.filter(x => x.id !== p.id && (x.destinationId === p.destinationId || x.category === p.category || x.type === p.type)).slice(0, 3);

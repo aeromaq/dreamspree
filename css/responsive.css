@@ -203,3 +203,27 @@
   .cart-drawer__body { padding-inline: var(--s-4); }
   .mini-item { margin-inline: calc(-1 * var(--s-4)); padding-inline: var(--s-4); }
 }
+
+/* ---------- Search v3: date picker, place search, departures, custom trips ---------- */
+@media (max-width: 1023px) {
+  .custom-band { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
+}
+@media (max-width: 767px) {
+  /* Fields are full width on phones: the date picker matches the field instead of overhanging */
+  .search-form .when__pop, .search-form .when__pop--right { left: 0; right: 0; width: auto; }
+  .search-form__alt { width: 100%; }
+  .search-form__alt > span { flex: 1; }
+  .hotel-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding-top: 44px; }
+  .hotel-row__n { position: absolute; top: 10px; left: 12px; margin: 0; }
+  .hotel-row .combo, .hotel-row .field:last-of-type { grid-column: 1 / -1; }
+  .hotel-row__rm { position: absolute; top: 4px; right: 4px; margin: 0; }
+  .hotels-form__guests { grid-template-columns: minmax(0, 1fr); }
+  .incl-pick__grid, .custom-band__card .incl-pick__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .incl-chip span { font-size: var(--fs-xs); padding: 9px 10px; }
+  .custom-band__card { padding: var(--s-4); }
+}
+@media (max-width: 400px) {
+  .dep-opt { grid-template-columns: 18px minmax(0, 1fr); }
+  .dep-opt__note { grid-column: 2; text-align: left; max-width: none; }
+  .dep-custom__fields, .when__dates { grid-template-columns: minmax(0, 1fr); }
+}

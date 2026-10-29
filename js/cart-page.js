@@ -7,7 +7,7 @@
   'use strict';
   const { $, $$, esc, fmtPHP, fmtDate, html } = DS;
   const C = DS.cartCatalog;
-  const ORDER = ['package', 'visa', 'flight', 'hotel', 'transport', 'insurance', 'cruise'];
+  const ORDER = ['package', 'custom', 'visa', 'flight', 'hotel', 'transport', 'insurance', 'cruise'];
 
   function init() {
     const root = $('[data-cart-page]'); if (!root || !DS.cart) return;
@@ -84,9 +84,9 @@
       DS.hydrateImages(root);
     }
     function completeTrip(empty) {
-      const kinds = ['visa', 'flight', 'hotel', 'transport', 'insurance', 'cruise'];
+      const kinds = ['custom', 'visa', 'flight', 'hotel', 'transport', 'insurance', 'cruise'];
       return `<section class="complete-trip" aria-labelledby="complete-title"><h2 id="complete-title">${empty ? 'Or start with a service' : 'Complete your trip'}</h2>
-        <div class="complete-trip__grid">${kinds.map(k => { const n = DS.cart.list().filter(i => i.kind === k).length; return `<button type="button" class="add-tile" data-cart-new="${k}"><span class="add-tile__icon">${DS.icon(C.kinds[k].icon)}</span><span class="add-tile__text"><strong>${esc(C.kinds[k].label)}</strong><small>${esc(C.kinds[k].blurb)}</small></span><span class="add-tile__cta">${n ? `${n} added · add another` : 'Add'} ${DS.icon('plus')}</span></button>`; }).join('')}</div></section>`;
+        <div class="complete-trip__grid">${kinds.map(k => { const n = DS.cart.list().filter(i => i.kind === k).length; return `<button type="button" class="add-tile ${k === 'custom' ? 'add-tile--wide' : ''}" data-cart-new="${k}"><span class="add-tile__icon">${DS.icon(C.kinds[k].icon)}</span><span class="add-tile__text"><strong>${esc(C.kinds[k].label)}</strong><small>${esc(C.kinds[k].blurb)}</small></span><span class="add-tile__cta">${n ? `${n} added · add another` : 'Add'} ${DS.icon('plus')}</span></button>`; }).join('')}</div></section>`;
     }
 
     /* ----- Step 2: details ----- */
