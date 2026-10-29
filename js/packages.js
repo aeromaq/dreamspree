@@ -11,13 +11,15 @@
   function initExplore() {
     const root = $('[data-explore]'); if (!root) return;
     const q = DS.params();
-    const MAX = Math.max(...DS.packages.map(p => p.priceFrom));
+    const MAX = Math.max(...DS.packages.filter(DS.hasPrice).map(p => p.priceFrom));
     const regions = [...new Set(DS.destinations.map(d => d.region))];
     const categories = [...new Set(DS.packages.map(p => p.category))];
     const state = {
       q: q.get('q') || '', dest: q.get('dest') || '', type: q.get('type') ? [q.get('type')] : [], region: [], budget: MAX, duration: 'any', category: [], sort: q.get('sort') || 'recommended',
-      pax: q.get('pax') || '', date: q.get('date') || ''
+      pax: q.get('pax') || '', date: q.get('date') || '', month: q.get('month') || '', adults: q.get('adults') || '', children: q.get('children') || ''
     };
+    // Search sends adults/children; older links send pax
+    if (!state.pax && state.adults) state.pax = String(+state.adults + (+state.children || 0));
 
     /* ----- Destination rail ----- */
     const rail = $('[data-dest-rail]');
@@ -38,7 +40,7 @@
       <div class="filter-group"><label class="field__label" for="f-budget">Budget per person (up to)</label><input class="range" id="f-budget" type="range" min="10000" max="${MAX}" step="1000" value="${MAX}" aria-valuetext="${fmtPHP(MAX)}"><div class="range-out"><span>₱10,000</span><span data-budget-out>${fmtPHP(MAX)}</span></div></div>
       <div class="filter-group"><label class="field__label" for="f-dur">Trip duration</label><select class="select" id="f-dur"><option value="any">Any length</option><option value="short">Up to 3 days</option><option value="mid">4 to 5 days</option><option value="long">6 days or more</option></select></div>
       <div class="filter-group"><span class="field__label">Travel type</span><div class="cluster" style="gap:6px">${categories.map(c => `<button type="button" class="chip" data-cat="${esc(c)}" aria-pressed="false">${esc(c)}</button>`).join('')}</div></div>
-      <p class="small muted" style="margin:0">All packages are sample data for this prototype. Prices are illustrative, per person, in PHP.</p>`;
+      <p class="small muted" style="margin:0">All packages are sample data for this prototype. Prices are illustrative, per person, in PHP. Packages priced on request are hidden while a budget limit is set.</p>`;
     $('#f-q', filters).addEventListener('input', debounce(e => { state.q = e.target.value.trim(); apply(); }, 180));
     filters.addEventListener('change', e => {
       const t = e.target; if (t.id === 'f-q') return; // search input is handled on input (debounced)
@@ -76,14 +78,16 @@
       DS.hydrateImages(intro);
       $('[data-clear-dest]', intro).addEventListener('click', () => { state.dest = ''; syncRail(); apply(); });
     }
-    if (state.pax || state.date) { context.hidden = false; context.innerHTML = `${DS.icon('info')}<span>Showing packages${state.pax ? ` for <strong>${esc(state.pax)} traveller${state.pax === '1' ? '' : 's'}</strong>` : ''}${state.date ? ` departing around <strong>${esc(fmtDate(state.date))}</strong>` : ''}. Open a package to see the sample total for your group.</span>`; }
+    const when = state.month ? DS.fmtMonth(state.month) : state.date ? fmtDate(state.date) : '';
+    const who = state.adults ? DS.paxLabel(+state.adults || 1, +state.children || 0) : state.pax ? `${state.pax} traveller${state.pax === '1' ? '' : 's'}` : '';
+    if (who || when) { context.hidden = false; context.innerHTML = `${DS.icon('info')}<span>Showing packages${who ? ` for <strong>${esc(who)}</strong>` : ''}${when ? ` travelling around <strong>${esc(when)}</strong>` : ''}. Open a package to see dates and add it to your Travel Cart with your group.</span>`; }
     let first = true;
     function apply() {
       let list = DS.packages.filter(p => {
         if (state.dest && p.destinationId !== state.dest) return false;
         if (state.type.length && !state.type.includes(p.type)) return false;
         if (state.region.length && !state.region.includes(p.region)) return false;
-        if (p.priceFrom > state.budget) return false;
+        if (state.budget < MAX && (!DS.hasPrice(p) || p.priceFrom > state.budget)) return false;
         if (state.duration === 'short' && p.duration.days > 3) return false;
         if (state.duration === 'mid' && (p.duration.days < 4 || p.duration.days > 5)) return false;
         if (state.duration === 'long' && p.duration.days < 6) return false;
@@ -91,7 +95,8 @@
         if (state.q) { const s = state.q.toLowerCase(); if (![p.title, p.destination, p.country, p.summary, p.category, ...p.highlights].join(' ').toLowerCase().includes(s)) return false; }
         return true;
       });
-      const sorters = { 'price-asc': (a, b) => a.priceFrom - b.priceFrom, 'price-desc': (a, b) => b.priceFrom - a.priceFrom, 'dur-asc': (a, b) => a.duration.days - b.duration.days, 'dur-desc': (a, b) => b.duration.days - a.duration.days, recommended: (a, b) => (DS.featuredIds.indexOf(a.id) + 1 || 99) - (DS.featuredIds.indexOf(b.id) + 1 || 99) };
+      const pv = (p, hi) => DS.hasPrice(p) ? p.priceFrom : (hi ? -1 : Infinity); // priced on request sorts last
+      const sorters = { 'price-asc': (a, b) => pv(a) - pv(b), 'price-desc': (a, b) => pv(b, 1) - pv(a, 1), 'dur-asc': (a, b) => a.duration.days - b.duration.days, 'dur-desc': (a, b) => b.duration.days - a.duration.days, recommended: (a, b) => (DS.featuredIds.indexOf(a.id) + 1 || 99) - (DS.featuredIds.indexOf(b.id) + 1 || 99) };
       list.sort(sorters[state.sort] || sorters.recommended);
       renderIntro();
       count.innerHTML = `<span>${list.length}</span> package${list.length === 1 ? '' : 's'}${list.length !== DS.packages.length ? ` of ${DS.packages.length}` : ''}`;
@@ -102,14 +107,14 @@
           $('[data-clear-empty]', results).addEventListener('click', clearAll);
         } else {
           results.innerHTML = list.map(p => DS.renderPackageCard(p)).join('');
-          if (state.pax || state.date) $$('a[href^="package.html"]', results).forEach(a => { const u = new URL(a.getAttribute('href'), location.href); if (state.pax) u.searchParams.set('pax', state.pax); if (state.date) u.searchParams.set('date', state.date); a.setAttribute('href', u.pathname.split('/').pop() + u.search); });
+          if (state.pax || state.date || state.month) $$('a[href^="package.html"]', results).forEach(a => { const u = new URL(a.getAttribute('href'), location.href); if (state.adults) { u.searchParams.set('adults', state.adults); if (+state.children) u.searchParams.set('children', state.children); } else if (state.pax) u.searchParams.set('pax', state.pax); if (state.month) u.searchParams.set('month', state.month); else if (state.date) u.searchParams.set('date', state.date); a.setAttribute('href', u.pathname.split('/').pop() + u.search); });
         }
-        DS.hydrateImages(results); document.dispatchEvent(new CustomEvent('ds:saved'));
+        DS.hydrateImages(results); if (DS.cart) DS.cart.refresh();
         if (DS.motion && DS.motion.revealNew) DS.motion.revealNew(results);
       };
       if (first) { first = false; results.innerHTML = DS.skeletons(4); setTimeout(draw, 380); } else draw();
       // Keep the URL shareable
-      const u = new URLSearchParams(); if (state.dest) u.set('dest', state.dest); if (state.type.length === 1) u.set('type', state.type[0]); if (state.q) u.set('q', state.q); if (state.sort !== 'recommended') u.set('sort', state.sort); if (state.pax) u.set('pax', state.pax); if (state.date) u.set('date', state.date);
+      const u = new URLSearchParams(); if (state.dest) u.set('dest', state.dest); if (state.type.length === 1) u.set('type', state.type[0]); if (state.q) u.set('q', state.q); if (state.sort !== 'recommended') u.set('sort', state.sort); if (state.adults) { u.set('adults', state.adults); if (+state.children) u.set('children', state.children); } else if (state.pax) u.set('pax', state.pax); if (state.month) u.set('month', state.month); else if (state.date) u.set('date', state.date);
       history.replaceState(null, '', location.pathname + (u.toString() ? '?' + u : '') + location.hash);
     }
     function renderActive() {
@@ -142,8 +147,15 @@
     }
     document.title = `${p.title} · Dreamspree Travel & Tours`;
     const dest = DS.getDestination(p.destinationId);
-    const sel = { adults: Math.min(12, Math.max(1, parseInt(q.get('pax') || '2', 10) || 2)), children: 0, date: p.departures[0].date, custom: '' };
-    if (q.get('date')) { sel.date = 'custom'; sel.custom = q.get('date'); }
+    const priced = DS.hasPrice(p);
+    const clamp = (v, lo, hi, dflt) => Math.min(hi, Math.max(lo, parseInt(v, 10) || dflt));
+    const sel = { adults: clamp(q.get('adults') || q.get('pax'), 1, 12, 2), children: clamp(q.get('children'), 0, 8, 0), date: p.departures[0].date, custom: '' };
+    const month = q.get('month');
+    if (month) { const m = p.departures.find(x => x.date.startsWith(month)); if (m) sel.date = m.date; else { sel.date = 'custom'; sel.custom = month + '-01'; } }
+    else if (q.get('date')) { sel.date = 'custom'; sel.custom = q.get('date'); }
+    // Already in the Travel Cart: start from what the traveller chose last time
+    const cartItem = DS.cart && DS.cart.findPackage(p.id);
+    if (cartItem) { const d = cartItem.d || {}; sel.adults = clamp(d.adults, 1, 12, 2); sel.children = clamp(d.children, 0, 8, 0); if (d.date && p.departures.some(x => x.date === d.date)) sel.date = d.date; else if (d.date) { sel.date = 'custom'; sel.custom = d.date; } }
 
     /* ----- Header + gallery ----- */
     const visaBadge = p.type === 'domestic' ? `<span class="badge badge--lime">${DS.icon('sun')}No visa needed</span>` : (dest.visa === 'required' ? `<span class="badge badge--info">${DS.icon('passport')}Visa assistance included</span>` : `<span class="badge badge--info">${DS.icon('check')}${dest.visa === 'visa-free' ? 'Visa-free entry' : 'Entry rules checked'}</span>`);
@@ -154,10 +166,10 @@
           <div class="cluster" style="gap:6px;margin-bottom:.75rem"><span class="badge badge--ocean">${esc(p.category)}</span><span class="badge">${p.type === 'domestic' ? 'Domestic' : 'International'}</span>${visaBadge}<span class="badge badge--demo">Sample package</span></div>
           <h1 class="display">${esc(p.title)}</h1>
           <div class="pkg-head__meta"><span>${DS.icon('pin')}${esc(DS.placeLabel(p))}</span><span>${DS.icon('clock')}${p.duration.days} days, ${p.duration.nights} nights</span><span>${DS.icon('users')}${esc(p.groupSize)}</span><span>${DS.icon('calendar')}Next sample departure ${esc(fmtDate(p.departures[0].date))}</span></div>
-          <div class="pkg-head__price"><span class="price">${fmtPHP(p.priceFrom)}</span><small>per person, from · sample price</small></div>
+          ${priced ? `<div class="pkg-head__price"><span class="price">${fmtPHP(p.priceFrom)}</span><small>per person, from · sample price</small></div>` : `<div class="pkg-head__price"><span class="price price--request">Price on request</span><small>quoted by a consultant for your dates and group</small></div>`}
           <div class="cluster" style="gap:5px;margin-top:.5rem">${DS.keyInclusions(p).map(i => `<span class="badge badge--teal">${DS.icon('check')}${esc(i)}</span>`).join('')}</div>
         </div>
-        <div class="pkg-head__actions"><button type="button" class="btn btn--ghost" data-share>${DS.icon('share')} Share</button><button type="button" class="btn btn--ghost" data-save="${p.id}" aria-pressed="false">${DS.icon('heart')} <span data-save-label>Save</span></button><a class="btn btn--primary" href="#booking">Request booking ${DS.icon('arrowRight', 'arrow')}</a></div>
+        <div class="pkg-head__actions"><button type="button" class="btn btn--ghost" data-share>${DS.icon('share')} Share</button><button type="button" class="btn btn--ghost" data-pkg-add>${DS.icon('bagPlus')} <span data-pkg-add-label>Add to cart</span></button><a class="btn btn--primary" href="#booking">Choose dates ${DS.icon('arrowRight', 'arrow')}</a></div>
       </div>
       <div class="gallery" aria-label="Photo gallery">${p.images.slice(0, 5).map((im, i) => `<button type="button" class="gallery__item" data-gallery="${i}" aria-label="Open photo ${i + 1} of ${p.images.length}">${DS.picture(im, `${p.destination} photo ${i + 1}`, { w: i === 0 ? 1000 : 600, h: i === 0 ? 760 : 400, label: p.destination, eager: i === 0 })}${i === 4 || (i === p.images.length - 1 && i < 4) ? `<span class="badge badge--glass gallery__more">${DS.icon('image')}${p.images.length} photos</span>` : ''}</button>`).join('')}</div>`;
     $('[data-share]').addEventListener('click', () => DS.share(p.title, location.href));
@@ -209,25 +221,28 @@
     const panel = $('[data-booking]');
     const depOpts = p.departures.map(d => `<option value="${d.date}" ${sel.date === d.date ? 'selected' : ''}>${fmtDate(d.date)} · ${esc(d.note)}</option>`).join('') + `<option value="custom" ${sel.date === 'custom' ? 'selected' : ''}>Another date (request)</option>`;
     panel.innerHTML = `
-      <div><div class="booking__price"><span class="price">${fmtPHP(p.priceFrom)}</span><small>per person, from</small></div><span class="badge badge--demo">Illustrative sample price</span></div>
+      <div>${priced ? `<div class="booking__price"><span class="price">${fmtPHP(p.priceFrom)}</span><small>per person, from</small></div><span class="badge badge--demo">Illustrative sample price</span>` : `<div class="booking__price"><span class="price price--request">Price on request</span></div><span class="badge">Quoted for your dates and group</span>`}</div>
       <div class="field"><label class="field__label" for="bk-date">Departure date</label><div class="field__control">${DS.icon('calendar')}<select class="select" id="bk-date">${depOpts}</select></div></div>
       <div class="field" data-custom-date ${sel.date === 'custom' ? '' : 'hidden'}><label class="field__label" for="bk-custom">Preferred date</label><input class="input" id="bk-custom" type="date" min="${new Date().toISOString().slice(0, 10)}" value="${esc(sel.custom)}"><span class="field__help">Custom dates are quoted by a consultant.</span></div>
       <div>
         <div class="counter-row"><div><strong>Adults</strong><span>12 years and above</span></div><div class="counter"><button type="button" class="counter__btn" data-ctr="adults" data-d="-1" aria-label="Fewer adults">${DS.icon('minus')}</button><span class="counter__val" data-val="adults" aria-live="polite">${sel.adults}</span><button type="button" class="counter__btn" data-ctr="adults" data-d="1" aria-label="More adults">${DS.icon('plus')}</button></div></div>
-        <div class="counter-row"><div><strong>Children</strong><span>2 to 11 years · ${Math.round(p.childRate * 100)}% of adult rate (sample)</span></div><div class="counter"><button type="button" class="counter__btn" data-ctr="children" data-d="-1" aria-label="Fewer children">${DS.icon('minus')}</button><span class="counter__val" data-val="children" aria-live="polite">${sel.children}</span><button type="button" class="counter__btn" data-ctr="children" data-d="1" aria-label="More children">${DS.icon('plus')}</button></div></div>
+        <div class="counter-row"><div><strong>Children</strong><span>2 to 11 years${priced ? ` · ${Math.round(p.childRate * 100)}% of adult rate (sample)` : ''}</span></div><div class="counter"><button type="button" class="counter__btn" data-ctr="children" data-d="-1" aria-label="Fewer children">${DS.icon('minus')}</button><span class="counter__val" data-val="children" aria-live="polite">${sel.children}</span><button type="button" class="counter__btn" data-ctr="children" data-d="1" aria-label="More children">${DS.icon('plus')}</button></div></div>
       </div>
-      <div class="booking__total" aria-live="polite"><div><span data-line-adults></span><span data-sub-adults></span></div><div data-row-children hidden><span data-line-children></span><span data-sub-children></span></div><div class="total"><span>Estimated total</span><span data-total data-value="0">₱0</span></div></div>
-      <p class="booking__note">${DS.icon('info')}<span>Estimate only. Final pricing depends on dates, airfare and room configuration and is confirmed in writing by your consultant. No payment is taken on this prototype.</span></p>
-      <button type="button" class="btn btn--primary btn--lg btn--block" data-request-booking>Request booking ${DS.icon('arrowRight', 'arrow')}</button>
-      <button type="button" class="btn btn--ghost btn--block" data-enquiry data-service="consult" data-destination="${esc(p.destination)}" data-title="Talk to a consultant about this trip" data-message="I am looking at “${esc(p.title)}” and have a few questions.">${DS.icon('headset')} Talk to a consultant</button>
-      <ul class="booking__assure"><li>${DS.icon('check')}No payment until a consultant confirms</li><li>${DS.icon('check')}Inclusions listed before you commit</li><li>${DS.icon('check')}Visa support where required</li></ul>`;
+      ${priced ? `<div class="booking__total" aria-live="polite"><div><span data-line-adults></span><span data-sub-adults></span></div><div data-row-children hidden><span data-line-children></span><span data-sub-children></span></div><div class="total"><span>Estimated total</span><span data-total data-value="0">₱0</span></div></div>
+      <p class="booking__note">${DS.icon('info')}<span>Estimate only. Final pricing depends on dates, airfare and room configuration and is confirmed in writing by your consultant. No payment is taken on this prototype.</span></p>` : `<p class="booking__note booking__note--request">${DS.icon('info')}<span>This package is priced on request. Add it to your Travel Cart with your dates and group, and your consultant sends the price in your quotation.</span></p>`}
+      <button type="button" class="btn btn--primary btn--lg btn--block" data-pkg-add>${DS.icon('bagPlus')} <span data-pkg-add-label>Add to Travel Cart</span></button>
+      <p class="booking__incart" data-incart hidden>${DS.icon('bagCheck')}<span>In your Travel Cart. <button type="button" class="btn btn--link btn--sm" data-cart-open>View cart</button></span></p>
+      <button type="button" class="btn btn--ghost btn--block" data-request-booking>Request a quotation for this package only</button>
+      <button type="button" class="btn btn--link booking__consult" data-enquiry data-service="consult" data-destination="${esc(p.destination)}" data-title="Talk to a consultant about this trip" data-message="I am looking at “${esc(p.title)}” and have a few questions.">${DS.icon('headset')} Talk to a consultant</button>
+      <ul class="booking__assure"><li>${DS.icon('check')}No payment until a consultant confirms</li><li>${DS.icon('check')}Add visa, flights or a hotel in your cart</li><li>${DS.icon('check')}One quotation for the whole trip</li></ul>`;
     const limits = { adults: [1, 12], children: [0, 8] };
     function calc(animate) {
+      $$('[data-ctr]', panel).forEach(b => { const k = b.dataset.ctr, n = sel[k] + +b.dataset.d; b.disabled = n < limits[k][0] || n > limits[k][1]; });
+      if (!priced) return 0;
       const a = sel.adults * p.priceFrom, c = sel.children * p.priceFrom * p.childRate, total = a + c;
       $('[data-line-adults]', panel).textContent = `${sel.adults} adult${sel.adults > 1 ? 's' : ''} × ${fmtPHP(p.priceFrom)}`; $('[data-sub-adults]', panel).textContent = fmtPHP(a);
       $('[data-row-children]', panel).hidden = !sel.children; $('[data-line-children]', panel).textContent = `${sel.children} child${sel.children > 1 ? 'ren' : ''} × ${fmtPHP(p.priceFrom * p.childRate)}`; $('[data-sub-children]', panel).textContent = fmtPHP(c);
       const t = $('[data-total]', panel); if (animate && DS.motion && DS.motion.countTo) DS.motion.countTo(t, total, fmtPHP); else { t.textContent = fmtPHP(total); t.dataset.value = total; }
-      $$('[data-ctr]', panel).forEach(b => { const k = b.dataset.ctr, n = sel[k] + +b.dataset.d; b.disabled = n < limits[k][0] || n > limits[k][1]; });
       const mb = $('[data-mobile-total]'); if (mb) mb.textContent = fmtPHP(total);
       return total;
     }
@@ -237,18 +252,35 @@
     calc(false);
 
     const dateLabel = () => sel.date === 'custom' ? (sel.custom ? fmtDate(sel.custom) + ' (custom request)' : 'Flexible / to be confirmed') : fmtDate(sel.date);
+    /* Add to Travel Cart with the chosen date and group (or update it if already there) */
+    function addToCart() {
+      if (!DS.cart) return;
+      const d = { date: sel.date === 'custom' ? sel.custom : sel.date, adults: sel.adults, children: sel.children };
+      const existing = DS.cart.findPackage(p.id);
+      if (existing) { DS.cart.update(existing.uid, d); DS.cart.open(); DS.toast('Travel Cart updated with your dates and group.'); }
+      else DS.cart.addAndShow('package', d, p.id);
+    }
+    const syncCartState = () => {
+      const on = !!(DS.cart && DS.cart.findPackage(p.id));
+      $$('[data-pkg-add-label]').forEach(l => { l.textContent = on ? (l.closest('.booking, .mobile-bar') ? 'Update Travel Cart' : 'In your cart') : (l.closest('.booking, .mobile-bar') ? 'Add to Travel Cart' : 'Add to cart'); });
+      $$('[data-pkg-add]').forEach(b => { const svg = b.querySelector('svg'); if (svg) svg.outerHTML = DS.icon(on ? 'bagCheck' : 'bagPlus'); });
+      const note = $('[data-incart]', panel); if (note) note.hidden = !on;
+    };
+    document.addEventListener('click', e => { if (e.target.closest('[data-pkg-add]')) { e.preventDefault(); addToCart(); } });
+    document.addEventListener('ds:cart', syncCartState);
     function requestBooking() {
       const total = calc(false);
-      const summary = `<div><span>Package</span><strong>${esc(p.title)}</strong></div><div><span>Departure</span><strong>${esc(dateLabel())}</strong></div><div><span>Travellers</span><strong>${sel.adults} adult${sel.adults > 1 ? 's' : ''}${sel.children ? `, ${sel.children} child${sel.children > 1 ? 'ren' : ''}` : ''}</strong></div><div class="total"><span>Estimated total (sample)</span><strong>${fmtPHP(total)}</strong></div>`;
-      DS.openEnquiry({ service: 'booking', destination: p.destination, travellers: sel.adults + sel.children, date: sel.date === 'custom' ? sel.custom : sel.date, summary, title: 'Request this booking', subtitle: 'A consultant checks availability and confirms the final price. Nothing is charged and no reservation is made on this prototype.', cta: 'Send booking request', message: `Booking request for “${p.title}”, departing ${dateLabel()}, ${sel.adults} adult(s)${sel.children ? ` and ${sel.children} child(ren)` : ''}.` });
+      const summary = `<div><span>Package</span><strong>${esc(p.title)}</strong></div><div><span>Departure</span><strong>${esc(dateLabel())}</strong></div><div><span>Travellers</span><strong>${sel.adults} adult${sel.adults > 1 ? 's' : ''}${sel.children ? `, ${sel.children} child${sel.children > 1 ? 'ren' : ''}` : ''}</strong></div><div class="total"><span>${priced ? 'Estimated total (sample)' : 'Price'}</span><strong>${priced ? fmtPHP(total) : 'On request'}</strong></div>`;
+      DS.openEnquiry({ service: 'booking', destination: p.destination, travellers: sel.adults + sel.children, date: sel.date === 'custom' ? sel.custom : sel.date, summary, title: 'Request a quotation for this package', subtitle: 'A consultant checks availability and confirms the final price. Nothing is charged and no reservation is made on this prototype.', cta: 'Send quotation request', message: `Quotation request for “${p.title}”, departing ${dateLabel()}, ${sel.adults} adult(s)${sel.children ? ` and ${sel.children} child(ren)` : ''}.` });
     }
     $('[data-request-booking]', panel).addEventListener('click', requestBooking);
-    const mbar = $('[data-mobile-bar]'); if (mbar) { mbar.innerHTML = `<div><span class="price" data-mobile-total>${fmtPHP(calc(false))}</span><small>Sample total · <a href="#booking">change dates</a></small></div><button type="button" class="btn btn--primary" data-mobile-request>Request booking</button>`; $('[data-mobile-request]', mbar).addEventListener('click', requestBooking); document.body.classList.add('has-mobile-bar'); }
+    const mbar = $('[data-mobile-bar]'); if (mbar) { mbar.innerHTML = `<div><span class="${priced ? 'price' : 'price price--request'}" data-mobile-total>${priced ? fmtPHP(calc(false)) : 'Price on request'}</span><small>${priced ? 'Sample total · ' : ''}<a href="#booking">change dates</a></small></div><button type="button" class="btn btn--primary" data-pkg-add>${DS.icon('bagPlus')} <span data-pkg-add-label>Add to Travel Cart</span></button>`; document.body.classList.add('has-mobile-bar'); }
+    syncCartState();
 
     /* ----- Related ----- */
     const related = DS.packages.filter(x => x.id !== p.id && (x.destinationId === p.destinationId || x.category === p.category || x.type === p.type)).slice(0, 3);
     $('[data-related]').innerHTML = related.map(x => DS.renderPackageCard(x)).join('');
-    DS.hydrateImages(root); document.dispatchEvent(new CustomEvent('ds:saved'));
+    DS.hydrateImages(root); if (DS.cart) DS.cart.refresh();
     if (location.hash === '#booking') setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
   }
 

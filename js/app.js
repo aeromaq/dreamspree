@@ -66,7 +66,11 @@
     filter: '<path d="M3 6h18M7 12h10M10 18h4"/>',
     history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
     userCheck: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/>',
-    wallet: '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>'
+    wallet: '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>',
+    bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>',
+    bagPlus: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M12 10v6M9 13h6"/>',
+    bagCheck: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="m9 14 2 2 4-4"/>',
+    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'
   };
   DS.icon = (name, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${P[name] || P.info}</svg>`;
 
@@ -85,41 +89,10 @@
   document.addEventListener('error', e => { if (e.target.tagName === 'IMG' && e.target.dataset.fallback !== undefined) imgFailed(e.target); }, true);
   DS.hydrateImages = (root = document) => $$('img.is-loading', root).forEach(img => { if (img.complete) { img.naturalWidth ? imgLoaded(img) : (img.dataset.fallback !== undefined && imgFailed(img)); } });
 
-  /* ---------- Saved-trip store (localStorage, non-sensitive) ---------- */
-  const KEY = 'dreamspree.saved.v1';
-  const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
-  const write = list => { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch { /* storage unavailable: keep in memory only */ } document.dispatchEvent(new CustomEvent('ds:saved')); };
-  DS.saved = {
-    list: () => read().filter(s => DS.getPackage(s.id)),
-    has: id => read().some(s => s.id === id),
-    add(id, opts = {}) { const list = read(); if (!list.some(s => s.id === id)) { list.push({ id, adults: opts.adults || 2, children: opts.children || 0, date: opts.date || '' , savedAt: Date.now() }); write(list); return true; } return false; },
-    update(id, patch) { write(read().map(s => s.id === id ? { ...s, ...patch } : s)); },
-    remove(id) { write(read().filter(s => s.id !== id)); },
-    clear() { write([]); },
-    toggle(id, opts) { if (DS.saved.has(id)) { DS.saved.remove(id); return false; } DS.saved.add(id, opts); return true; }
-  };
-  function refreshSavedBadges() {
-    const n = DS.saved.list().length;
-    $$('[data-saved-count]').forEach(el => { el.textContent = n; el.dataset.count = n; });
-    $$('[data-save]').forEach(btn => {
-      const on = DS.saved.has(btn.dataset.save);
-      btn.classList.toggle('is-active', on); btn.setAttribute('aria-pressed', on);
-      const name = (DS.getPackage(btn.dataset.save) || {}).title || 'package';
-      btn.setAttribute('aria-label', on ? `Remove ${name} from Trip Builder` : `Save ${name} to Trip Builder`);
-      btn.title = on ? 'Saved to Trip Builder' : 'Save to Trip Builder';
-      const label = btn.querySelector('[data-save-label]'); if (label) label.textContent = on ? 'Saved' : 'Save';
-    });
-  }
-  document.addEventListener('ds:saved', refreshSavedBadges);
-  document.addEventListener('click', e => {
-    const btn = e.target.closest('[data-save]'); if (!btn) return;
-    e.preventDefault(); e.stopPropagation();
-    const id = btn.dataset.save; const pkg = DS.getPackage(id); if (!pkg) return;
-    const on = DS.saved.toggle(id);
-    if (on) DS.toast(`${pkg.title} saved to your Trip Builder.`, { action: { label: 'View', href: 'trip-builder.html' } });
-    else DS.toast('Removed from your Trip Builder.');
-    if (DS.motion && DS.motion.pop) DS.motion.pop(btn);
-  });
+  /* ---------- Travel Cart hooks ----------
+     The cart store, header badge, mini-cart and add-to-cart handling live in cart.js,
+     which loads after this file. Renderers below only emit [data-cart-add] buttons. */
+  function refreshSavedBadges() { if (DS.cart) DS.cart.refresh(); }
 
   /* ---------- Toasts ---------- */
   let toastRoot;
@@ -211,7 +184,7 @@
   document.addEventListener('input', e => { const f = e.target.closest('.field.is-invalid'); if (f) { f.classList.remove('is-invalid'); e.target.removeAttribute('aria-invalid'); } });
 
   /* ---------- Enquiry modal (shared from every page) ---------- */
-  const SERVICE_LABELS = { tours: 'Tours & Packages', visa: 'Visa Assistance', flights: 'Flights', hotels: 'Hotels', transport: 'Private Transportation', cruises: 'Cruises', insurance: 'Travel Insurance', corporate: 'Corporate Travel', consult: 'Talk to a Consultant', booking: 'Package Booking Request', quote: 'Trip Builder Quotation' };
+  const SERVICE_LABELS = { tours: 'Tours & Packages', visa: 'Visa Assistance', flights: 'Flights', hotels: 'Hotels', transport: 'Private Transportation', cruises: 'Cruises', insurance: 'Travel Insurance', corporate: 'Corporate Travel', consult: 'Talk to a Consultant', booking: 'Package Booking Request', quote: 'Travel Cart Quotation' };
   DS.openEnquiry = (pre = {}) => {
     const serviceOpts = Object.entries(SERVICE_LABELS).map(([k, v]) => `<option value="${k}" ${pre.service === k ? 'selected' : ''}>${v}</option>`).join('');
     const destOpts = ['<option value="">Select a destination</option>', ...DS.destinations.map(d => `<option value="${d.name}" ${pre.destination === d.name ? 'selected' : ''}>${d.name}</option>`), `<option value="Multiple / undecided" ${pre.destination === 'Multiple / undecided' ? 'selected' : ''}>Multiple / undecided</option>`, `<option value="Other" ${pre.destination === 'Other' ? 'selected' : ''}>Other</option>`].join('');
@@ -309,14 +282,14 @@
   /* "Japan, Japan" reads badly: show the country once when destination and country match */
   DS.placeLabel = p => (p.destination === p.country || p.country.startsWith(p.destination)) ? p.country : `${p.destination}, ${p.country}`;
   DS.renderDestinationCard = (d, opts = {}) => {
-    const pkgs = DS.packagesFor(d.id), from = Math.min(...pkgs.map(p => p.priceFrom));
+    const pkgs = DS.packagesFor(d.id), priced = pkgs.filter(DS.hasPrice), from = priced.length ? Math.min(...priced.map(p => p.priceFrom)) : 0;
     return `<a class="dest-card ${opts.wide ? 'dest-card--wide' : ''}" href="explore.html?dest=${d.id}">
       <div class="dest-card__media">${DS.picture(d.image, '', { w: 600, h: 750, label: d.name })}</div>
       <div class="dest-card__top">${DS.badgeForVisa(d.visa)}</div>
       <div class="dest-card__body">
         <h3 class="dest-card__name">${esc(d.name)}</h3>
         <p class="dest-card__tag">${esc(d.tagline)}</p>
-        <div class="dest-card__meta"><span>From <strong>${fmtPHP(from)}</strong> · ${pkgs.length} package${pkgs.length === 1 ? '' : 's'}</span><span class="dest-card__arrow" aria-hidden="true">${DS.icon('arrowUpRight')}</span></div>
+        <div class="dest-card__meta"><span>${from ? `From <strong>${fmtPHP(from)}</strong>` : 'Price on request'} · ${pkgs.length} package${pkgs.length === 1 ? '' : 's'}</span><span class="dest-card__arrow" aria-hidden="true">${DS.icon('arrowUpRight')}</span></div>
       </div></a>`;
   };
   /* Short inclusion tags for cards (derived from the full inclusion list) */
@@ -331,19 +304,23 @@
     if (has(/insurance/i) && tags.length < 3) tags.push('Insurance');
     return tags.slice(0, 3);
   };
+  /* Optional pricing: packages without priceFrom read "Price on request" everywhere */
+  DS.priceBlock = p => DS.hasPrice(p)
+    ? `<div class="pkg-card__price"><small>From, per person</small><span class="price">${fmtPHP(p.priceFrom)} <em>sample</em></span></div>`
+    : `<div class="pkg-card__price"><small>Quoted by a consultant</small><span class="price price--request">Price on request</span></div>`;
   DS.renderPackageCard = (p, opts = {}) => {
     const incl = DS.keyInclusions(p).map(i => `<span class="badge">${esc(i)}</span>`).join('');
     const next = p.departures[0];
     return `<article class="card pkg-card ${opts.row ? 'pkg-card--row' : ''}" data-pkg="${p.id}">
       <div class="card__media"><a href="package.html?id=${p.id}" tabindex="-1" aria-hidden="true">${DS.picture(p.images[0], '', { w: 640, h: 480, label: p.destination })}</a>
         <div class="card__tags"><span class="badge badge--glass">${DS.icon('clock')}${p.duration.days} days · ${p.duration.nights} nights</span><span class="badge badge--glass">${esc(p.category)}</span></div>
-        <button type="button" class="icon-btn card__save" data-save="${p.id}" aria-pressed="false" aria-label="Save ${esc(p.title)} to Trip Builder">${DS.icon('heart')}</button></div>
+        <button type="button" class="icon-btn card__save" data-cart-add="package" data-ref="${p.id}" aria-pressed="false" aria-label="Add ${esc(p.title)} to Travel Cart">${DS.icon('bagPlus')}</button></div>
       <div class="pkg-card__body">
         <div class="pkg-card__loc">${DS.icon('pin')}${esc(DS.placeLabel(p))}</div>
         <h3 class="pkg-card__title"><a href="package.html?id=${p.id}">${esc(p.title)}</a></h3>
         <div class="pkg-card__meta"><span>${DS.icon('calendar')}Next: ${esc(fmtDate(next.date))}</span><span>${p.departures.length} sample dates</span></div>
         <div class="pkg-card__incl">${incl}</div>
-        <div class="pkg-card__foot"><div class="pkg-card__price"><small>From, per person</small><span class="price">${fmtPHP(p.priceFrom)} <em>sample</em></span></div><a class="btn btn--sm btn--primary" href="package.html?id=${p.id}">View details ${DS.icon('arrowRight', 'arrow')}</a></div>
+        <div class="pkg-card__foot">${DS.priceBlock(p)}<a class="btn btn--sm btn--primary" href="package.html?id=${p.id}">View details ${DS.icon('arrowRight', 'arrow')}</a></div>
       </div></article>`;
   };
   DS.renderStoryCard = s => `<button type="button" class="card story-card" data-story="${s.id}" aria-haspopup="dialog">
@@ -359,6 +336,9 @@
     const s = DS.services.find(x => x.id === id); if (!s) return;
     if (s.flow === 'packages') { location.href = 'explore.html' + (extra.query ? '?' + extra.query : ''); return; }
     if (s.flow === 'visa') { location.href = 'visa.html' + (extra.dest ? '?dest=' + extra.dest : ''); return; }
+    // Bookable services become Travel Cart requests; corporate travel stays a proposal enquiry
+    const kind = { flights: 'flight', hotels: 'hotel', transport: 'transport', cruises: 'cruise', insurance: 'insurance' }[id];
+    if (kind && DS.cart && !extra.destination) { DS.cart.openForm(kind, { values: { adults: 2, children: 0 } }); return; }
     DS.openEnquiry({ service: id, title: `${s.name} enquiry`, subtitle: `${s.blurb} A consultant prepares options and sends a quotation.`, ...extra });
   };
   // Only explicit service-card buttons route. (Previously this matched any [data-service] ancestor,
@@ -373,66 +353,155 @@
   };
   document.addEventListener('click', e => { const c = e.target.closest('[data-story]'); if (c) DS.openStory(c.dataset.story); });
 
-  /* ---------- Search widget (homepage) ---------- */
+  /* ---------- Shared form pieces: month list, destination list, traveller picker ---------- */
+  /* Next 12 months as YYYY-MM values (readable labels instead of a raw date field) */
+  DS.monthOptions = (sel = '', anyLabel = 'Any month') => {
+    const now = new Date(); const out = [`<option value="">${esc(anyLabel)}</option>`];
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const v = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      out.push(`<option value="${v}" ${sel === v ? 'selected' : ''}>${d.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}</option>`);
+    }
+    return out.join('');
+  };
+  DS.fmtMonth = v => { if (!/^\d{4}-\d{2}$/.test(v || '')) return v || ''; const [y, m] = v.split('-'); return new Date(+y, +m - 1, 1).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' }); };
+  /* Destinations for one trip type, grouped by region. Trip type comes first in every
+     form, so the list never mixes Boracay with Japan. */
+  DS.destOptions = (type, sel = '', opts = {}) => {
+    const list = DS.destinations.filter(d => !type || d.type === type);
+    const regions = [...new Set(list.map(d => d.region))];
+    const any = opts.anyLabel !== undefined ? opts.anyLabel : 'Any destination';
+    const count = d => { const n = DS.packagesFor(d.id).length; return opts.counts ? ` (${n} package${n === 1 ? '' : 's'})` : ''; };
+    return (any ? `<option value="">${esc(any)}</option>` : '') +
+      regions.map(r => `<optgroup label="${esc(r)}">${list.filter(d => d.region === r).map(d => `<option value="${d.id}" ${sel === d.id ? 'selected' : ''}>${esc(d.name)}${count(d)}</option>`).join('')}</optgroup>`).join('') +
+      (opts.other ? `<option value="other" ${sel === 'other' ? 'selected' : ''}>Somewhere else</option>` : '');
+  };
+  DS.paxLabel = (a, c, noun = 'traveller') => {
+    if (noun !== 'traveller') { const n = a + c; return `${n} ${noun}${n === 1 ? '' : 's'}`; }
+    return `${a} adult${a === 1 ? '' : 's'}${c ? `, ${c} child${c === 1 ? '' : 'ren'}` : ''}`;
+  };
+  /* Traveller picker: a button that opens a small panel with adult/child counters.
+     Values travel in hidden inputs named adults/children so FormData just works. */
+  let paxSeq = 0;
+  DS.paxPicker = (o = {}) => {
+    const id = 'pax-' + (++paxSeq), a = o.adults ?? 2, c = o.children ?? 0, max = o.max || 12;
+    return `<div class="field pax" data-pax data-max="${max}" data-noun="${esc(o.noun || 'traveller')}">
+      <span class="field__label" id="${id}-l">${esc(o.label || 'Travellers')}</span>
+      <button type="button" class="pax__btn" id="${id}-b" aria-haspopup="true" aria-expanded="false" aria-controls="${id}-p" aria-labelledby="${id}-l ${id}-b">${DS.icon('users')}<span data-pax-text>${esc(DS.paxLabel(a, c, o.noun))}</span>${DS.icon('chevronDown', 'pax__chev')}</button>
+      <div class="pax__pop" id="${id}-p" hidden>
+        <div class="counter-row"><div><strong>Adults</strong><span>12 years and above</span></div><div class="counter"><button type="button" class="counter__btn" data-pax-step="adults" data-d="-1" aria-label="Fewer adults">${DS.icon('minus')}</button><span class="counter__val" data-pax-val="adults" aria-live="polite">${a}</span><button type="button" class="counter__btn" data-pax-step="adults" data-d="1" aria-label="More adults">${DS.icon('plus')}</button></div></div>
+        <div class="counter-row"><div><strong>Children</strong><span>2 to 11 years</span></div><div class="counter"><button type="button" class="counter__btn" data-pax-step="children" data-d="-1" aria-label="Fewer children">${DS.icon('minus')}</button><span class="counter__val" data-pax-val="children" aria-live="polite">${c}</span><button type="button" class="counter__btn" data-pax-step="children" data-d="1" aria-label="More children">${DS.icon('plus')}</button></div></div>
+        <button type="button" class="btn btn--sm btn--dark btn--block" data-pax-done>Done</button>
+      </div>
+      <input type="hidden" name="adults" value="${a}"><input type="hidden" name="children" value="${c}">
+    </div>`;
+  };
+  const paxSync = root => {
+    const a = +$('input[name="adults"]', root).value, c = +$('input[name="children"]', root).value, max = +root.dataset.max;
+    $('[data-pax-val="adults"]', root).textContent = a; $('[data-pax-val="children"]', root).textContent = c;
+    $('[data-pax-text]', root).textContent = DS.paxLabel(a, c, root.dataset.noun);
+    $$('[data-pax-step]', root).forEach(b => { const k = b.dataset.paxStep, n = (k === 'adults' ? a : c) + +b.dataset.d; b.disabled = (k === 'adults' ? n < 1 : n < 0) || a + c + +b.dataset.d > max && +b.dataset.d > 0; });
+  };
+  const paxClose = (root, focus) => { const pop = $('.pax__pop', root); if (pop.hidden) return; pop.hidden = true; $('.pax__btn', root).setAttribute('aria-expanded', 'false'); if (focus) $('.pax__btn', root).focus(); };
+  document.addEventListener('click', e => {
+    const open = $$('[data-pax]').filter(r => !$('.pax__pop', r).hidden);
+    const btn = e.target.closest('.pax__btn');
+    open.forEach(r => { if (!r.contains(e.target)) paxClose(r); });
+    if (btn) { const root = btn.closest('[data-pax]'), pop = $('.pax__pop', root), show = pop.hidden; pop.hidden = !show; btn.setAttribute('aria-expanded', String(show)); if (show) { const r = btn.getBoundingClientRect(); pop.classList.toggle('pax__pop--up', !!btn.closest('.modal') && r.bottom + 270 > window.innerHeight && r.top > 280); paxSync(root); $('[data-pax-step="adults"][data-d="1"]', root).focus(); } return; }
+    const step = e.target.closest('[data-pax-step]');
+    if (step && !step.disabled) { const root = step.closest('[data-pax]'), inp = $(`input[name="${step.dataset.paxStep}"]`, root); inp.value = +inp.value + +step.dataset.d; paxSync(root); inp.dispatchEvent(new Event('change', { bubbles: true })); if (DS.motion && DS.motion.pop) DS.motion.pop($(`[data-pax-val="${step.dataset.paxStep}"]`, root)); return; }
+    const done = e.target.closest('[data-pax-done]'); if (done) paxClose(done.closest('[data-pax]'), true);
+  });
+  // Escape closes only the open picker (and must not also close a surrounding modal)
+  document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; const r = e.target.closest && e.target.closest('[data-pax]'); if (r && !$('.pax__pop', r).hidden) { e.stopPropagation(); paxClose(r, true); } }, true);
+
+  /* ---------- Search widget (homepage) ----------
+     Trip type comes first; the destination list is rebuilt from it. Tours searches the
+     catalogue; every other service adds a request to the Travel Cart. */
   function initSearchWidget() {
     const w = $('[data-search-widget]'); if (!w) return;
     const tabs = $('.search-tabs', w), panel = $('.search-panel', w);
     const TAB_LABEL = { tours: 'Tours & Packages', visa: 'Visa', flights: 'Flights', hotels: 'Hotels', transport: 'Transport', cruises: 'Cruises', insurance: 'Insurance', corporate: 'Corporate' };
+    const KIND = { flights: 'flight', hotels: 'hotel', transport: 'transport', cruises: 'cruise', insurance: 'insurance', visa: 'visa' };
     tabs.innerHTML = DS.services.map((s, i) => `<button type="button" role="tab" class="search-tab" id="stab-${s.id}" aria-selected="${i === 0}" aria-controls="spanel" data-tab="${s.id}" tabindex="${i === 0 ? 0 : -1}">${DS.icon(s.icon)}${esc(TAB_LABEL[s.id] || s.name)}</button>`).join('');
-    const destOpts = (sel) => `<option value="">Anywhere</option>` + DS.destinations.map(d => `<option value="${d.id}" ${sel === d.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('');
     const today = new Date().toISOString().slice(0, 10);
-    const paxOpts = Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1} traveller${i ? 's' : ''}</option>`).join('');
+    const st = { type: 'international' };
+    const C = DS.cartCatalog;
+    const typeField = () => `<div class="field trip-type" role="radiogroup" aria-labelledby="sw-type-l"><span class="field__label" id="sw-type-l">${DS.icon('compass')}Trip type</span><div class="seg seg--type">
+        <label class="seg__opt"><input type="radio" name="type" value="international" ${st.type === 'international' ? 'checked' : ''}><span>${DS.icon('globe')}International</span></label>
+        <label class="seg__opt"><input type="radio" name="type" value="domestic" ${st.type === 'domestic' ? 'checked' : ''}><span>${DS.icon('sun')}Domestic</span></label></div><span class="trip-type__help" data-type-help>${typeHelp()}</span></div>`;
+    const typeHelp = () => { const n = DS.destinations.filter(d => d.type === st.type).length; return st.type === 'domestic' ? `${n} Philippine destinations, no visa needed` : `${n} destinations across Asia, visa help included`; };
+    const sel = (id, label, icon, options, name) => `<div class="field"><label class="field__label" for="${id}">${label}</label><div class="field__control">${DS.icon(icon)}<select class="select" id="${id}" name="${name}">${options}</select></div></div>`;
+    const date = (id, label, name) => `<div class="field"><label class="field__label" for="${id}">${label}</label><div class="field__control">${DS.icon('calendar')}<input class="input" id="${id}" name="${name}" type="date" min="${today}"></div></div>`;
+    const addBtn = `<button type="submit" class="btn btn--primary btn--lg search-form__submit" data-action="cart">${DS.icon('bagPlus')} Add to Travel Cart</button>`;
+    const hint = (icon, text) => `<p class="search-form__hint">${DS.icon(icon)}<span>${text}</span></p>`;
+    const destSel = (id, label, other) => sel(id, label, 'pin', DS.destOptions(st.type, '', { other }), 'dest');
+    const FORMS = {
+      tours: () => ({ cols: 3, type: true, body: destSel('sw-dest', 'Destination') + sel('sw-month', 'Travel month', 'calendar', DS.monthOptions(), 'month') + DS.paxPicker({ label: 'Travellers' }),
+        cta: `<button type="submit" class="btn btn--primary btn--lg search-form__submit" data-action="search">${DS.icon('search')} Search packages</button>`,
+        hint: hint('sparkles', 'Choose a trip type first: the destination list follows it. Prices are sample data, and some packages are priced on request.') }),
+      visa: () => ({ cols: 3, body: sel('sw-visa', 'Visa for', 'passport', C.visa.map(v => `<option value="${v.id}">${esc(v.name)}</option>`).join(''), 'country') + sel('sw-vmonth', 'Travel month', 'calendar', DS.monthOptions('', 'Not decided yet'), 'month') + DS.paxPicker({ label: 'Applicants', adults: 1, noun: 'applicant' }),
+        cta: addBtn, hint: hint('passport', 'Visa assistance is for international trips. Want to see the documents first? <a href="visa.html">Run the Visa Readiness Checker</a>.') }),
+      flights: () => ({ cols: 4, type: true, body: sel('sw-from', 'From', 'plane', C.origins.map(o => `<option value="${o.id}">${esc(o.name)}</option>`).join(''), 'origin') + destSel('sw-to', 'To', true).replace(/<option value="">[^<]*<\/option>/, '<option value="">Where to?</option>') + date('sw-fdate', 'Departure', 'depart') + DS.paxPicker({ label: 'Passengers', noun: 'passenger' }),
+        cta: addBtn, hint: hint('headset', 'Fares are found and booked by your consultant. Add return dates and cabin class in your cart.') }),
+      hotels: () => ({ cols: 3, type: true, body: destSel('sw-hdest', 'Destination') + date('sw-hin', 'Check-in', 'checkin') + DS.paxPicker({ label: 'Guests', noun: 'guest' }),
+        cta: addBtn, hint: hint('bed', 'Set nights, rooms and hotel class in your cart. Your consultant sends options that match your package.') }),
+      transport: () => ({ cols: 3, type: true, body: destSel('sw-tdest', 'Destination') + date('sw-tdate', 'Date', 'date') + DS.paxPicker({ label: 'Passengers', noun: 'passenger' }),
+        cta: addBtn, hint: hint('car', 'Airport transfer by default. Switch to a day tour or a private van in your cart.') }),
+      cruises: () => ({ cols: 3, body: sel('sw-region', 'Cruise region', 'ship', C.cruiseRegions.map(r => `<option>${esc(r)}</option>`).join(''), 'region') + sel('sw-cmonth', 'Sailing month', 'calendar', DS.monthOptions('', 'Flexible'), 'month') + DS.paxPicker({ label: 'Guests', noun: 'guest' }),
+        cta: addBtn, hint: hint('ship', 'Cruise fares are quoted by your consultant, with pre- and post-cruise plans.') }),
+      insurance: () => ({ cols: 3, type: true, body: destSel('sw-idest', 'Destination') + date('sw-idate', 'Departure', 'depart') + DS.paxPicker({ label: 'Travellers' }),
+        cta: addBtn, hint: hint('shield', 'Cover is explained in plain language before you buy. Choose standard or comprehensive in your cart.') }),
+      corporate: () => ({ cols: 3, type: true, body: destSel('sw-cdest', 'Destination') + sel('sw-codate', 'Travel month', 'calendar', DS.monthOptions('', 'Not decided yet'), 'month') + DS.paxPicker({ label: 'Delegates', noun: 'delegate', adults: 10, max: 60 }),
+        cta: `<button type="submit" class="btn btn--dark btn--lg search-form__submit" data-action="enquiry">${DS.icon('briefcase')} Request a proposal</button>`,
+        hint: hint('briefcase', 'Corporate and group travel gets a dedicated consultant and a written proposal.') })
+    };
+    let current = 'tours';
     const render = id => {
-      const s = DS.services.find(x => x.id === id);
-      let inner;
-      if (id === 'tours') {
-        inner = `<form class="search-form" data-flow="packages" novalidate>
-          <div class="field"><label class="field__label" for="sw-dest">Destination</label><div class="field__control">${DS.icon('pin')}<select class="select" id="sw-dest" name="dest">${destOpts()}</select></div></div>
-          <div class="field"><label class="field__label" for="sw-date">Preferred departure</label><div class="field__control">${DS.icon('calendar')}<input class="input" id="sw-date" name="date" type="date" min="${today}"></div></div>
-          <div class="field"><label class="field__label" for="sw-pax">Travellers</label><div class="field__control">${DS.icon('users')}<select class="select" id="sw-pax" name="pax">${paxOpts}</select></div></div>
-          <div class="field"><span class="field__label" id="sw-type-label">Trip type</span><div class="seg" role="group" aria-labelledby="sw-type-label"><button type="button" class="seg__btn" data-type="" aria-pressed="true">All</button><button type="button" class="seg__btn" data-type="domestic" aria-pressed="false">Domestic</button><button type="button" class="seg__btn" data-type="international" aria-pressed="false">International</button></div></div>
-          <button type="submit" class="btn btn--primary btn--lg search-form__submit">${DS.icon('search')} Search packages</button>
-          <p class="search-form__hint">${DS.icon('sparkles')}Results come from sample package data. Prices are illustrative and confirmed by a consultant.</p>
-        </form>`;
-      } else if (id === 'visa') {
-        inner = `<form class="search-form search-form--service" data-flow="visa" novalidate>
-          <div class="field"><label class="field__label" for="sw-vdest">Where are you applying for?</label><div class="field__control">${DS.icon('globe')}<select class="select" id="sw-vdest" name="dest"><option value="">Choose a destination</option><option value="japan">Japan</option><option value="korea">South Korea</option><option value="schengen">Schengen (Europe)</option><option value="other">Somewhere else</option></select></div></div>
-          <div class="field"><label class="field__label" for="sw-vpurpose">Purpose</label><div class="field__control">${DS.icon('tag')}<select class="select" id="sw-vpurpose" name="purpose"><option value="tourism">Tourism</option><option value="family">Visiting family</option><option value="business">Business</option></select></div></div>
-          <div class="field"><label class="field__label" for="sw-vdate">Travel period</label><div class="field__control">${DS.icon('calendar')}<input class="input" id="sw-vdate" name="date" type="month"></div></div>
-          <button type="submit" class="btn btn--dark btn--lg search-form__submit">${DS.icon('passport')} Check visa readiness</button>
-          <p class="search-form__hint">${DS.icon('sparkles')}A guided 3-step checker with an illustrative document checklist. No personal documents are requested.</p>
-        </form>`;
-      } else {
-        const labels = { flights: ['Route or destination', 'Departure date', 'Passengers'], hotels: ['Destination', 'Check-in', 'Guests'], transport: ['Pick-up area or destination', 'Date', 'Passengers'], cruises: ['Cruise region', 'Preferred month', 'Guests'], insurance: ['Destination', 'Departure date', 'Travellers'], corporate: ['Destination', 'Travel date', 'Delegates'] }[id] || ['Destination', 'Date', 'Travellers'];
-        inner = `<form class="search-form search-form--service" data-flow="enquiry" data-svc="${id}" novalidate>
-          <div class="field"><label class="field__label" for="sw-sdest">${labels[0]}</label><div class="field__control">${DS.icon('pin')}<select class="select" id="sw-sdest" name="dest">${destOpts()}<option value="other">Other</option></select></div></div>
-          <div class="field"><label class="field__label" for="sw-sdate">${labels[1]}</label><div class="field__control">${DS.icon('calendar')}<input class="input" id="sw-sdate" name="date" type="${id === 'cruises' ? 'month' : 'date'}" ${id === 'cruises' ? '' : 'min="' + today + '"'}></div></div>
-          <div class="field"><label class="field__label" for="sw-spax">${labels[2]}</label><div class="field__control">${DS.icon('users')}<select class="select" id="sw-spax" name="pax">${paxOpts}<option value="13">More than 12</option></select></div></div>
-          <button type="submit" class="btn btn--primary btn--lg search-form__submit">${DS.icon('message')} Request a quote</button>
-          <p class="search-form__hint">${DS.icon('headset')}${esc(s.blurb)} Live inventory is not part of this prototype, so a consultant prepares your options.</p>
-        </form>`;
-      }
-      panel.innerHTML = inner; panel.id = 'spanel'; panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', 'stab-' + id);
+      current = id;
+      const f = FORMS[id]();
+      panel.innerHTML = `<form class="search-form ${f.type ? 'has-type' : ''}" style="--cols:${f.cols}" data-tabform="${id}" novalidate>${f.type ? typeField() : ''}${f.body}${f.cta}${f.hint}</form>`;
+      // Tours lists show how many sample packages each destination has
+      if (id === 'tours') $('#sw-dest', panel).innerHTML = DS.destOptions(st.type, '', { counts: true });
+      panel.id = 'spanel'; panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', 'stab-' + id);
       if (DS.motion && DS.motion.tabIn) DS.motion.tabIn(panel);
     };
     DS.tabs(w); w.addEventListener('ds:tab', e => render(e.detail.tab.dataset.tab));
     render('tours');
-    w.addEventListener('click', e => { const b = e.target.closest('.seg__btn'); if (!b) return; $$('.seg__btn', b.parentElement).forEach(x => x.setAttribute('aria-pressed', x === b)); });
+    // Trip type change: rebuild every destination list in the form, keep other values
+    w.addEventListener('change', e => {
+      if (e.target.name !== 'type') return;
+      st.type = e.target.value;
+      const form = e.target.form;
+      const help = $('[data-type-help]', form); if (help) help.textContent = typeHelp();
+      $$('select[name="dest"]', form).forEach(s => {
+        const flights = s.id === 'sw-to';
+        s.innerHTML = DS.destOptions(st.type, '', { counts: current === 'tours', other: flights });
+        if (flights) s.options[0].textContent = 'Where to?';
+        if (DS.motion && DS.motion.pop) DS.motion.pop(s.closest('.field__control'));
+      });
+    });
     w.addEventListener('submit', e => {
       e.preventDefault(); const f = e.target; const data = Object.fromEntries(new FormData(f).entries());
-      if (f.dataset.flow === 'packages') {
-        const type = $('.seg__btn[aria-pressed="true"]', f)?.dataset.type || '';
-        const q = new URLSearchParams(); if (data.dest) q.set('dest', data.dest); if (type) q.set('type', type); if (data.date) q.set('date', data.date); if (data.pax) q.set('pax', data.pax);
-        location.href = 'explore.html?' + q.toString();
-      } else if (f.dataset.flow === 'visa') {
-        if (!data.dest) { DS.toast('Choose a destination to start the checker.', { type: 'error' }); $('#sw-vdest').focus(); return; }
-        if (data.dest === 'other') { DS.openEnquiry({ service: 'visa', title: 'Visa assistance for another destination', subtitle: 'The demo checker covers Japan, South Korea and Schengen. A consultant can advise on any destination.', message: data.date ? `Planned travel period: ${data.date}.` : '' }); return; }
-        const q = new URLSearchParams({ dest: data.dest, purpose: data.purpose }); if (data.date) q.set('period', data.date);
-        location.href = 'visa.html?' + q.toString();
-      } else {
-        const d = DS.getDestination(data.dest);
-        DS.routeService(f.dataset.svc, { destination: d ? d.name : (data.dest === 'other' ? 'Other' : ''), travellers: data.pax, date: /^\d{4}-\d{2}-\d{2}$/.test(data.date || '') ? data.date : '', message: data.date && !/^\d{4}-\d{2}-\d{2}$/.test(data.date) ? `Preferred month: ${data.date}.` : '' });
+      const action = (e.submitter && e.submitter.dataset.action) || 'search';
+      const adults = +data.adults || 1, children = +data.children || 0;
+      if (action === 'search') {
+        const q = new URLSearchParams(); if (data.dest) q.set('dest', data.dest); if (data.type) q.set('type', data.type); if (data.month) q.set('month', data.month); q.set('adults', adults); if (children) q.set('children', children);
+        location.href = 'explore.html?' + q.toString(); return;
       }
+      if (action === 'enquiry') {
+        const d = DS.getDestination(data.dest);
+        DS.routeService('corporate', { destination: d ? d.name : 'Multiple / undecided', travellers: adults + children, message: data.month ? `Planned travel month: ${DS.fmtMonth(data.month)}.` : '' }); return;
+      }
+      const kind = KIND[current];
+      if (kind === 'flight' && !data.dest) { DS.toast('Choose where you are flying to.', { type: 'error' }); $('#sw-to', f).focus(); return; }
+      const details = { ...data, adults, children }; delete details.type;
+      if (kind === 'hotel') Object.assign(details, { nights: 3, rooms: 1, stars: 'Any' });
+      if (kind === 'flight') Object.assign(details, { to: data.dest, cabin: 'Economy', ret: '' });
+      if (kind === 'transport') details.service = 'Airport transfer';
+      if (kind === 'cruise') details.cabin = 'Ocean view';
+      if (kind === 'insurance') Object.assign(details, { plan: 'Standard cover', ret: '' });
+      if (DS.cart) DS.cart.addAndShow(kind, details);
     });
   }
 

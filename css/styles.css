@@ -230,7 +230,35 @@ p:last-child { margin-bottom: 0; }
 .site-header--over:not(.is-scrolled) .nav__link:hover, .site-header--over:not(.is-scrolled) .nav__link.is-active { color: var(--color-text-on-dark); }
 .site-header--over:not(.is-scrolled) .nav__link.is-active::after { background: var(--color-primary); }
 .site-header--over:not(.is-scrolled) .nav-toggle { color: var(--color-text-on-dark); }
-.site-header--over:not(.is-scrolled) .saved-chip { color: var(--color-text-on-dark); border-color: rgba(255,255,255,0.4); background: rgba(var(--scrim-rgb),0.25); }
+.site-header--over:not(.is-scrolled) .cart-btn { color: var(--color-text-on-dark); border-color: rgba(255,255,255,0.4); background: rgba(var(--scrim-rgb),0.25); }
+.site-header--over:not(.is-scrolled) .btn--consult { --btn-bg: var(--color-cta); --btn-bd: var(--color-cta); --btn-fg: var(--color-text-on-dark); }
+
+.site-header__inner { display: flex; align-items: center; gap: var(--s-6); width: 100%; }
+.brand { display: inline-flex; align-items: center; margin-right: auto; text-decoration: none; flex: none; }
+/* Logo: the PNG is a solid green block with white type. No box, no padding, no shadow. */
+.brand__logo { height: 40px; width: auto; max-width: none; flex: none; border-radius: 0; background: none; padding: 0; border: 0; box-shadow: none; }
+.nav { display: flex; align-items: center; gap: 2px; }
+.nav__link {
+  position: relative; display: inline-block; padding: 8px 12px;
+  font-weight: 600; font-size: var(--fs-sm); color: var(--color-text-secondary); text-decoration: none; border-radius: var(--r-sm);
+  transition: color var(--t-fast) ease;
+}
+.nav__link::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 3px; height: 2px; background: var(--color-primary-strong); transform: scaleX(0); transform-origin: left; transition: transform var(--t-base) var(--ease-out); }
+.nav__link:hover { color: var(--color-text-primary); }
+.nav__link:hover::after, .nav__link.is-active::after { transform: scaleX(1); }
+.nav__link.is-active { color: var(--color-text-primary); }
+.header-actions { display: flex; align-items: center; gap: var(--s-2); }
+.cart-btn {
+  position: relative; flex: none; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--color-border-strong); border-radius: var(--r-md);
+  font-size: var(--fs-sm); font-weight: 600; color: var(--color-text-primary); background: transparent; transition: border-color var(--t-fast), background var(--t-fast);
+}
+.cart-btn:hover { border-color: var(--color-primary-strong); background: var(--color-primary-light); color: var(--color-text-primary); }
+.cart-btn svg { width: var(--icon-sm); height: var(--icon-sm); }
+.cart-btn__count { min-width: 20px; height: 20px; padding: 0 6px; display: inline-grid; place-items: center; border-radius: var(--r-pill); background: var(--color-accent); color: var(--color-text-primary); font-size: 11px; font-weight: 800; line-height: 1; }
+.cart-btn__count[data-count="0"] { display: none; }
+.nav-toggle { color: var(--color-text-on-dark); }
+.site-header--over:not(.is-scrolled) .cart-btn { color: var(--color-text-on-dark); border-color: rgba(255,255,255,0.4); background: rgba(var(--scrim-rgb),0.25); }
 .site-header--over:not(.is-scrolled) .btn--consult { --btn-bg: var(--color-cta); --btn-bd: var(--color-cta); --btn-fg: var(--color-text-on-dark); }
 
 .site-header__inner { display: flex; align-items: center; gap: var(--s-6); width: 100%; }
