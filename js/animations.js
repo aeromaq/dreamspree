@@ -22,14 +22,14 @@
   gsap.defaults({ ease: 'power3.out', duration: 0.8 });
   const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
 
-  /* ---------- Hooks used by app.js, packages.js, visa.js, trip.js ---------- */
+  /* ---------- Hooks used by app.js, cart.js, packages.js, visa.js, cart-page.js ---------- */
   DS.motion = {
     expand(panel) { gsap.killTweensOf(panel); gsap.set(panel, { height: 'auto' }); gsap.from(panel, { height: 0, duration: 0.45, ease: 'power2.inOut', onComplete: () => ScrollTrigger.refresh() }); gsap.from(panel.firstElementChild, { autoAlpha: 0, y: -6, duration: 0.4, delay: 0.1 }); },
     collapse(panel) { gsap.killTweensOf(panel); gsap.to(panel, { height: 0, duration: 0.35, ease: 'power2.inOut', onComplete: () => ScrollTrigger.refresh() }); },
     tabIn(panel) { gsap.fromTo(panel, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, clearProps: 'transform,opacity' }); },
     modalIn(root, dialog, cb) { gsap.fromTo(root.querySelector('.modal__backdrop'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }); gsap.fromTo(dialog, { autoAlpha: 0, y: isMobile() ? 40 : 24, scale: isMobile() ? 1 : 0.97 }, { autoAlpha: 1, y: 0, scale: 1, duration: 0.45, ease: 'power3.out', clearProps: 'transform', onComplete: cb }); },
     modalOut(root, dialog, cb) { gsap.to(dialog, { autoAlpha: 0, y: 16, duration: 0.25, ease: 'power2.in' }); gsap.to(root.querySelector('.modal__backdrop'), { autoAlpha: 0, duration: 0.3, onComplete: () => { gsap.set([dialog, root.querySelector('.modal__backdrop')], { clearProps: 'all' }); cb && cb(); } }); },
-    drawerIn(drawer, cb) { const p = drawer.querySelector('.drawer__panel'); gsap.fromTo(drawer.querySelector('.drawer__backdrop'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }); gsap.fromTo(p, { xPercent: 100 }, { xPercent: 0, duration: 0.45, ease: 'power3.out', onComplete: cb }); gsap.from(p.querySelectorAll('.drawer__nav a'), { autoAlpha: 0, x: 24, stagger: 0.05, duration: 0.4, delay: 0.15 }); },
+    drawerIn(drawer, cb) { const p = drawer.querySelector('.drawer__panel'); gsap.fromTo(drawer.querySelector('.drawer__backdrop'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }); gsap.fromTo(p, { xPercent: 100 }, { xPercent: 0, duration: 0.45, ease: 'power3.out', onComplete: cb }); const links = p.querySelectorAll('.drawer__nav a, .mini-item'); if (links.length) gsap.from(links, { autoAlpha: 0, x: 24, stagger: 0.04, duration: 0.4, delay: 0.15, clearProps: 'opacity,visibility,transform' }); },
     drawerOut(drawer, cb) { const p = drawer.querySelector('.drawer__panel'); gsap.to(p, { xPercent: 100, duration: 0.3, ease: 'power2.in' }); gsap.to(drawer.querySelector('.drawer__backdrop'), { autoAlpha: 0, duration: 0.3, onComplete: () => { gsap.set([p, drawer.querySelector('.drawer__backdrop')], { clearProps: 'all' }); cb && cb(); } }); },
     toastIn(t) { gsap.from(t, { autoAlpha: 0, y: 20, scale: 0.96, duration: 0.4 }); },
     toastOut(t, cb) { gsap.to(t, { autoAlpha: 0, y: 10, duration: 0.3, onComplete: cb }); },

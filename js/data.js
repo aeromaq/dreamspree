@@ -102,7 +102,9 @@ window.DS = window.DS || {};
     { q: 'Is this good for families?', a: 'Most domestic packages are family friendly. Mention children’s ages and your consultant will adjust activities and pricing.' }
   ];
 
-  /* ---------- Packages ---------- */
+  /* ---------- Packages ----------
+     priceFrom is optional. Set it to null when a package should not show a price:
+     cards, the package page and the Travel Cart then show "Price on request". */
   DS.packages = [
     {
       id: 'jp-golden-route', title: 'Tokyo, Hakone & Kyoto: The Golden Route', destinationId: 'japan', destination: 'Japan', country: 'Japan', type: 'international', region: 'East Asia',
@@ -149,7 +151,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'kr-seoul-nami', title: 'Seoul City & Nami Island Escape', destinationId: 'south-korea', destination: 'South Korea', country: 'South Korea', type: 'international', region: 'East Asia',
-      category: 'Culture', duration: { days: 5, nights: 4 }, priceFrom: 52900, childRate: 0.85, groupSize: 'Join-in, up to 20 travellers',
+      category: 'Culture', duration: { days: 5, nights: 4 }, priceFrom: null, childRate: 0.85, groupSize: 'Join-in, up to 20 travellers',
       images: ['1538669715315-155098f0fb1d', '1583833008338-31a6657917ab', '1517154421773-0529f29ea451', '1548115184-bc6544d06a58', '1534274867514-d5b47ef89ed7'],
       summary: 'Palaces, markets and a hanbok morning in Seoul, plus a full-day trip to Nami Island and the Garden of Morning Calm.',
       highlights: ['Gyeongbokgung in hanbok', 'Nami Island and Petite France', 'Myeongdong street food crawl', 'N Seoul Tower at sunset', 'Hongdae free evening'],
@@ -231,7 +233,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'vn-danang-hoian', title: 'Da Nang, Ba Na Hills & Hoi An', destinationId: 'vietnam', destination: 'Vietnam', country: 'Vietnam', type: 'international', region: 'Southeast Asia',
-      category: 'Leisure', duration: { days: 4, nights: 3 }, priceFrom: 29900, childRate: 0.85, groupSize: 'Private, 2 to 8 travellers',
+      category: 'Leisure', duration: { days: 4, nights: 3 }, priceFrom: null, childRate: 0.85, groupSize: 'Private, 2 to 8 travellers',
       images: ['1559592413-7cec4d0cae2b', '1555921015-5532091f6026', '1528127269322-539801943592'],
       summary: 'Golden Bridge at Ba Na Hills, My Khe beach afternoons and lantern-lit evenings in Hoi An’s ancient town.',
       highlights: ['Golden Bridge and Ba Na Hills cable car', 'Hoi An lantern boat ride', 'Marble Mountains', 'My Khe Beach stay', 'Tailor-made clothing stop'],
@@ -290,7 +292,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'ph-coron-wrecks', title: 'Coron Lakes, Wrecks & Hot Springs', destinationId: 'palawan', destination: 'Palawan', country: 'Philippines', type: 'domestic', region: 'Mimaropa',
-      category: 'Adventure', duration: { days: 3, nights: 2 }, priceFrom: 18900, childRate: 0.8, groupSize: 'Join-in, up to 12 travellers',
+      category: 'Adventure', duration: { days: 3, nights: 2 }, priceFrom: null, childRate: 0.8, groupSize: 'Join-in, up to 12 travellers',
       images: ['1551918120-9739cb430c6d', '1518509562904-e7ef99cdcc86', '1530053969600-caed2596d242', '1551244072-5d12893278ab'],
       summary: 'Kayangan Lake, Twin Lagoon, the Skeleton Wreck snorkel and a soak in Maquinit Hot Springs on the way back.',
       highlights: ['Kayangan Lake viewpoint', 'Twin Lagoon swim-through', 'Skeleton Wreck snorkel', 'Maquinit Hot Springs', 'Mt Tapyas sunset'],
@@ -551,7 +553,40 @@ window.DS = window.DS || {};
     }
   ];
 
+  /* ---------- Travel Cart catalogue ----------
+     What a traveller can add to the Travel Cart besides packages. Every price is
+     optional: leave `fee` null and the item shows "Price on request", quoted by a
+     consultant. Fees shown are SAMPLE DATA. */
+  DS.cartCatalog = {
+    kinds: {
+      package: { label: 'Package', icon: 'compass' },
+      visa: { label: 'Visa assistance', icon: 'passport', blurb: 'Checklist, appointment booking and document review.' },
+      flight: { label: 'Flights', icon: 'plane', blurb: 'Fares found and booked by your consultant.' },
+      hotel: { label: 'Hotel', icon: 'bed', blurb: 'Hand-picked stays to match your package.' },
+      transport: { label: 'Transport', icon: 'car', blurb: 'Airport transfers, day tours and private vans.' },
+      cruise: { label: 'Cruise', icon: 'ship', blurb: 'Cruise itineraries with pre- and post-cruise plans.' },
+      insurance: { label: 'Travel insurance', icon: 'shield', blurb: 'Cover explained in plain language before you fly.' }
+    },
+    visa: [
+      { id: 'japan', name: 'Japan', fee: 2500, destinationId: 'japan' },
+      { id: 'korea', name: 'South Korea', fee: 2000, destinationId: 'south-korea' },
+      { id: 'schengen', name: 'Schengen (Europe)', fee: null },
+      { id: 'other', name: 'Another country', fee: null }
+    ],
+    origins: [
+      { id: 'MNL', name: 'Manila (MNL)' }, { id: 'CEB', name: 'Cebu (CEB)' }, { id: 'CRK', name: 'Clark (CRK)' }, { id: 'DVO', name: 'Davao (DVO)' }, { id: 'ILO', name: 'Iloilo (ILO)' }
+    ],
+    cabins: ['Economy', 'Premium economy', 'Business'],
+    hotelClass: ['Any', '3-star', '4-star', '5-star'],
+    transport: ['Airport transfer', 'Day tour with driver', 'Multi-day private van'],
+    cruiseRegions: ['Asia & Japan', 'Mediterranean', 'Caribbean', 'Alaska', 'Somewhere else'],
+    cruiseCabins: ['Inside', 'Ocean view', 'Balcony', 'Suite'],
+    insurancePlans: ['Standard cover', 'Comprehensive cover']
+  };
+
   /* ---------- Lookup helpers ---------- */
+  /* Prices are optional: a package with priceFrom null is shown as "Price on request" */
+  DS.hasPrice = p => !!p && typeof p.priceFrom === 'number' && p.priceFrom > 0;
   DS.getPackage = id => DS.packages.find(p => p.id === id);
   DS.getDestination = id => DS.destinations.find(d => d.id === id);
   DS.packagesFor = destId => DS.packages.filter(p => p.destinationId === destId);
