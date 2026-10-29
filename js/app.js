@@ -145,7 +145,8 @@
       sub.textContent = opts.subtitle || ''; sub.hidden = !opts.subtitle;
       dialog.classList.toggle('modal__dialog--lg', !!opts.large);
       body.innerHTML = ''; body.append(typeof content === 'string' ? html(`<div>${content}</div>`) : content);
-      lastFocus = document.activeElement;
+      // Swapping one form for another keeps focus returning to what opened the first
+      if (!root.classList.contains('is-open')) lastFocus = document.activeElement;
       root.classList.add('is-open'); document.body.style.overflow = 'hidden';
       DS.hydrateImages(body);
       const focusTarget = opts.focus ? $(opts.focus, body) : ($$(FOCUSABLE, body)[0] || dialog);
@@ -198,10 +199,10 @@
           <div class="field"><label class="field__label" for="enq-phone">Mobile number</label><input class="input" id="enq-phone" name="phone" type="tel" autocomplete="tel" required placeholder="+63 9XX XXX XXXX"><span class="field__error" aria-live="polite"></span></div>
           <div class="field"><label class="field__label" for="enq-service">Service</label><select class="select" id="enq-service" name="service" required>${serviceOpts}</select><span class="field__error"></span></div>
           <div class="field"><label class="field__label" for="enq-dest">Preferred destination</label><select class="select" id="enq-dest" name="destination" required>${destOpts}</select><span class="field__error" aria-live="polite"></span></div>
-          <div class="field"><label class="field__label" for="enq-pax">Number of travellers</label><input class="input" id="enq-pax" name="travellers" type="number" min="1" max="60" required value="${pre.travellers || 2}"><span class="field__error" aria-live="polite"></span></div>
+          <div class="field"><label class="field__label" for="enq-pax">Number of travelers</label><input class="input" id="enq-pax" name="travelers" type="number" min="1" max="100" required value="${pre.travelers || 2}"><span class="field__error" aria-live="polite"></span></div>
           <div class="field"><label class="field__label" for="enq-date">Estimated travel date</label><input class="input" id="enq-date" name="date" type="date" min="${new Date().toISOString().slice(0, 10)}" value="${pre.date || ''}"><span class="field__help">Leave blank if you are still flexible.</span><span class="field__error"></span></div>
           <div class="field"><label class="field__label" for="enq-contact">Preferred contact</label><select class="select" id="enq-contact" name="contact"><option>Viber</option><option>WhatsApp</option><option>Messenger</option><option>Phone call</option><option>Email</option></select></div>
-          <div class="field field--full"><label class="field__label" for="enq-msg">Tell us about your trip</label><textarea class="textarea" id="enq-msg" name="message" required data-minlen="12" placeholder="Who is travelling, what you would like to see, your budget range, and anything we should know.">${esc(pre.message || '')}</textarea><span class="field__error" aria-live="polite"></span></div>
+          <div class="field field--full"><label class="field__label" for="enq-msg">Tell us about your trip</label><textarea class="textarea" id="enq-msg" name="message" required data-minlen="12" placeholder="Who is traveling, what you would like to see, your budget range, and anything we should know.">${esc(pre.message || '')}</textarea><span class="field__error" aria-live="polite"></span></div>
           <div class="field field--full"><label class="checkbox"><input type="checkbox" name="consent" required><span>I understand this is a prototype demonstration. No information is sent or stored. (In the live site this would link to the privacy notice.)</span></label><span class="field__error" aria-live="polite"></span></div>
         </div>
         <div class="cluster" style="margin-top:1.5rem;justify-content:space-between">
@@ -353,7 +354,7 @@
   };
   document.addEventListener('click', e => { const c = e.target.closest('[data-story]'); if (c) DS.openStory(c.dataset.story); });
 
-  /* ---------- Shared form pieces: months, destinations, travellers, dates, places ---------- */
+  /* ---------- Shared form pieces: months, destinations, travelers, dates, places ---------- */
   /* Next n months as YYYY-MM values (readable labels instead of a raw date field) */
   const nextMonths = (n = 18) => { const now = new Date(); return Array.from({ length: n }, (_, i) => { const d = new Date(now.getFullYear(), now.getMonth() + i, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }); };
   DS.monthOptions = (sel = '', anyLabel = 'Any month') => [`<option value="">${esc(anyLabel)}</option>`, ...nextMonths(12).map(v => `<option value="${v}" ${sel === v ? 'selected' : ''}>${DS.fmtMonth(v)}</option>`)].join('');
@@ -381,52 +382,104 @@
       regions.map(r => `<optgroup label="${esc(r)}">${list.filter(d => d.region === r).map(d => `<option value="${d.id}" ${sel === d.id ? 'selected' : ''}>${esc(d.name)}${count(d)}</option>`).join('')}</optgroup>`).join('') +
       (opts.other ? `<option value="other" ${sel === 'other' ? 'selected' : ''}>Somewhere else</option>` : '');
   };
-  DS.paxLabel = (a, c, noun = 'traveller', rooms) => {
+  /* Travelers: counters go up to 12 people. Larger parties (13 to 100) switch to a
+     group booking with a single number, a dedicated coordinator and group rates. */
+  const PAX_MAX = 12, GROUP_MIN = 13, GROUP_MAX = 100;
+  Object.assign(DS, { PAX_MAX, GROUP_MIN, GROUP_MAX });
+  DS.paxLabel = (a, c, noun = 'traveler', rooms, group) => {
     const r = rooms ? ` · ${rooms} room${rooms === 1 ? '' : 's'}` : '';
-    if (noun !== 'traveller') { const n = a + c; return `${n} ${noun}${n === 1 ? '' : 's'}${r}`; }
+    if (group) return `Group of ${a} ${noun}s${r}`;
+    if (noun !== 'traveler') { const n = a + c; return `${n} ${noun}${n === 1 ? '' : 's'}${r}`; }
     return `${a} adult${a === 1 ? '' : 's'}${c ? `, ${c} child${c === 1 ? '' : 'ren'}` : ''}${r}`;
   };
-  /* Traveller picker: a button that opens a small panel with adult/child (and optional room)
-     counters. Values travel in hidden inputs named adults/children/rooms so FormData just works. */
+  /* Traveler picker. On the page it is a button with a small popover; inside a modal
+     (inline: true) the counters sit in the form, so nothing opens on top of other fields.
+     Values travel in hidden inputs adults / children / rooms / group so FormData just works. */
   let paxSeq = 0;
   const counterRow = (key, title, sub, val, noun) => `<div class="counter-row"><div><strong>${title}</strong><span>${sub}</span></div><div class="counter"><button type="button" class="counter__btn" data-pax-step="${key}" data-d="-1" aria-label="Fewer ${noun}">${DS.icon('minus')}</button><span class="counter__val" data-pax-val="${key}" aria-live="polite">${val}</span><button type="button" class="counter__btn" data-pax-step="${key}" data-d="1" aria-label="More ${noun}">${DS.icon('plus')}</button></div></div>`;
   DS.paxPicker = (o = {}) => {
-    const id = 'pax-' + (++paxSeq), a = o.adults ?? 2, c = o.children ?? 0, max = o.max || 12, rooms = o.rooms;
-    return `<div class="field pax" data-pax data-max="${max}" data-noun="${esc(o.noun || 'traveller')}">
-      <span class="field__label" id="${id}-l">${esc(o.label || 'Travellers')}</span>
-      <button type="button" class="pax__btn" id="${id}-b" aria-haspopup="true" aria-expanded="false" aria-controls="${id}-p" aria-labelledby="${id}-l ${id}-b">${DS.icon('users')}<span data-pax-text>${esc(DS.paxLabel(a, c, o.noun, rooms))}</span>${DS.icon('chevronDown', 'pax__chev')}</button>
-      <div class="pax__pop" id="${id}-p" hidden>
+    const id = 'pax-' + (++paxSeq), noun = o.noun || 'traveler', rooms = o.rooms;
+    let a = o.adults ?? 2, c = o.children ?? 0;
+    const group = o.group === true || o.group === '1' || a + c > PAX_MAX;
+    if (group) { a = Math.min(GROUP_MAX, Math.max(GROUP_MIN, a + c)); c = 0; }
+    const panel = `<div class="pax__counters" ${group ? 'hidden' : ''}>
         ${counterRow('adults', 'Adults', '12 years and above', a, 'adults')}
-        ${counterRow('children', 'Children', '2 to 11 years', c, 'children')}
-        ${rooms ? counterRow('rooms', 'Rooms', 'We suggest the room mix', rooms, 'rooms') : ''}
-        <button type="button" class="btn btn--sm btn--dark btn--block" data-pax-done>Done</button>
+        ${counterRow('children', 'Children', o.childNote || '2 to 11 years', c, 'children')}
       </div>
-      <input type="hidden" name="adults" value="${a}"><input type="hidden" name="children" value="${c}">${rooms ? `<input type="hidden" name="rooms" value="${rooms}">` : ''}
-    </div>`;
+      <div class="pax__group" ${group ? '' : 'hidden'}>
+        <label class="pax__group-label" for="${id}-g"><strong>Group size</strong><span>${GROUP_MIN} to ${GROUP_MAX} ${esc(noun)}s</span></label>
+        <input class="input pax__group-input" type="number" id="${id}-g" min="${GROUP_MIN}" max="${GROUP_MAX}" step="1" inputmode="numeric" value="${group ? a : GROUP_MIN}" data-pax-groupn>
+        <p class="pax__note">${DS.icon('users')}<span>Groups get a dedicated coordinator and group rates. Add children's ages in your notes.</span></p>
+      </div>
+      ${rooms ? counterRow('rooms', 'Rooms', 'We suggest a mix', rooms, 'rooms') : ''}
+      <button type="button" class="btn btn--link btn--sm pax__switch" data-pax-group="${group ? 'off' : 'on'}">${group ? `Back to individual counts` : `More than ${PAX_MAX}? Book as a group (up to ${GROUP_MAX})`}</button>`;
+    const hidden = `<input type="hidden" name="adults" value="${a}"><input type="hidden" name="children" value="${c}">${rooms ? `<input type="hidden" name="rooms" value="${rooms}">` : ''}<input type="hidden" name="group" value="${group ? '1' : ''}">`;
+    if (o.inline) return `<div class="field pax pax--inline ${o.full === false ? '' : 'field--full'}" data-pax data-noun="${esc(noun)}" role="group" aria-labelledby="${id}-l">
+      <span class="field__label" id="${id}-l">${esc(o.label || 'Travelers')}</span>
+      <div class="pax__panel">${panel}</div>${hidden}<span class="field__error" aria-live="polite"></span></div>`;
+    return `<div class="field pax" data-pax data-noun="${esc(noun)}">
+      <span class="field__label" id="${id}-l">${esc(o.label || 'Travelers')}</span>
+      <button type="button" class="pax__btn" id="${id}-b" aria-haspopup="true" aria-expanded="false" aria-controls="${id}-p" aria-labelledby="${id}-l ${id}-b">${DS.icon('users')}<span data-pax-text>${esc(DS.paxLabel(a, c, noun, rooms, group))}</span>${DS.icon('chevronDown', 'pax__chev')}</button>
+      <div class="pax__pop" id="${id}-p" hidden>${panel}<button type="button" class="btn btn--sm btn--dark btn--block" data-pax-done>Done</button></div>
+      ${hidden}<span class="field__error" aria-live="polite"></span></div>`;
   };
+  const paxVal = (root, k) => { const i = $(`input[name="${k}"]`, root); return i ? +i.value || 0 : 0; };
   const paxSync = root => {
-    const val = k => { const i = $(`input[name="${k}"]`, root); return i ? +i.value : 0; };
-    const a = val('adults'), c = val('children'), r = val('rooms'), max = +root.dataset.max;
-    ['adults', 'children', 'rooms'].forEach(k => { const el = $(`[data-pax-val="${k}"]`, root); if (el) el.textContent = val(k); });
-    $('[data-pax-text]', root).textContent = DS.paxLabel(a, c, root.dataset.noun, r || undefined);
+    const group = $('input[name="group"]', root).value === '1';
+    if (group) { const n = Math.round(+$('[data-pax-groupn]', root).value || 0); if (n >= GROUP_MIN && n <= GROUP_MAX) { $('input[name="adults"]', root).value = n; $('input[name="children"]', root).value = 0; } }
+    const a = paxVal(root, 'adults'), c = paxVal(root, 'children'), r = paxVal(root, 'rooms');
+    const roomsMax = Math.min(50, Math.max(1, a + c));
+    const ri = $('input[name="rooms"]', root); if (ri && r > roomsMax) ri.value = roomsMax;
+    ['adults', 'children', 'rooms'].forEach(k => { const el = $(`[data-pax-val="${k}"]`, root); if (el) el.textContent = paxVal(root, k); });
+    const t = $('[data-pax-text]', root); if (t) t.textContent = DS.paxLabel(a, c, root.dataset.noun, paxVal(root, 'rooms') || undefined, group);
     $$('[data-pax-step]', root).forEach(b => {
-      const k = b.dataset.paxStep, d = +b.dataset.d, n = val(k) + d;
-      if (k === 'rooms') { b.disabled = n < 1 || n > Math.max(1, a + c) || n > 9; return; }
-      b.disabled = (k === 'adults' ? n < 1 : n < 0) || (d > 0 && a + c + d > max);
+      const k = b.dataset.paxStep, d = +b.dataset.d, n = paxVal(root, k) + d;
+      if (k === 'rooms') { b.disabled = n < 1 || n > roomsMax; return; }
+      b.disabled = (k === 'adults' ? n < 1 : n < 0) || (d > 0 && a + c + d > PAX_MAX);
     });
+    // At the 12-person limit, point to group booking
+    const sw = $('[data-pax-group="on"]', root); if (sw) sw.classList.toggle('is-hint', a + c >= PAX_MAX);
   };
-  const paxClose = (root, focus) => { const pop = $('.pax__pop', root); if (pop.hidden) return; pop.hidden = true; $('.pax__btn', root).setAttribute('aria-expanded', 'false'); if (focus) $('.pax__btn', root).focus(); };
+  DS.paxSync = paxSync;
+  const paxClose = (root, focus) => { const pop = $('.pax__pop', root); if (!pop || pop.hidden) return; pop.hidden = true; $('.pax__btn', root).setAttribute('aria-expanded', 'false'); if (focus) $('.pax__btn', root).focus(); };
+  function paxGroup(root, on) {
+    $('input[name="group"]', root).value = on ? '1' : '';
+    $('.pax__counters', root).hidden = on; $('.pax__group', root).hidden = !on;
+    const sw = $('.pax__switch', root), noun = root.dataset.noun;
+    sw.dataset.paxGroup = on ? 'off' : 'on'; sw.textContent = on ? 'Back to individual counts' : `More than ${PAX_MAX}? Book as a group (up to ${GROUP_MAX})`;
+    const gi = $('[data-pax-groupn]', root);
+    if (on) { gi.value = Math.max(GROUP_MIN, paxVal(root, 'adults') + paxVal(root, 'children')); gi.focus(); gi.select(); }
+    else { $('input[name="adults"]', root).value = Math.min(PAX_MAX, Math.max(1, paxVal(root, 'adults'))); $('input[name="children"]', root).value = 0; void noun; }
+    paxSync(root); $('input[name="adults"]', root).dispatchEvent(new Event('change', { bubbles: true }));
+  }
   document.addEventListener('click', e => {
-    const open = $$('[data-pax]').filter(r => !$('.pax__pop', r).hidden);
+    const open = $$('[data-pax]').filter(r => { const p = $('.pax__pop', r); return p && !p.hidden; });
     const btn = e.target.closest('.pax__btn:not(.when__btn)');
     open.forEach(r => { if (!r.contains(e.target)) paxClose(r); });
-    if (btn) { const root = btn.closest('[data-pax]'), pop = $('.pax__pop', root), show = pop.hidden; pop.hidden = !show; btn.setAttribute('aria-expanded', String(show)); if (show) { const r = btn.getBoundingClientRect(); pop.classList.toggle('pax__pop--up', !!btn.closest('.modal') && r.bottom + 270 > window.innerHeight && r.top > 280); paxSync(root); $('[data-pax-step="adults"][data-d="1"]', root).focus(); } return; }
+    if (btn) {
+      const root = btn.closest('[data-pax]'), pop = $('.pax__pop', root), show = pop.hidden;
+      pop.hidden = !show; btn.setAttribute('aria-expanded', String(show));
+      if (show) { paxSync(root); const g = $('input[name="group"]', root).value === '1'; (g ? $('[data-pax-groupn]', root) : $('[data-pax-step="adults"][data-d="1"]', root)).focus({ preventScroll: true }); const r = pop.getBoundingClientRect(); if (r.bottom > window.innerHeight - 8) window.scrollBy({ top: Math.min(r.bottom - window.innerHeight + 16, btn.getBoundingClientRect().top - 80), behavior: 'smooth' }); }
+      return;
+    }
     const step = e.target.closest('[data-pax-step]');
-    if (step && !step.disabled) { const root = step.closest('[data-pax]'), inp = $(`input[name="${step.dataset.paxStep}"]`, root); inp.value = +inp.value + +step.dataset.d; const rooms = $('input[name="rooms"]', root); if (rooms) { const ppl = +$('input[name="adults"]', root).value + +$('input[name="children"]', root).value; if (+rooms.value > ppl) rooms.value = Math.max(1, ppl); } paxSync(root); inp.dispatchEvent(new Event('change', { bubbles: true })); if (DS.motion && DS.motion.pop) DS.motion.pop($(`[data-pax-val="${step.dataset.paxStep}"]`, root)); return; }
-    const done = e.target.closest('[data-pax-done]'); if (done) paxClose(done.closest('[data-pax]'), true);
+    if (step && !step.disabled) { const root = step.closest('[data-pax]'), inp = $(`input[name="${step.dataset.paxStep}"]`, root); inp.value = +inp.value + +step.dataset.d; paxSync(root); inp.dispatchEvent(new Event('change', { bubbles: true })); if (DS.motion && DS.motion.pop) DS.motion.pop($(`[data-pax-val="${step.dataset.paxStep}"]`, root)); return; }
+    const sw = e.target.closest('[data-pax-group]'); if (sw) { paxGroup(sw.closest('[data-pax]'), sw.dataset.paxGroup === 'on'); return; }
+    const done = e.target.closest('[data-pax-done]'); if (done) { const root = done.closest('[data-pax]'); if (DS.paxValidate(root)) paxClose(root, true); }
   });
+  document.addEventListener('input', e => { if (e.target.matches && e.target.matches('[data-pax-groupn]')) { const root = e.target.closest('[data-pax]'); root.classList.remove('is-invalid'); paxSync(root); $('input[name="adults"]', root).dispatchEvent(new Event('change', { bubbles: true })); } });
+  /* A group must be 13 to 100. Returns false (and shows why) when it is not. */
+  DS.paxValidate = root => {
+    if (!root || $('input[name="group"]', root).value !== '1') return true;
+    const gi = $('[data-pax-groupn]', root), n = +gi.value;
+    if (Number.isInteger(n) && n >= GROUP_MIN && n <= GROUP_MAX) { root.classList.remove('is-invalid'); return true; }
+    const pop = $('.pax__pop', root); if (pop && pop.hidden) { pop.hidden = false; $('.pax__btn', root).setAttribute('aria-expanded', 'true'); }
+    root.classList.add('is-invalid'); $('.field__error', root).textContent = `Enter a group size from ${GROUP_MIN} to ${GROUP_MAX}.`;
+    gi.focus(); if (DS.motion && DS.motion.shake) DS.motion.shake(gi);
+    return false;
+  };
   // Escape closes only the open picker (and must not also close a surrounding modal)
-  document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; const r = e.target.closest && e.target.closest('[data-pax]'); if (r && !$('.pax__pop', r).hidden) { e.stopPropagation(); paxClose(r, true); } }, true);
+  document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; const r = e.target.closest && e.target.closest('[data-pax]'); const p = r && $('.pax__pop', r); if (p && !p.hidden) { e.stopPropagation(); paxClose(r, true); } }, true);
 
   /* ---------- Date picker with modes ----------
      One control for "when": exact dates (departure + return), a month, or flexible
@@ -503,6 +556,7 @@
   /* Tours: the destination decides which months and departures are offered */
   DS.whenSetMonths = (root, list) => { const box = $('[data-when-months]', root); if (!box) return; const cur = wv(root, 'month').value; box.innerHTML = monthChips(list, whenMode(root) === 'month' ? cur : ''); whenSync(root); };
   DS.whenSetSuggest = (root, s) => { const box = $('[data-when-suggest]', root); if (!box) return; box.innerHTML = suggestHTML(s, DS.whenValues(root)); };
+  DS.whenSetLabels = (root, L = {}) => { const d = $('[data-when-depart]', root), r = $('[data-when-ret]', root); if (d && L.depart) $(`label[for="${d.id}"]`, root).textContent = L.depart; if (r && L.ret) $(`label[for="${r.id}"]`, root).textContent = L.ret; };
   DS.whenSetOneWay = (root, on) => { root.dataset.oneway = on ? '1' : ''; const f = $('[data-when-retfield]', root); if (f) f.hidden = on; whenSync(root); };
   const whenOpen = root => {
     const pop = $('.when__pop', root), btn = $('.when__btn', root); if (!btn) return;
@@ -605,7 +659,7 @@
   let comboSeq = 0;
   DS.placeField = (o = {}) => {
     const id = o.id || 'combo-' + (++comboSeq);
-    return `<div class="field combo ${o.full ? 'field--full' : ''}" data-combo="${o.source || 'places'}" ${o.required ? 'data-required="1"' : ''}>
+    return `<div class="field combo ${o.full ? 'field--full' : ''}" data-combo="${o.source || 'places'}" ${o.required ? 'data-required="1"' : ''} data-picked="${esc(o.value ? DS.placeText(o.source, o.value) : '')}">
       <label class="field__label" for="${id}">${esc(o.label || 'Destination')}</label>
       <div class="field__control">${DS.icon(o.icon || 'pin')}<input class="input combo__input" id="${id}" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${id}-list" autocomplete="off" spellcheck="false" placeholder="${esc(o.placeholder || 'Search')}" value="${esc(DS.placeText(o.source, o.value))}">
       <ul class="combo__list" id="${id}-list" role="listbox" aria-label="${esc(o.label || 'Destination')} suggestions" hidden></ul></div>
@@ -614,7 +668,9 @@
   };
   const comboParts = root => ({ input: $('.combo__input', root), list: $('.combo__list', root), hidden: $('input[type="hidden"]', root), source: root.dataset.combo });
   function comboRender(root) {
-    const { input, list, source } = comboParts(root), q = input.value;
+    const { input, list, source, hidden } = comboParts(root);
+    // A field already showing its chosen place lists popular choices, not "no match"
+    const q = root.dataset.picked && input.value === root.dataset.picked ? '' : input.value;
     const res = DS.searchPlaces(source, q);
     const head = !norm(q) ? `<li class="combo__head" role="presentation">${source === 'airports' ? 'Popular airports' : 'Popular choices'}</li>` : '';
     list.innerHTML = head + (res.length ? res.map((r, i) => source === 'airports'
@@ -626,11 +682,11 @@
   const comboClose = root => { const { input, list } = comboParts(root); list.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); };
   function comboPick(root, opt) {
     const { input, hidden } = comboParts(root);
-    input.value = opt.dataset.label; hidden.value = opt.dataset.value;
+    input.value = opt.dataset.label; hidden.value = opt.dataset.value; root.dataset.picked = opt.dataset.label;
     root.classList.remove('is-invalid'); comboClose(root);
     hidden.dispatchEvent(new Event('change', { bubbles: true }));
   }
-  DS.comboSet = (root, value) => { const { input, hidden, source } = comboParts(root); hidden.value = value || ''; input.value = DS.placeText(source, value); };
+  DS.comboSet = (root, value) => { const { input, hidden, source } = comboParts(root); hidden.value = value || ''; input.value = DS.placeText(source, value); root.dataset.picked = value ? input.value : ''; };
   // Suggestions open on click, typing or ArrowDown, not on focus alone, so a form that
   // focuses its first field does not open with a list covering it
   document.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('.combo__input')) e.target.select(); });
@@ -648,8 +704,8 @@
       if (root.contains(document.activeElement)) return;
       const { input, hidden, source } = comboParts(root), n = norm(input.value);
       // A typed code or an exact name counts as picking it
-      if (source === 'airports' && n) { const a = DS.airports.find(x => x.code.toLowerCase() === n) || (DS.airports.filter(x => norm(x.city) === n).length === 1 && DS.airports.find(x => norm(x.city) === n)); if (a) { hidden.value = a.code; input.value = `${a.city} (${a.code})`; } }
-      else if (n) { const list = source === 'countries' ? DS.countries : DS.places; const p = list.find(x => norm(x.label) === n || norm(x.label.split(',')[0]) === n); if (p) { hidden.value = p.label; input.value = p.label; } }
+      if (source === 'airports' && n) { const a = DS.airports.find(x => x.code.toLowerCase() === n) || (DS.airports.filter(x => norm(x.city) === n).length === 1 && DS.airports.find(x => norm(x.city) === n)); if (a) { hidden.value = a.code; input.value = `${a.city} (${a.code})`; root.dataset.picked = input.value; } }
+      else if (n) { const list = source === 'countries' ? DS.countries : DS.places; const p = list.find(x => norm(x.label) === n || norm(x.label.split(',')[0]) === n); if (p) { hidden.value = p.label; input.value = p.label; root.dataset.picked = input.value; } }
       comboClose(root);
     }, 120);
   });
@@ -718,25 +774,76 @@
       box.hidden = !on; if (on) { if (DS.motion && DS.motion.tabIn) DS.motion.tabIn(box); $('[data-dep-depart]', root).focus(); }
     }
     if (e.target.matches('[data-dep-depart]')) {
-      // Return defaults to the package length; the traveller can still change it
+      // Return defaults to the package length; the traveler can still change it
       const d = e.target.value, r = $('[data-dep-ret]', root);
       r.min = d || r.min; if (d && (!r.value || r.value <= d)) r.value = DS.addDays(d, +root.dataset.nights);
     }
     root.dispatchEvent(new CustomEvent('ds:dep', { bubbles: true }));
   });
 
+  /* ---------- Custom trip: what to include ----------
+     A custom trip needs at least two things. With only one ticked, the traveler is
+     pointed to the tab that books that one service directly. */
+  const INCL_MIN = 2;
+  const SINGLE = {
+    flights: { tab: 'flights', kind: 'flight', label: 'flights' }, hotel: { tab: 'hotels', kind: 'hotel', label: 'a hotel' },
+    'airport-transfers': { tab: 'transport', kind: 'transport', service: 'airport-transfer', label: 'an airport transfer' }, 'private-car': { tab: 'transport', kind: 'transport', service: 'private-car', label: 'a private car' },
+    visa: { tab: 'visa', kind: 'visa', label: 'visa assistance' }, insurance: { tab: 'insurance', kind: 'insurance', label: 'travel insurance' },
+    'city-tour': { tab: 'tours', label: 'a tour package' }, activities: { tab: 'tours', label: 'a tour package' }, 'theme-parks': { tab: 'tours', label: 'a tour package' }, 'island-hopping': { tab: 'tours', label: 'a tour package' }
+  };
+  DS.inclSingle = id => SINGLE[id];
+  const inclCount = n => n === 0 ? `Pick at least ${INCL_MIN}` : n < INCL_MIN ? `${n} picked · pick ${INCL_MIN - n} more` : `${n} picked`;
+  DS.inclPicker = (o = {}) => {
+    const sel = [].concat(o.selected || []);
+    return `<fieldset class="field field--full incl-pick ${o.compact ? 'incl-pick--compact' : ''} ${sel.length >= INCL_MIN ? 'is-ok' : ''}" data-incl>
+      <legend class="field__label">${esc(o.legend || 'What should we include?')}<span class="incl-pick__count" data-incl-count aria-live="polite">${inclCount(sel.length)}</span></legend>
+      <div class="incl-pick__grid">${DS.cartCatalog.customIncludes.map(x => `<label class="incl-chip"><input type="checkbox" name="incl" value="${x.id}" ${sel.includes(x.id) ? 'checked' : ''}><span>${DS.icon(x.icon)}${esc(x.label)}</span></label>`).join('')}</div>
+      <div class="incl-pick__hint" data-incl-hint hidden></div>
+      <span class="field__error" aria-live="polite"></span>
+    </fieldset>`;
+  };
+  function inclSync(root) {
+    const on = $$('input[name="incl"]:checked', root).map(i => i.value);
+    $('[data-incl-count]', root).textContent = inclCount(on.length);
+    root.classList.toggle('is-ok', on.length >= INCL_MIN);
+    const hint = $('[data-incl-hint]', root), one = on.length === 1 && SINGLE[on[0]];
+    hint.hidden = !one;
+    if (one) hint.innerHTML = `${DS.icon('info')}<span>Only need ${one.label}? You can request it directly.</span><button type="button" class="btn btn--sm btn--ghost" data-incl-single="${on[0]}">${one.kind ? `Request ${one.label}` : 'Browse tour packages'} ${DS.icon('arrowRight', 'arrow')}</button>`;
+    if (on.length >= INCL_MIN) { root.classList.remove('is-invalid'); }
+  }
+  DS.inclSync = inclSync;
+  DS.inclValidate = root => {
+    if (!root) return true;
+    const n = $$('input[name="incl"]:checked', root).length; inclSync(root);
+    if (n >= INCL_MIN) return true;
+    root.classList.add('is-invalid');
+    $('.field__error', root).textContent = n === 0 ? `Pick at least ${INCL_MIN} things for your custom trip.` : `A custom trip combines at least ${INCL_MIN} things. Pick one more, or request the single service instead.`;
+    root.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const first = $('input[name="incl"]:not(:checked)', root); if (first) first.focus({ preventScroll: true });
+    if (DS.motion && DS.motion.shake) DS.motion.shake($('.incl-pick__grid', root));
+    return false;
+  };
+  document.addEventListener('change', e => { if (e.target.matches && e.target.matches('[data-incl] input[name="incl"]')) inclSync(e.target.closest('[data-incl]')); });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-incl-single]'); if (!b) return;
+    b.dispatchEvent(new CustomEvent('ds:incl-single', { bubbles: true, detail: { id: b.dataset.inclSingle, ...SINGLE[b.dataset.inclSingle] } }));
+  });
+
   /* ---------- Search widget (homepage) ----------
      Each tab asks only what that service needs. Tours: trip type, then a destination,
-     then dates that follow the destination's departures. Flights, hotels, insurance and
-     corporate travel are worldwide (no trip type). Everything except Tours goes into
-     the Travel Cart (corporate travel stays a proposal request). */
+     then dates that follow the destination's departures. Custom Trip: what to include,
+     where, when and who. Flights, hotels, transport, insurance and corporate travel are
+     worldwide (no trip type). Visa, flights, hotels and transport can add several lines
+     at once ("Add another ..."). Everything except Tours and Custom Trip goes straight
+     into the Travel Cart (corporate travel stays a proposal request). */
   function initSearchWidget() {
     const w = $('[data-search-widget]'); if (!w) return;
     const tabs = $('.search-tabs', w), panel = $('.search-panel', w);
-    const TAB_LABEL = { tours: 'Tours & Packages', visa: 'Visa', flights: 'Flights', hotels: 'Hotels', transport: 'Transport', cruises: 'Cruises', insurance: 'Insurance', corporate: 'Corporate' };
+    const TAB_LABEL = { tours: 'Tours & Packages', custom: 'Custom Trip', visa: 'Visa', flights: 'Flights', hotels: 'Hotels', transport: 'Transport', cruises: 'Cruises', insurance: 'Insurance', corporate: 'Corporate' };
     const KIND = { flights: 'flight', hotels: 'hotel', transport: 'transport', cruises: 'cruise', insurance: 'insurance', visa: 'visa' };
-    tabs.innerHTML = DS.services.map((s, i) => `<button type="button" role="tab" class="search-tab" id="stab-${s.id}" aria-selected="${i === 0}" aria-controls="spanel" data-tab="${s.id}" tabindex="${i === 0 ? 0 : -1}">${DS.icon(s.icon)}${esc(TAB_LABEL[s.id] || s.name)}</button>`).join('');
-    const today = DS.todayISO();
+    // Custom Trip gets its own tab, right after packages
+    const TABS = [DS.services[0], { id: 'custom', icon: 'sparkles' }, ...DS.services.slice(1)];
+    tabs.innerHTML = TABS.map((s, i) => `<button type="button" role="tab" class="search-tab ${s.id === 'custom' ? 'search-tab--custom' : ''}" id="stab-${s.id}" aria-selected="${i === 0}" aria-controls="spanel" data-tab="${s.id}" tabindex="${i === 0 ? 0 : -1}">${DS.icon(s.icon)}${esc(TAB_LABEL[s.id] || s.name)}</button>`).join('');
     const st = { type: 'international', trip: 'return' };
     const C = DS.cartCatalog;
     const typeHelp = () => { const n = DS.destinations.filter(d => d.type === st.type).length; return st.type === 'domestic' ? `${n} Philippine destinations, no visa needed` : `${n} destinations across Asia, visa help included`; };
@@ -747,10 +854,10 @@
         <label class="seg__opt"><input type="radio" name="trip" value="return" ${st.trip === 'return' ? 'checked' : ''}><span>Round trip</span></label>
         <label class="seg__opt"><input type="radio" name="trip" value="oneway" ${st.trip === 'oneway' ? 'checked' : ''}><span>One way</span></label></div><span class="trip-type__help">Airfare only, to any airport in the world</span></div>`;
     const sel = (id, label, icon, options, name) => `<div class="field"><label class="field__label" for="${id}">${label}</label><div class="field__control">${DS.icon(icon)}<select class="select" id="${id}" name="${name}">${options}</select></div></div>`;
-    const date = (id, label, name) => `<div class="field"><label class="field__label" for="${id}">${label}</label><div class="field__control">${DS.icon('calendar')}<input class="input" id="${id}" name="${name}" type="date" min="${today}"></div></div>`;
     const addBtn = `<button type="submit" class="btn btn--primary btn--lg search-form__submit" data-action="cart">${DS.icon('bagPlus')} Add to Travel Cart</button>`;
     const hint = (icon, text) => `<p class="search-form__hint">${DS.icon(icon)}<span>${text}</span></p>`;
     const alt = (attr, icon, strong, text) => `<button type="button" class="search-form__alt" ${attr}>${DS.icon(icon)}<span><strong>${strong}</strong>${text ? ` ${text}` : ''}</span>${DS.icon('arrowRight', 'arrow')}</button>`;
+    const svc = id => DS.getTransport(id);
 
     /* Tours: months and departures that exist for the chosen trip type and destination */
     const tourPkgs = dest => DS.packages.filter(p => p.type === st.type && (!dest || p.destinationId === dest));
@@ -764,57 +871,73 @@
       const items = tourPkgs(dest).flatMap(p => DS.departuresFor(p).map(x => ({ depart: x.date, ret: x.ret, title: `${p.title.split(':')[0]} · ${p.duration.days}D${p.duration.nights}N` }))).sort((a, b) => a.depart.localeCompare(b.depart));
       return { heading: `Scheduled departures for ${d.name}`, items };
     };
+    let carry = {}; // values carried from one tab to another (e.g. Tours → Custom Trip)
     const FORMS = {
       tours: () => ({ cols: 3, top: typeField(), body: sel('sw-dest', 'Destination', 'pin', DS.destOptions(st.type, '', { counts: true }), 'dest') +
           DS.whenPicker({ id: 'sw-when', label: 'Travel dates', modes: ['dates', 'month', 'flex'], months: tourMonths(''), suggest: tourSuggest(''), placeholder: 'Any dates', datesHelp: 'Dates that do not match a scheduled departure are quoted as a custom trip.', monthHelp: 'Months with scheduled departures. Prefer another month? Build a custom trip.' }) +
-          DS.paxPicker({ label: 'Travellers' }),
+          DS.paxPicker({ label: 'Travelers' }),
         cta: `<button type="submit" class="btn btn--primary btn--lg search-form__submit" data-action="search">${DS.icon('search')} Search packages</button>`,
-        foot: hint('sparkles', 'Pick a destination and the dates follow its departures. Prices are sample data.') + alt('data-custom-trip', 'sparkles', 'Build a custom trip', 'Choose what to include') }),
+        foot: hint('sparkles', 'Pick a destination and the dates follow its departures. Prices are sample data.') + alt('data-goto-custom', 'sparkles', 'No package fits?', 'Build a custom trip') }),
+      custom: () => ({ cols: 3, top: DS.inclPicker({ compact: true, legend: 'What should we include?', selected: carry.incl }),
+        body: DS.placeField({ id: 'sw-where', name: 'where', label: 'Where to?', source: 'places', value: carry.where || '', placeholder: 'City, country, or several' }) +
+          DS.whenPicker({ id: 'sw-xwhen', label: 'Travel dates', modes: ['dates', 'month', 'flex'], value: carry, placeholder: 'Any dates' }) +
+          DS.paxPicker({ label: 'Travelers', adults: carry.adults || 2, children: carry.children || 0, group: carry.group }),
+        cta: `<button type="submit" class="btn btn--primary btn--lg search-form__submit" data-action="custom">${DS.icon('sparkles')} Plan my trip</button>`,
+        foot: hint('headset', 'Pick at least 2 things. Next you can add pace, hotel class, budget and notes. A consultant designs the trip and quotes it; nothing is booked.') }),
       visa: () => ({ cols: 3, body: sel('sw-visa', 'Visa for', 'passport', C.visa.map(v => `<option value="${v.id}">${esc(v.name)}</option>`).join(''), 'country') +
           DS.whenPicker({ id: 'sw-vwhen', label: 'Travel dates', modes: ['dates', 'month'], retOptional: true, placeholder: 'Not decided yet', datesHelp: 'Not sure yet? Leave the dates empty. Your consultant plans the application around them later.' }) +
           DS.paxPicker({ label: 'Applicants', adults: 1, noun: 'applicant' }),
-        cta: addBtn, foot: hint('passport', 'Want to see the documents first? <a href="visa.html">Run the Visa Readiness Checker</a>.') }),
+        cta: addBtn, foot: hint('passport', 'Want to see the documents first? <a href="visa.html">Run the Visa Readiness Checker</a>.') + alt('data-multi="visa"', 'plus', 'Add another country', 'for a multi-country trip') }),
       flights: () => ({ cols: 4, top: tripField(), body: DS.placeField({ id: 'sw-from', name: 'origin', label: 'From', source: 'airports', icon: 'plane', value: 'MNL', placeholder: 'City, airport or code' }) +
           DS.placeField({ id: 'sw-to', name: 'to', label: 'To', source: 'airports', icon: 'pin', placeholder: 'City, airport or code', required: true }) +
           DS.whenPicker({ id: 'sw-fwhen', label: 'Dates', modes: ['dates'], oneWay: st.trip === 'oneway', placeholder: 'Add dates' }) +
           DS.paxPicker({ label: 'Passengers', noun: 'passenger' }),
-        cta: addBtn, foot: hint('headset', 'Type a city, a country or a 3-letter code such as NRT. Your consultant finds and books the fare; choose the cabin in your cart.') }),
+        cta: addBtn, foot: hint('headset', 'Type a city, a country or a 3-letter code such as NRT. Choose the cabin in your cart.') + alt('data-multi="flight"', 'plus', 'Add another flight', 'for a multi-city trip') }),
       hotels: () => ({ cols: 3, body: DS.placeField({ id: 'sw-hcity', name: 'city', label: 'Destination', source: 'places', placeholder: 'City or area', required: true }) +
           DS.whenPicker({ id: 'sw-hwhen', label: 'Check-in – check-out', labels: { depart: 'Check-in', ret: 'Check-out' }, modes: ['dates'], placeholder: 'Add dates' }) +
           DS.paxPicker({ label: 'Guests and rooms', noun: 'guest', rooms: 1 }),
-        cta: addBtn, foot: hint('bed', 'Hotel class and preferences are set in your cart.') + alt('data-hotels-multi', 'plus', 'Add another city', 'for a multi-city stay') }),
-      transport: () => ({ cols: 3, top: typeField(), body: sel('sw-tdest', 'Destination', 'pin', DS.destOptions(st.type), 'dest') + date('sw-tdate', 'Date', 'date') + DS.paxPicker({ label: 'Passengers', noun: 'passenger' }),
-        cta: addBtn, foot: hint('car', 'Airport transfer by default. Switch to a day tour or a private van in your cart.') }),
+        cta: addBtn, foot: hint('bed', 'Hotel class and preferences are set in your cart.') + alt('data-multi="hotel"', 'plus', 'Add another city', 'for a multi-city stay') }),
+      transport: () => ({ cols: 4, body: sel('sw-tsvc', 'Service', 'car', C.transportServices.map(t => `<option value="${t.id}">${esc(t.label)}</option>`).join(''), 'service') +
+          DS.placeField({ id: 'sw-tplace', name: 'place', label: 'Pick-up city or airport', source: 'places', placeholder: 'City, airport or area' }) +
+          DS.whenPicker({ id: 'sw-twhen', label: 'Dates', labels: svc('airport-transfer').labels, modes: ['dates'], oneWay: true, placeholder: 'Add a date' }) +
+          DS.paxPicker({ label: 'Passengers', noun: 'passenger' }),
+        cta: addBtn, foot: hint('car', 'Transfers, chauffeured cars, self-drive rentals and group coaches, anywhere you travel.') + alt('data-multi="transport"', 'plus', 'Add another', 'transfer or car') }),
       cruises: () => ({ cols: 3, body: sel('sw-region', 'Cruise region', 'ship', C.cruiseRegions.map(r => `<option>${esc(r)}</option>`).join(''), 'region') +
           DS.whenPicker({ id: 'sw-cwhen', label: 'Sailing dates', modes: ['month', 'dates', 'flex'], placeholder: 'Flexible', labels: { depart: 'Sail from', ret: 'Back by' } }) + DS.paxPicker({ label: 'Guests', noun: 'guest' }),
         cta: addBtn, foot: hint('ship', 'Cruise fares are quoted by your consultant, with pre- and post-cruise plans.') }),
       insurance: () => ({ cols: 3, body: DS.placeField({ id: 'sw-idest', name: 'dest', label: 'Destination', source: 'countries', icon: 'globe', placeholder: 'Country or region' }) +
-          DS.whenPicker({ id: 'sw-iwhen', label: 'Travel dates', modes: ['dates'], placeholder: 'Add dates' }) + DS.paxPicker({ label: 'Travellers' }),
+          DS.whenPicker({ id: 'sw-iwhen', label: 'Travel dates', modes: ['dates'], placeholder: 'Add dates' }) + DS.paxPicker({ label: 'Travelers' }),
         cta: addBtn, foot: hint('shield', 'Cover is explained in plain language before you buy. Choose standard or comprehensive in your cart.') }),
       corporate: () => ({ cols: 3, body: DS.placeField({ id: 'sw-cdest', name: 'dest', label: 'Destination', source: 'places', placeholder: 'City, or several cities' }) +
           DS.whenPicker({ id: 'sw-cowhen', label: 'Travel dates', modes: ['dates', 'month', 'flex'], placeholder: 'Not decided yet' }) +
-          DS.paxPicker({ label: 'Delegates', noun: 'delegate', adults: 10, max: 60 }),
+          DS.paxPicker({ label: 'Delegates', noun: 'delegate', adults: 10 }),
         cta: `<button type="submit" class="btn btn--dark btn--lg search-form__submit" data-action="enquiry">${DS.icon('briefcase')} Request a proposal</button>`,
         foot: hint('briefcase', 'Corporate and group travel gets a dedicated consultant and a written proposal.') })
     };
     let current = 'tours';
     const render = id => {
       current = id;
-      const f = FORMS[id]();
-      panel.innerHTML = `<form class="search-form ${f.top ? 'has-type' : ''}" style="--cols:${f.cols}" data-tabform="${id}" novalidate>${f.top || ''}${f.body}${f.cta}<div class="search-form__foot">${f.foot}</div></form>`;
+      const f = FORMS[id](); carry = {};
+      panel.innerHTML = `<form class="search-form search-form--${id} ${f.top ? 'has-type' : ''}" style="--cols:${f.cols}" data-tabform="${id}" novalidate>${f.top || ''}${f.body}${f.cta}<div class="search-form__foot">${f.foot}</div></form>`;
       panel.id = 'spanel'; panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', 'stab-' + id);
       if (DS.motion && DS.motion.tabIn) DS.motion.tabIn(panel);
     };
-    DS.tabs(w); w.addEventListener('ds:tab', e => render(e.detail.tab.dataset.tab));
+    const tabCtl = DS.tabs(w); w.addEventListener('ds:tab', e => render(e.detail.tab.dataset.tab));
+    const goTab = (id, values) => { carry = values || {}; const i = TABS.findIndex(t => t.id === id); if (i >= 0) tabCtl.activate(i, true); };
+    DS.searchTab = goTab;
     render('tours');
+    // index.html#custom opens straight on the Custom Trip tab (used by the menu)
+    if (location.hash === '#custom') { goTab('custom'); setTimeout(() => w.scrollIntoView({ block: 'center' }), 300); }
+    window.addEventListener('hashchange', () => { if (location.hash === '#custom') { goTab('custom'); w.scrollIntoView({ block: 'center', behavior: 'smooth' }); } });
     const syncTourDates = form => {
       const root = $('#sw-when', form); if (!root) return;
       const dest = $('#sw-dest', form).value;
       DS.whenSetMonths(root, tourMonths(dest)); DS.whenSetSuggest(root, tourSuggest(dest));
     };
+    // Transport: one date for transfers and day tours, a start and end for hires and rentals
+    const syncTransport = form => { const t = svc($('#sw-tsvc', form).value), root = $('#sw-twhen', form); DS.whenSetLabels(root, t.labels); DS.whenSetOneWay(root, t.dates === 'single'); };
     w.addEventListener('change', e => {
       const form = e.target.form || e.target.closest('form');
-      // Trip type: rebuild the destination list (and, for Tours, the months and departures)
       if (e.target.name === 'type') {
         st.type = e.target.value;
         const help = $('[data-type-help]', form); if (help) help.textContent = typeHelp();
@@ -822,36 +945,58 @@
         syncTourDates(form);
       }
       if (e.target.id === 'sw-dest') syncTourDates(form);
+      if (e.target.id === 'sw-tsvc') syncTransport(form);
       if (e.target.name === 'trip') { st.trip = e.target.value; DS.whenSetOneWay($('#sw-fwhen', form), st.trip === 'oneway'); }
     });
+    const formData = form => Object.fromEntries([...new FormData(form).entries()].filter(([k]) => !k.startsWith('_')));
     // Secondary actions under the form
     w.addEventListener('click', e => {
       const form = $('form', panel);
-      if (e.target.closest('[data-custom-trip]')) {
-        const v = { adults: 2, children: 0 };
-        if (form && current === 'tours') { const data = Object.fromEntries(new FormData(form).entries()); const d = DS.getDestination(data.dest); Object.assign(v, data, { where: d ? d.name + (d.country !== d.name ? ', ' + d.country : '') : '' }); }
-        if (DS.cart) DS.cart.openForm('custom', { values: v });
+      if (e.target.closest('[data-goto-custom]')) {
+        const data = formData(form), d = DS.getDestination(data.dest);
+        goTab('custom', { ...data, where: d ? (d.type === 'domestic' ? `${d.name}, Philippines` : d.country) : '' });
+        return;
       }
-      if (e.target.closest('[data-hotels-multi]')) {
-        const data = Object.fromEntries(new FormData(form).entries());
-        if (DS.cart) DS.cart.openHotels({ rows: [{ city: data.city, depart: data.depart, ret: data.ret }, { city: '', depart: data.ret, ret: '' }], adults: +data.adults || 2, children: +data.children || 0, rooms: +data.rooms || 1 });
+      const m = e.target.closest('[data-multi]');
+      if (m && DS.cart) {
+        if (!DS.paxValidate($('[data-pax]', form))) return;
+        const data = formData(form), pax = { adults: +data.adults || 1, children: +data.children || 0, group: data.group, rooms: +data.rooms || 1 };
+        const rows = {
+          hotel: [{ city: data.city, depart: data.depart, ret: data.ret }, { depart: data.ret }],
+          transport: [{ service: data.service, place: data.place, depart: data.depart, ret: data.ret }, { service: data.service === 'airport-transfer' ? 'airport-transfer' : 'day-tour', place: data.place }],
+          visa: [{ country: data.country, depart: data.depart, ret: data.ret }, { country: data.country === 'japan' ? 'korea' : 'japan', depart: data.ret }],
+          flight: [{ origin: data.origin, to: data.to, depart: data.depart }, { origin: data.to, to: '', depart: data.ret }]
+        }[m.dataset.multi];
+        DS.cart.openMulti(m.dataset.multi, { rows, ...pax });
       }
     });
+    // "Only need flights?" inside the Custom Trip tab: jump to that service's tab
+    w.addEventListener('ds:incl-single', e => {
+      const form = $('form', panel), data = formData(form);
+      goTab(e.detail.tab, { ...data, place: data.where });
+    });
     w.addEventListener('submit', e => {
-      e.preventDefault(); const f = e.target; const data = Object.fromEntries([...new FormData(f).entries()].filter(([k]) => !k.startsWith('_')));
-      const action = (e.submitter && e.submitter.dataset.action) || 'search';
+      e.preventDefault(); const f = e.target; const data = formData(f);
+      const action = (e.submitter && e.submitter.dataset.action) || $('.search-form__submit', f).dataset.action;
       const adults = +data.adults || 1, children = +data.children || 0;
       const whenRoot = $('[data-when]', f);
+      if (!DS.paxValidate($('[data-pax]', f))) return;
       if (action === 'search') {
         if (whenRoot && !DS.whenValidate(whenRoot)) return;
         const q = new URLSearchParams(); if (data.dest) q.set('dest', data.dest); if (data.type) q.set('type', data.type);
         ['when', 'depart', 'ret', 'month', 'nights'].forEach(k => { if (data[k]) q.set(k, data[k]); });
-        q.set('adults', adults); if (children) q.set('children', children);
+        q.set('adults', adults); if (children) q.set('children', children); if (data.group) q.set('group', '1');
         location.href = 'explore.html?' + q.toString(); return;
+      }
+      if (action === 'custom') {
+        if (!DS.inclValidate($('[data-incl]', f))) return;
+        if (whenRoot && !DS.whenValidate(whenRoot)) return;
+        DS.cart.openForm('custom', { values: { ...data, incl: new FormData(f).getAll('incl'), adults, children } });
+        return;
       }
       if (action === 'enquiry') {
         if (whenRoot && !DS.whenValidate(whenRoot)) return;
-        DS.routeService('corporate', { destination: data.dest ? 'Other' : 'Multiple / undecided', travellers: adults + children, message: [data.dest ? `Destination: ${data.dest}.` : '', data.when ? `Travel dates: ${DS.whenText(data)}.` : ''].filter(Boolean).join(' ') }); return;
+        DS.routeService('corporate', { destination: data.dest ? 'Other' : 'Multiple / undecided', travelers: adults + children, message: [data.dest ? `Destination: ${data.dest}.` : '', data.when ? `Travel dates: ${DS.whenText(data)}.` : '', data.group ? `Group of ${adults} delegates.` : ''].filter(Boolean).join(' ') }); return;
       }
       const kind = KIND[current];
       if (kind === 'flight') {
@@ -862,11 +1007,11 @@
         if (!data.city) { DS.comboError($('#sw-hcity', f).closest('[data-combo]'), 'Enter a city or area.'); return; }
         if (!DS.whenValidate(whenRoot, { retLabel: 'Check-out', departLabel: 'check-in' })) return;
       }
+      if (kind === 'transport' && !data.place) { DS.comboError($('#sw-tplace', f).closest('[data-combo]'), 'Enter a city, airport or area.'); return; }
       if (whenRoot && !DS.whenValidate(whenRoot)) return;
       const details = { ...data, adults, children }; delete details.type;
       if (kind === 'hotel') Object.assign(details, { rooms: +data.rooms || 1, stars: 'Any' });
       if (kind === 'flight') Object.assign(details, { cabin: 'Economy', trip: st.trip });
-      if (kind === 'transport') details.service = 'Airport transfer';
       if (kind === 'cruise') details.cabin = 'Ocean view';
       if (kind === 'insurance') details.plan = 'Standard cover';
       if (DS.cart) DS.cart.addAndShow(kind, details);
@@ -882,7 +1027,7 @@
     if (stories) stories.innerHTML = DS.stories.map(DS.renderStoryCard).join('');
     if (services) services.innerHTML = DS.services.map(DS.renderServiceCard).join('');
     const chips = $('[data-custom-chips]');
-    if (chips) chips.innerHTML = DS.cartCatalog.customIncludes.map(x => `<label class="incl-chip"><input type="checkbox" name="incl" value="${x.id}"><span>${DS.icon(x.icon)}${esc(x.label)}</span></label>`).join('');
+    if (chips) chips.innerHTML = DS.inclPicker({ legend: 'What should your trip include?' });
     initSearchWidget();
   }
 

@@ -16,7 +16,7 @@
     const categories = [...new Set(DS.packages.map(p => p.category))];
     const state = {
       q: q.get('q') || '', dest: q.get('dest') || '', type: q.get('type') ? [q.get('type')] : [], region: [], budget: MAX, duration: 'any', category: [], sort: q.get('sort') || 'recommended',
-      pax: q.get('pax') || '', date: q.get('date') || '', month: q.get('month') || '', adults: q.get('adults') || '', children: q.get('children') || '',
+      pax: q.get('pax') || '', date: q.get('date') || '', month: q.get('month') || '', adults: q.get('adults') || '', children: q.get('children') || '', group: q.get('group') === '1',
       when: q.get('when') || '', depart: q.get('depart') || '', ret: q.get('ret') || '', nights: q.get('nights') || ''
     };
     // Flexible search ("5 nights, any month") pre-sets the duration filter
@@ -84,7 +84,7 @@
       $('[data-clear-dest]', intro).addEventListener('click', () => { state.dest = ''; syncRail(); apply(); });
     }
     const when = (state.when || state.depart || state.month) ? DS.whenText(state) : state.date ? fmtDate(state.date) : '';
-    const who = state.adults ? DS.paxLabel(+state.adults || 1, +state.children || 0) : state.pax ? `${state.pax} traveller${state.pax === '1' ? '' : 's'}` : '';
+    const who = state.adults ? DS.paxLabel(+state.adults || 1, +state.children || 0, 'traveler', undefined, state.group) : state.pax ? `${state.pax} traveler${state.pax === '1' ? '' : 's'}` : '';
     if (who || when) { context.hidden = false; context.innerHTML = `${DS.icon('info')}<span>Showing packages${who ? ` for <strong>${esc(who)}</strong>` : ''}${when ? `, <strong>${esc(when)}</strong>` : ''}. ${hasDates() ? 'Packages that depart on your dates come first. Different dates? Choose “Another date” on a package to make it a custom trip.' : 'Open a package to see its departures and add it to your Travel Cart.'}</span>`; }
     /* A package "matches" when one of its departures falls in the chosen month, or within 3 days of the chosen departure date */
     const matchFor = p => {
@@ -120,14 +120,14 @@
         } else {
           results.innerHTML = list.map(p => DS.renderPackageCard(p, { match: matchFor(p) })).join('');
           // Carry the group and dates into each package page
-          if (state.pax || state.adults || state.date || hasDates()) $$('a[href^="package.html"]', results).forEach(a => { const u = new URL(a.getAttribute('href'), location.href); if (state.adults) { u.searchParams.set('adults', state.adults); if (+state.children) u.searchParams.set('children', state.children); } else if (state.pax) u.searchParams.set('pax', state.pax); DATE_KEYS.forEach(k => { if (state[k]) u.searchParams.set(k, state[k]); }); if (!hasDates() && state.date) u.searchParams.set('date', state.date); a.setAttribute('href', u.pathname.split('/').pop() + u.search); });
+          if (state.pax || state.adults || state.date || hasDates()) $$('a[href^="package.html"]', results).forEach(a => { const u = new URL(a.getAttribute('href'), location.href); if (state.adults) { u.searchParams.set('adults', state.adults); if (+state.children) u.searchParams.set('children', state.children); if (state.group) u.searchParams.set('group', '1'); } else if (state.pax) u.searchParams.set('pax', state.pax); DATE_KEYS.forEach(k => { if (state[k]) u.searchParams.set(k, state[k]); }); if (!hasDates() && state.date) u.searchParams.set('date', state.date); a.setAttribute('href', u.pathname.split('/').pop() + u.search); });
         }
         DS.hydrateImages(results); if (DS.cart) DS.cart.refresh();
         if (DS.motion && DS.motion.revealNew) DS.motion.revealNew(results);
       };
       if (first) { first = false; results.innerHTML = DS.skeletons(4); setTimeout(draw, 380); } else draw();
       // Keep the URL shareable
-      const u = new URLSearchParams(); if (state.dest) u.set('dest', state.dest); if (state.type.length === 1) u.set('type', state.type[0]); if (state.q) u.set('q', state.q); if (state.sort !== 'recommended') u.set('sort', state.sort); if (state.adults) { u.set('adults', state.adults); if (+state.children) u.set('children', state.children); } else if (state.pax) u.set('pax', state.pax); DATE_KEYS.forEach(k => { if (state[k]) u.set(k, state[k]); }); if (!hasDates() && state.date) u.set('date', state.date);
+      const u = new URLSearchParams(); if (state.dest) u.set('dest', state.dest); if (state.type.length === 1) u.set('type', state.type[0]); if (state.q) u.set('q', state.q); if (state.sort !== 'recommended') u.set('sort', state.sort); if (state.adults) { u.set('adults', state.adults); if (+state.children) u.set('children', state.children); if (state.group) u.set('group', '1'); } else if (state.pax) u.set('pax', state.pax); DATE_KEYS.forEach(k => { if (state[k]) u.set(k, state[k]); }); if (!hasDates() && state.date) u.set('date', state.date);
       history.replaceState(null, '', location.pathname + (u.toString() ? '?' + u : '') + location.hash);
     }
     function renderActive() {
@@ -163,15 +163,15 @@
     const priced = DS.hasPrice(p);
     const clamp = (v, lo, hi, dflt) => Math.min(hi, Math.max(lo, parseInt(v, 10) || dflt));
     const deps = DS.departuresFor(p);
-    const sel = { adults: clamp(q.get('adults') || q.get('pax'), 1, 12, 2), children: clamp(q.get('children'), 0, 8, 0), date: deps.length ? deps[0].date : '', ret: deps.length ? deps[0].ret : '', custom: !deps.length };
+    const sel = { adults: clamp(q.get('adults') || q.get('pax'), 1, DS.GROUP_MAX, 2), children: clamp(q.get('children'), 0, DS.PAX_MAX, 0), group: q.get('group') === '1', date: deps.length ? deps[0].date : '', ret: deps.length ? deps[0].ret : '', custom: !deps.length };
     /* Dates from the search: a scheduled departure within 3 days is picked; any other
        exact dates become a custom trip; a month picks that month's departure */
     const depart = q.get('depart') || q.get('date'), month = q.get('month');
     if (depart) { const m = deps.find(x => Math.abs(DS.daysBetween(x.date, depart)) <= 3); if (m) Object.assign(sel, { date: m.date, ret: m.ret, custom: false }); else Object.assign(sel, { date: depart, ret: q.get('ret') || DS.addDays(depart, p.duration.nights), custom: true }); }
     else if (month) { const m = deps.find(x => x.date.startsWith(month)); if (m) Object.assign(sel, { date: m.date, ret: m.ret, custom: false }); }
-    // Already in the Travel Cart: start from what the traveller chose last time
+    // Already in the Travel Cart: start from what the traveler chose last time
     const cartItem = DS.cart && DS.cart.findPackage(p.id);
-    if (cartItem) { const d = cartItem.d || {}; sel.adults = clamp(d.adults, 1, 12, 2); sel.children = clamp(d.children, 0, 8, 0); if (d.date) { const m = !d.custom && deps.find(x => x.date === d.date); Object.assign(sel, m ? { date: m.date, ret: m.ret, custom: false } : { date: d.date, ret: d.ret || DS.addDays(d.date, p.duration.nights), custom: true }); } }
+    if (cartItem) { const d = cartItem.d || {}; sel.adults = clamp(d.adults, 1, DS.GROUP_MAX, 2); sel.children = clamp(d.children, 0, DS.PAX_MAX, 0); sel.group = d.group === '1' || d.group === true; if (d.date) { const m = !d.custom && deps.find(x => x.date === d.date); Object.assign(sel, m ? { date: m.date, ret: m.ret, custom: false } : { date: d.date, ret: d.ret || DS.addDays(d.date, p.duration.nights), custom: true }); } }
 
     /* ----- Header + gallery ----- */
     const visaBadge = p.type === 'domestic' ? `<span class="badge badge--lime">${DS.icon('sun')}No visa needed</span>` : (dest.visa === 'required' ? `<span class="badge badge--info">${DS.icon('passport')}Visa assistance included</span>` : `<span class="badge badge--info">${DS.icon('check')}${dest.visa === 'visa-free' ? 'Visa-free entry' : 'Entry rules checked'}</span>`);
@@ -238,28 +238,28 @@
     panel.innerHTML = `
       <div>${priced ? `<div class="booking__price"><span class="price">${fmtPHP(p.priceFrom)}</span><small>per person, from</small></div><span class="badge badge--demo">Illustrative sample price</span>` : `<div class="booking__price"><span class="price price--request">Price on request</span></div><span class="badge">Quoted for your dates and group</span>`}</div>
       ${DS.departureList(p, sel, { name: 'bk-dep' })}
-      <div>
-        <div class="counter-row"><div><strong>Adults</strong><span>12 years and above</span></div><div class="counter"><button type="button" class="counter__btn" data-ctr="adults" data-d="-1" aria-label="Fewer adults">${DS.icon('minus')}</button><span class="counter__val" data-val="adults" aria-live="polite">${sel.adults}</span><button type="button" class="counter__btn" data-ctr="adults" data-d="1" aria-label="More adults">${DS.icon('plus')}</button></div></div>
-        <div class="counter-row"><div><strong>Children</strong><span>2 to 11 years${priced ? ` · ${Math.round(p.childRate * 100)}% of adult rate (sample)` : ''}</span></div><div class="counter"><button type="button" class="counter__btn" data-ctr="children" data-d="-1" aria-label="Fewer children">${DS.icon('minus')}</button><span class="counter__val" data-val="children" aria-live="polite">${sel.children}</span><button type="button" class="counter__btn" data-ctr="children" data-d="1" aria-label="More children">${DS.icon('plus')}</button></div></div>
-      </div>
+      ${DS.paxPicker({ inline: true, full: false, label: 'Travelers', adults: sel.adults, children: sel.children, group: sel.group, childNote: `2 to 11 years${priced ? ` · ${Math.round(p.childRate * 100)}% of adult rate (sample)` : ''}` })}
       ${priced ? `<div class="booking__total" data-total-box aria-live="polite"><div><span data-line-adults></span><span data-sub-adults></span></div><div data-row-children hidden><span data-line-children></span><span data-sub-children></span></div><div class="total"><span>Estimated total</span><span data-total data-value="0">₱0</span></div></div>
       <p class="booking__note" data-est-note>${DS.icon('info')}<span>Estimate only. Final pricing depends on dates, airfare and room configuration and is confirmed in writing by your consultant. No payment is taken on this prototype.</span></p>
+      <p class="booking__note booking__note--request" data-group-note hidden>${DS.icon('users')}<span>Group booking: your consultant quotes group rates for your group size.</span></p>
       <p class="booking__note booking__note--request" data-custom-note hidden>${DS.icon('sparkles')}<span>Custom trip: the sample price applies to scheduled departures only. Your consultant quotes your dates.</span></p>` : `<p class="booking__note booking__note--request">${DS.icon('info')}<span>This package is priced on request. Add it to your Travel Cart with your dates and group, and your consultant sends the price in your quotation.</span></p>`}
       <button type="button" class="btn btn--primary btn--lg btn--block" data-pkg-add>${DS.icon('bagPlus')} <span data-pkg-add-label>Add to Travel Cart</span></button>
       <p class="booking__incart" data-incart hidden>${DS.icon('bagCheck')}<span>In your Travel Cart. <button type="button" class="btn btn--link btn--sm" data-cart-open>View cart</button></span></p>
       <button type="button" class="btn btn--ghost btn--block" data-request-booking>Request a quotation for this package only</button>
       <button type="button" class="btn btn--link booking__consult" data-enquiry data-service="consult" data-destination="${esc(p.destination)}" data-title="Talk to a consultant about this trip" data-message="I am looking at “${esc(p.title)}” and have a few questions.">${DS.icon('headset')} Talk to a consultant</button>
       <ul class="booking__assure"><li>${DS.icon('check')}No payment until a consultant confirms</li><li>${DS.icon('check')}Add visa, flights or a hotel in your cart</li><li>${DS.icon('check')}One quotation for the whole trip</li></ul>`;
-    const limits = { adults: [1, 12], children: [0, 8] };
+    const paxRoot = $('[data-pax]', panel);
+    // Read the traveler picker each time: counters, or one number for a group of 13 to 100
+    const readPax = () => { const v = n => $(`input[name="${n}"]`, paxRoot).value; Object.assign(sel, { adults: +v('adults') || 1, children: +v('children') || 0, group: v('group') === '1' }); return sel; };
     const depList = $('[data-dep-list]', panel);
     const isCustom = () => DS.readDeparture(depList).custom;
     function calc(animate) {
-      $$('[data-ctr]', panel).forEach(b => { const k = b.dataset.ctr, n = sel[k] + +b.dataset.d; b.disabled = n < limits[k][0] || n > limits[k][1]; });
+      readPax();
       if (!priced) return 0;
-      // Custom dates have no sample price: show the request note instead of a total
-      const custom = isCustom(), mb = $('[data-mobile-total]');
-      $('[data-total-box]', panel).hidden = custom; $('[data-est-note]', panel).hidden = custom; $('[data-custom-note]', panel).hidden = !custom;
-      if (custom) { if (mb) { mb.textContent = 'Custom trip'; mb.classList.add('price--request'); } return 0; }
+      // Custom dates and groups have no sample price: show a note instead of a total
+      const custom = isCustom(), group = sel.group, mb = $('[data-mobile-total]');
+      $('[data-total-box]', panel).hidden = custom || group; $('[data-est-note]', panel).hidden = custom || group; $('[data-custom-note]', panel).hidden = !custom; $('[data-group-note]', panel).hidden = !group || custom;
+      if (custom || group) { if (mb) { mb.textContent = custom ? 'Custom trip' : 'Group rate'; mb.classList.add('price--request'); } return 0; }
       if (mb) mb.classList.remove('price--request');
       const a = sel.adults * p.priceFrom, c = sel.children * p.priceFrom * p.childRate, total = a + c;
       $('[data-line-adults]', panel).textContent = `${sel.adults} adult${sel.adults > 1 ? 's' : ''} × ${fmtPHP(p.priceFrom)}`; $('[data-sub-adults]', panel).textContent = fmtPHP(a);
@@ -268,7 +268,7 @@
       if (mb) mb.textContent = fmtPHP(total);
       return total;
     }
-    panel.addEventListener('click', e => { const b = e.target.closest('[data-ctr]'); if (!b || b.disabled) return; sel[b.dataset.ctr] += +b.dataset.d; $(`[data-val="${b.dataset.ctr}"]`, panel).textContent = sel[b.dataset.ctr]; if (DS.motion && DS.motion.pop) DS.motion.pop($(`[data-val="${b.dataset.ctr}"]`, panel)); calc(true); });
+    panel.addEventListener('change', e => { if (e.target.closest('[data-pax]')) calc(true); });
     panel.addEventListener('ds:dep', () => calc(false));
 
     const dateLabel = () => { const d = DS.readDeparture(depList); return d.date ? `${DS.fmtRange(d.date, d.ret)}${d.custom ? ' (custom trip)' : ''}` : 'Dates to be confirmed'; };
@@ -276,7 +276,9 @@
     function addToCart() {
       if (!DS.cart) return;
       if (!DS.validateDeparture(depList)) { depList.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
-      const d = { ...DS.readDeparture(depList), adults: sel.adults, children: sel.children };
+      if (!DS.paxValidate(paxRoot)) return;
+      readPax();
+      const d = { ...DS.readDeparture(depList), adults: sel.adults, children: sel.children, group: sel.group ? '1' : '' };
       const existing = DS.cart.findPackage(p.id);
       if (existing) { DS.cart.update(existing.uid, d); DS.cart.open(); DS.toast('Travel Cart updated with your dates and group.'); }
       else DS.cart.addAndShow('package', d, p.id);
@@ -290,10 +292,10 @@
     document.addEventListener('click', e => { if (e.target.closest('[data-pkg-add]')) { e.preventDefault(); addToCart(); } });
     document.addEventListener('ds:cart', syncCartState);
     function requestBooking() {
-      if (!DS.validateDeparture(depList)) return;
-      const total = calc(false), custom = isCustom();
-      const summary = `<div><span>Package</span><strong>${esc(p.title)}</strong></div><div><span>Departure</span><strong>${esc(dateLabel())}</strong></div><div><span>Travellers</span><strong>${sel.adults} adult${sel.adults > 1 ? 's' : ''}${sel.children ? `, ${sel.children} child${sel.children > 1 ? 'ren' : ''}` : ''}</strong></div><div class="total"><span>${priced && !custom ? 'Estimated total (sample)' : 'Price'}</span><strong>${priced && !custom ? fmtPHP(total) : 'On request'}</strong></div>`;
-      DS.openEnquiry({ service: 'booking', destination: p.destination, travellers: sel.adults + sel.children, date: DS.readDeparture(depList).date, summary, title: 'Request a quotation for this package', subtitle: 'A consultant checks availability and confirms the final price. Nothing is charged and no reservation is made on this prototype.', cta: 'Send quotation request', message: `Quotation request for “${p.title}”, departing ${dateLabel()}, ${sel.adults} adult(s)${sel.children ? ` and ${sel.children} child(ren)` : ''}.` });
+      if (!DS.validateDeparture(depList) || !DS.paxValidate(paxRoot)) return;
+      const total = calc(false), custom = isCustom() || sel.group;
+      const summary = `<div><span>Package</span><strong>${esc(p.title)}</strong></div><div><span>Departure</span><strong>${esc(dateLabel())}</strong></div><div><span>Travelers</span><strong>${esc(DS.paxLabel(sel.adults, sel.children, 'traveler', undefined, sel.group))}</strong></div><div class="total"><span>${priced && !custom ? 'Estimated total (sample)' : 'Price'}</span><strong>${priced && !custom ? fmtPHP(total) : 'On request'}</strong></div>`;
+      DS.openEnquiry({ service: 'booking', destination: p.destination, travelers: sel.adults + sel.children, date: DS.readDeparture(depList).date, summary, title: 'Request a quotation for this package', subtitle: 'A consultant checks availability and confirms the final price. Nothing is charged and no reservation is made on this prototype.', cta: 'Send quotation request', message: `Quotation request for “${p.title}”, departing ${dateLabel()}, ${DS.paxLabel(sel.adults, sel.children, 'traveler', undefined, sel.group).toLowerCase()}.` });
     }
     $('[data-request-booking]', panel).addEventListener('click', requestBooking);
     const mbar = $('[data-mobile-bar]'); if (mbar) { mbar.innerHTML = `<div><span class="${priced ? 'price' : 'price price--request'}" data-mobile-total>${priced ? fmtPHP(calc(false)) : 'Price on request'}</span><small>${priced ? 'Sample total · ' : ''}<a href="#booking">change dates</a></small></div><button type="button" class="btn btn--primary" data-pkg-add>${DS.icon('bagPlus')} <span data-pkg-add-label>Add to Travel Cart</span></button>`; document.body.classList.add('has-mobile-bar'); }

@@ -25,7 +25,7 @@
     /* ----- Line items ----- */
     function line(it) {
       const x = DS.cart.describe(it), d = it.d || {};
-      const noun = DS.cart.noun(it.kind), a = Math.max(1, +d.adults || 1);
+      const noun = DS.cart.noun(it.kind), a = Math.max(1, +d.adults || 1), c = Math.max(0, +d.children || 0), group = d.group === '1' || d.group === true;
       return `<article class="cart-line" data-uid="${it.uid}">
         <div class="cart-line__media">${x.href ? `<a href="${x.href}" tabindex="-1" aria-hidden="true">${DS.cart.media(x, 240)}</a>` : DS.cart.media(x, 240)}</div>
         <div class="cart-line__body">
@@ -35,7 +35,7 @@
             <div class="cart-line__price"><span class="${x.price != null ? 'price' : 'price price--request'}">${x.price != null ? fmtPHP(x.price) : 'Price on request'}</span><small>${esc(x.price != null ? x.note : 'Quoted by your consultant')}</small></div>
           </div>
           <div class="cart-line__actions">
-            <div class="cart-line__qty"><span class="small muted">Adults</span><div class="counter counter--sm"><button type="button" class="counter__btn" data-qty="-1" aria-label="Fewer ${noun}s for ${esc(x.title)}" ${a <= 1 ? 'disabled' : ''}>${DS.icon('minus')}</button><span class="counter__val" aria-live="polite">${a}</span><button type="button" class="counter__btn" data-qty="1" aria-label="More ${noun}s for ${esc(x.title)}" ${a >= 12 ? 'disabled' : ''}>${DS.icon('plus')}</button></div></div>
+            ${group ? `<div class="cart-line__qty cart-line__qty--group">${DS.icon('users')}<span><strong>Group booking</strong> · ${a} ${noun}s</span></div>` : `<div class="cart-line__qty"><span class="small muted">Adults</span><div class="counter counter--sm"><button type="button" class="counter__btn" data-qty="-1" aria-label="Fewer ${noun}s for ${esc(x.title)}" ${a <= 1 ? 'disabled' : ''}>${DS.icon('minus')}</button><span class="counter__val" aria-live="polite">${a}</span><button type="button" class="counter__btn" data-qty="1" aria-label="More ${noun}s for ${esc(x.title)}" ${a + c >= DS.PAX_MAX ? 'disabled' : ''}>${DS.icon('plus')}</button></div></div>`}
             <div class="cluster" style="gap:4px"><button type="button" class="btn btn--ghost btn--sm" data-edit>${DS.icon('edit')} Edit details</button><button type="button" class="btn btn--link btn--sm" data-remove>${DS.icon('trash')} Remove</button></div>
           </div>
         </div></article>`;
@@ -162,7 +162,7 @@
       }
       const id = lineEl.dataset.uid, it = DS.cart.get(id); if (!it) return;
       const q = e.target.closest('[data-qty]');
-      if (q && !q.disabled) { DS.cart.update(id, { adults: Math.min(12, Math.max(1, (+it.d.adults || 1) + +q.dataset.qty)) }); return; }
+      if (q && !q.disabled) { DS.cart.update(id, { adults: Math.min(DS.PAX_MAX - (+it.d.children || 0), Math.max(1, (+it.d.adults || 1) + +q.dataset.qty)) }); return; }
       if (e.target.closest('[data-edit]')) { DS.cart.openForm(it.kind, { uid: id }); return; }
       if (e.target.closest('[data-remove]')) {
         const title = DS.cart.describe(it).title;
