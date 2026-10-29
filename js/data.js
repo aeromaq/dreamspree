@@ -112,7 +112,7 @@ window.DS = window.DS || {};
   DS.packages = [
     {
       id: 'jp-golden-route', validUntil: '2027-11-30', airport: 'NRT', title: 'Tokyo, Hakone & Kyoto: The Golden Route', destinationId: 'japan', destination: 'Japan', country: 'Japan', type: 'international', region: 'East Asia',
-      category: 'Culture', duration: { days: 6, nights: 5 }, priceFrom: 78900, childRate: 0.85, groupSize: 'Private, 2 to 12 travellers',
+      category: 'Culture', duration: { days: 6, nights: 5 }, priceFrom: 78900, childRate: 0.85, groupSize: 'Private, 2 to 12 travelers',
       images: ['1526481280693-3bfa7568e0f3', '1493976040374-85c8e12f0c0e', '1549693578-d683be217e58', '1578469645742-46cae010e5d4', '1492571350019-22de08371fd3'],
       summary: 'The classic first Japan trip, done properly: two nights in Tokyo, a Fuji-view onsen night in Hakone and two nights in Kyoto, linked by the Shinkansen.',
       highlights: ['Shibuya Crossing and teamLab Planets', 'Lake Ashi cruise with Mt Fuji views', 'Ryokan stay with kaiseki dinner', 'Fushimi Inari before the crowds', 'Reserved Shinkansen seats'],
@@ -134,7 +134,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'jp-osaka-family', validUntil: '2027-12-31', airport: 'KIX', title: 'Osaka, Nara & Universal Studios Family Break', destinationId: 'japan', destination: 'Japan', country: 'Japan', type: 'international', region: 'East Asia',
-      category: 'Family', duration: { days: 5, nights: 4 }, priceFrom: 64500, childRate: 0.8, groupSize: 'Private, 2 to 10 travellers',
+      category: 'Family', duration: { days: 5, nights: 4 }, priceFrom: 64500, childRate: 0.8, groupSize: 'Private, 2 to 10 travelers',
       images: ['1590559899731-a382839e5549', '1578637387939-43c525550085', '1493780474015-ba834fd0ce2f', '1524413840807-0c3cb6fa808d'],
       summary: 'A relaxed, kid-paced Kansai trip: Universal Studios with Express Passes, deer feeding in Nara, Osaka Castle and a day trip to Kyoto.',
       highlights: ['Universal Studios Japan with Express Pass', 'Nara Park deer and Todai-ji', 'Dotonbori street food night', 'Kyoto day trip by train', 'Family rooms throughout'],
@@ -151,11 +151,11 @@ window.DS = window.DS || {};
       preparation: ['Visa applications for each family member, including children', 'Stroller-friendly routes are flagged in your itinerary', 'Book Express Passes at least 3 weeks ahead in peak season'],
       cancellation: POLICY_INTL, faqs: FAQ_INTL,
       departures: [{ date: '2027-04-01', note: 'Holy Week break' }, { date: '2027-05-13', note: 'Summer break' }, { date: '2027-12-20', note: 'Christmas lights' }],
-      visaNote: 'Visa required for every traveller, including children.'
+      visaNote: 'Visa required for every traveler, including children.'
     },
     {
       id: 'kr-seoul-nami', validUntil: '2027-12-15', airport: 'ICN', title: 'Seoul City & Nami Island Escape', destinationId: 'south-korea', destination: 'South Korea', country: 'South Korea', type: 'international', region: 'East Asia',
-      category: 'Culture', duration: { days: 5, nights: 4 }, priceFrom: null, childRate: 0.85, groupSize: 'Join-in, up to 20 travellers',
+      category: 'Culture', duration: { days: 5, nights: 4 }, priceFrom: null, childRate: 0.85, groupSize: 'Join-in, up to 20 travelers',
       images: ['1538669715315-155098f0fb1d', '1583833008338-31a6657917ab', '1517154421773-0529f29ea451', '1548115184-bc6544d06a58', '1534274867514-d5b47ef89ed7'],
       summary: 'Palaces, markets and a hanbok morning in Seoul, plus a full-day trip to Nami Island and the Garden of Morning Calm.',
       highlights: ['Gyeongbokgung in hanbok', 'Nami Island and Petite France', 'Myeongdong street food crawl', 'N Seoul Tower at sunset', 'Hongdae free evening'],
@@ -172,11 +172,11 @@ window.DS = window.DS || {};
       preparation: ['Korea visa: allow 3 to 5 weeks; bank certificate and ITR usually required', 'Download Naver Map; Google Maps is limited in Korea', 'K-ETA is not required with a valid visa'],
       cancellation: POLICY_INTL, faqs: FAQ_INTL,
       departures: [{ date: '2027-04-09', note: 'Spring blossoms' }, { date: '2027-10-15', note: 'Autumn foliage' }, { date: '2027-12-03', note: 'First snow season' }],
-      visaNote: 'Visa required. Group visa processing available for 5 or more travellers.'
+      visaNote: 'Visa required. Group visa processing available for 5 or more travelers.'
     },
     {
       id: 'tw-taipei-jiufen', validUntil: '2027-11-30', airport: 'TPE', title: 'Taipei, Jiufen & Night Markets', destinationId: 'taiwan', destination: 'Taiwan', country: 'Taiwan', type: 'international', region: 'East Asia',
-      category: 'Leisure', duration: { days: 4, nights: 3 }, priceFrom: 32900, childRate: 0.85, groupSize: 'Private, 2 to 8 travellers',
+      category: 'Leisure', duration: { days: 4, nights: 3 }, priceFrom: 32900, childRate: 0.85, groupSize: 'Private, 2 to 8 travelers',
       images: ['1470004914212-05527e49370b', '1508248467877-aec1b08de376', '1552993873-0dd1110e025f', '1598935898639-81586f7d2129'],
       summary: 'A long-weekend Taipei trip: Taipei 101, a Jiufen and Shifen day with sky lanterns, and nightly market crawls.',
       highlights: ['Taipei 101 observatory', 'Jiufen old street at dusk', 'Shifen sky lantern', 'Raohe and Shilin night markets', 'Beitou hot springs (optional)'],
@@ -196,7 +196,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'hk-disney-family', validUntil: '2027-12-31', airport: 'HKG', title: 'Hong Kong Disneyland & City Lights', destinationId: 'hong-kong', destination: 'Hong Kong', country: 'Hong Kong SAR', type: 'international', region: 'East Asia',
-      category: 'Family', duration: { days: 4, nights: 3 }, priceFrom: 36900, childRate: 0.8, groupSize: 'Private, 2 to 10 travellers',
+      category: 'Family', duration: { days: 4, nights: 3 }, priceFrom: 36900, childRate: 0.8, groupSize: 'Private, 2 to 10 travelers',
       images: ['1536599018102-9f803c140fc1', '1507941097613-9f2157b69235', '1583417319070-4a69db38a482'],
       summary: 'The easiest first international trip for families: a full Disneyland day, Victoria Peak, the Star Ferry and a dim sum lunch, two hours from Manila.',
       highlights: ['Hong Kong Disneyland 1-day ticket', 'Peak Tram and Sky Terrace', 'Star Ferry crossing', 'Symphony of Lights', 'Dim sum lunch included'],
@@ -216,7 +216,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'vn-hanoi-halong', validUntil: '2027-11-30', airport: 'HAN', title: 'Hanoi & Ha Long Bay Overnight Cruise', destinationId: 'vietnam', destination: 'Vietnam', country: 'Vietnam', type: 'international', region: 'Southeast Asia',
-      category: 'Adventure', duration: { days: 5, nights: 4 }, priceFrom: 38900, childRate: 0.85, groupSize: 'Join-in, up to 16 travellers',
+      category: 'Adventure', duration: { days: 5, nights: 4 }, priceFrom: 38900, childRate: 0.85, groupSize: 'Join-in, up to 16 travelers',
       images: ['1528127269322-539801943592', '1555921015-5532091f6026', '1557750255-c76072a7aad1'],
       summary: 'Hanoi’s Old Quarter and egg coffee, a Ninh Binh boat day through limestone karsts and a night on a Ha Long Bay cruise.',
       highlights: ['Overnight Ha Long Bay cruise with cabin', 'Ninh Binh sampan ride at Trang An', 'Hanoi street-food tour', 'Train Street coffee', 'Visa-free entry for Filipinos'],
@@ -237,7 +237,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'vn-danang-hoian', validUntil: '2027-09-30', airport: 'DAD', title: 'Da Nang, Ba Na Hills & Hoi An', destinationId: 'vietnam', destination: 'Vietnam', country: 'Vietnam', type: 'international', region: 'Southeast Asia',
-      category: 'Leisure', duration: { days: 4, nights: 3 }, priceFrom: null, childRate: 0.85, groupSize: 'Private, 2 to 8 travellers',
+      category: 'Leisure', duration: { days: 4, nights: 3 }, priceFrom: null, childRate: 0.85, groupSize: 'Private, 2 to 8 travelers',
       images: ['1559592413-7cec4d0cae2b', '1555921015-5532091f6026', '1528127269322-539801943592'],
       summary: 'Golden Bridge at Ba Na Hills, My Khe beach afternoons and lantern-lit evenings in Hoi An’s ancient town.',
       highlights: ['Golden Bridge and Ba Na Hills cable car', 'Hoi An lantern boat ride', 'Marble Mountains', 'My Khe Beach stay', 'Tailor-made clothing stop'],
@@ -257,7 +257,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'ph-boracay-sunset', validUntil: '2027-05-31', airport: 'MPH', title: 'Boracay White Beach & Sunset Sail', destinationId: 'boracay', destination: 'Boracay', country: 'Philippines', type: 'domestic', region: 'Visayas',
-      category: 'Leisure', duration: { days: 3, nights: 2 }, priceFrom: 13900, childRate: 0.8, groupSize: 'Private, 2 to 20 travellers',
+      category: 'Leisure', duration: { days: 3, nights: 2 }, priceFrom: 13900, childRate: 0.8, groupSize: 'Private, 2 to 20 travelers',
       images: ['1519046904884-53103b34b206', '1509233725247-49e657c54213', '1559494007-9f5847c49d94', '1468413253725-0d5181091126'],
       summary: 'A quick reset on White Beach with a paraw sunset sail, island hopping to Puka Beach and nothing else on the schedule.',
       highlights: ['Paraw sunset sail', 'Island hopping with Puka Beach', 'Station 2 beachfront stay', 'Helmet diving (optional)', 'Buffet dinner on the beach'],
@@ -276,7 +276,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'ph-elnido-lagoons', validUntil: '2027-05-31', airport: 'ENI', title: 'El Nido Lagoons & Island Hopping', destinationId: 'palawan', destination: 'Palawan', country: 'Philippines', type: 'domestic', region: 'Mimaropa',
-      category: 'Adventure', duration: { days: 4, nights: 3 }, priceFrom: 24900, childRate: 0.8, groupSize: 'Private, 2 to 12 travellers',
+      category: 'Adventure', duration: { days: 4, nights: 3 }, priceFrom: 24900, childRate: 0.8, groupSize: 'Private, 2 to 12 travelers',
       images: ['1518509562904-e7ef99cdcc86', '1551918120-9739cb430c6d', '1516690561799-46d8f74f9abf', '1506929562872-bb421503ef21', '1552465011-b4e21bf6e79a'],
       summary: 'Tours A and C by private boat, a Nacpan Beach afternoon and three nights in a resort on Corong-Corong bay.',
       highlights: ['Big and Small Lagoon by kayak', 'Secret Beach and Hidden Beach', 'Nacpan Beach sunset', 'Private boat for your group', 'Direct flight to El Nido'],
@@ -296,7 +296,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'ph-coron-wrecks', validUntil: '2027-05-31', airport: 'USU', title: 'Coron Lakes, Wrecks & Hot Springs', destinationId: 'palawan', destination: 'Palawan', country: 'Philippines', type: 'domestic', region: 'Mimaropa',
-      category: 'Adventure', duration: { days: 3, nights: 2 }, priceFrom: null, childRate: 0.8, groupSize: 'Join-in, up to 12 travellers',
+      category: 'Adventure', duration: { days: 3, nights: 2 }, priceFrom: null, childRate: 0.8, groupSize: 'Join-in, up to 12 travelers',
       images: ['1551918120-9739cb430c6d', '1518509562904-e7ef99cdcc86', '1530053969600-caed2596d242', '1551244072-5d12893278ab'],
       summary: 'Kayangan Lake, Twin Lagoon, the Skeleton Wreck snorkel and a soak in Maquinit Hot Springs on the way back.',
       highlights: ['Kayangan Lake viewpoint', 'Twin Lagoon swim-through', 'Skeleton Wreck snorkel', 'Maquinit Hot Springs', 'Mt Tapyas sunset'],
@@ -315,7 +315,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'ph-siargao-surf', validUntil: '2027-10-31', airport: 'IAO', title: 'Siargao Surf & Island Hopping', destinationId: 'siargao', destination: 'Siargao', country: 'Philippines', type: 'domestic', region: 'Mindanao',
-      category: 'Adventure', duration: { days: 4, nights: 3 }, priceFrom: 21900, childRate: 0.8, groupSize: 'Private, 2 to 10 travellers',
+      category: 'Adventure', duration: { days: 4, nights: 3 }, priceFrom: 21900, childRate: 0.8, groupSize: 'Private, 2 to 10 travelers',
       images: ['1505118380757-91f5f5632de0', '1502680390469-be75c86b636f', '1505228395891-9a51e7e86bf6', '1512100356356-de1b84283e18'],
       summary: 'Beginner surf lessons at Cloud 9, the Magpupungko rock pools at low tide and a three-island boat day, with a General Luna base.',
       highlights: ['2 surf lessons with a local instructor', 'Naked, Daku and Guyam islands', 'Magpupungko rock pools', 'Sugba Lagoon paddleboarding', 'Scooter rental included'],
@@ -335,7 +335,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'ph-cebu-south', validUntil: '2027-06-30', airport: 'CEB', title: 'Cebu South: Kawasan, Moalboal & Oslob', destinationId: 'cebu', destination: 'Cebu', country: 'Philippines', type: 'domestic', region: 'Visayas',
-      category: 'Adventure', duration: { days: 4, nights: 3 }, priceFrom: 19900, childRate: 0.8, groupSize: 'Private, 2 to 14 travellers',
+      category: 'Adventure', duration: { days: 4, nights: 3 }, priceFrom: 19900, childRate: 0.8, groupSize: 'Private, 2 to 14 travelers',
       images: ['1433086966358-54859d0ed716', '1551244072-5d12893278ab', '1530053969600-caed2596d242', '1519451241324-20b4ea2c4220'],
       summary: 'Canyoneering to Kawasan Falls, the Moalboal sardine run and Pescador Island, plus a Cebu City heritage afternoon with lechon.',
       highlights: ['Kawasan canyoneering', 'Moalboal sardine run snorkel', 'Pescador Island', 'Sumilon sandbar', 'Cebu heritage walk and lechon'],
@@ -355,7 +355,7 @@ window.DS = window.DS || {};
     },
     {
       id: 'ph-bohol-countryside', validUntil: '2027-05-31', airport: 'TAG', title: 'Bohol Countryside & Panglao Beach', destinationId: 'bohol', destination: 'Bohol', country: 'Philippines', type: 'domestic', region: 'Visayas',
-      category: 'Family', duration: { days: 3, nights: 2 }, priceFrom: 15900, childRate: 0.8, groupSize: 'Private, 2 to 16 travellers',
+      category: 'Family', duration: { days: 3, nights: 2 }, priceFrom: 15900, childRate: 0.8, groupSize: 'Private, 2 to 16 travelers',
       images: ['1540202404-a2f29016b523', '1555400038-63f5ba517a47', '1432405972618-c60b0225b8f9', '1544550581-5f7ceaf7f992'],
       summary: 'The full countryside tour with the Chocolate Hills, tarsiers and a Loboc River lunch cruise, then a beach day on Panglao with Balicasag snorkelling.',
       highlights: ['Chocolate Hills viewpoint', 'Tarsier sanctuary', 'Loboc River floating lunch', 'Balicasag Island turtles', 'Alona Beach resort'],
@@ -378,13 +378,13 @@ window.DS = window.DS || {};
   DS.stories = [
     { id: 'japan-visa-2027', category: 'Visa information update', title: 'Japan visa appointments: how early to start', excerpt: 'Appointment slots in Metro Manila have been booking out months ahead. Here is a realistic timeline and what to prepare while you wait.', image: '1493976040374-85c8e12f0c0e', readTime: '4 min', date: 'October 2026',
       body: `<p>Demand for Japan trips keeps growing and visa application slots through accredited agencies are the bottleneck, not the embassy decision itself. For a trip in spring, start your paperwork before the end of the year.</p><h3>A workable timeline</h3><ul><li><strong>10 to 12 weeks out:</strong> run the Visa Readiness Checker and request your bank certificate and ITR copies.</li><li><strong>8 weeks out:</strong> your consultant reviews documents and books the lodgement slot.</li><li><strong>3 to 5 weeks out:</strong> typical processing window once lodged.</li></ul><h3>What slows applications down</h3><ul><li>Bank certificates older than 30 days at submission.</li><li>Itineraries that do not match your flight dates.</li><li>Missing employment certificates for employees, or DTI and permits for business owners.</li></ul><p class="small muted">Illustrative guidance for the prototype. Confirm current requirements with the Embassy of Japan and your consultant.</p>` },
-    { id: 'first-international-trip', category: 'Travel preparation', title: 'Your first international trip: a calm checklist', excerpt: 'From passport validity to the immigration counter, the questions first-time travellers ask most, answered in order.', image: '1530521954074-e64f6810b32d', readTime: '6 min', date: 'September 2026',
-      body: `<p>The first trip abroad is mostly nerves about things that turn out to be simple. Work through this list in order and the airport becomes routine.</p><h3>Before you book</h3><ul><li>Passport valid for at least six months after your return date.</li><li>Check whether the destination needs a visa, a travel authorisation or nothing at all.</li><li>Round-trip ticket and hotel booking: immigration officers may ask for both.</li></ul><h3>Two weeks before</h3><ul><li>Print or save offline copies of bookings, insurance and your consultant’s number.</li><li>Tell your bank you are travelling and get a small amount of foreign currency.</li><li>Download the destination’s transit app and an offline map.</li></ul><h3>At the airport</h3><ul><li>Arrive three hours before an international flight.</li><li>Have your passport, boarding pass and return ticket ready for immigration.</li><li>Answer questions plainly: where you are going, for how long, and where you are staying.</li></ul>` },
+    { id: 'first-international-trip', category: 'Travel preparation', title: 'Your first international trip: a calm checklist', excerpt: 'From passport validity to the immigration counter, the questions first-time travelers ask most, answered in order.', image: '1530521954074-e64f6810b32d', readTime: '6 min', date: 'September 2026',
+      body: `<p>The first trip abroad is mostly nerves about things that turn out to be simple. Work through this list in order and the airport becomes routine.</p><h3>Before you book</h3><ul><li>Passport valid for at least six months after your return date.</li><li>Check whether the destination needs a visa, a travel authorisation or nothing at all.</li><li>Round-trip ticket and hotel booking: immigration officers may ask for both.</li></ul><h3>Two weeks before</h3><ul><li>Print or save offline copies of bookings, insurance and your consultant’s number.</li><li>Tell your bank you are traveling and get a small amount of foreign currency.</li><li>Download the destination’s transit app and an offline map.</li></ul><h3>At the airport</h3><ul><li>Arrive three hours before an international flight.</li><li>Have your passport, boarding pass and return ticket ready for immigration.</li><li>Answer questions plainly: where you are going, for how long, and where you are staying.</li></ul>` },
     { id: 'seoul-autumn', category: 'Seasonal recommendation', title: 'Why late October is Seoul’s best week', excerpt: 'Ginkgo yellow on Samcheong-dong, cool palace mornings and the last of the outdoor markets before winter.', image: '1583833008338-31a6657917ab', readTime: '3 min', date: 'August 2026',
       body: `<p>Seoul in late October sits between the summer crowds and the first cold snap. Daytime highs hover in the high teens, which is perfect for a day in hanbok at Gyeongbokgung.</p><h3>Where the colour is</h3><ul><li>The ginkgo avenue along Samcheong-dong, usually peaking in the last week of October.</li><li>Namsan’s walking trails up to N Seoul Tower.</li><li>Nami Island’s metasequoia lane, best on a weekday.</li></ul><h3>Pack for two seasons</h3><p>Mornings start around 8°C and afternoons reach 18°C. A light down jacket over a shirt covers both. Our Seoul & Nami Island package has an October departure timed for this week.</p>` },
     { id: 'palawan-which-side', category: 'Destination guide', title: 'El Nido or Coron? Choosing your Palawan', excerpt: 'They are two hours apart by fast ferry but feel like different trips. Here is how to pick, or how to do both.', image: '1518509562904-e7ef99cdcc86', readTime: '5 min', date: 'July 2026',
-      body: `<p>El Nido is lagoons, limestone and beach bars. Coron is lakes, wrecks and a quieter town. Both have direct or near-direct flights from Manila, so the choice is about what you want from the water.</p><h3>Choose El Nido if</h3><ul><li>You want the postcard lagoons and kayaking.</li><li>You like a lively town with sunset spots and restaurants.</li><li>You are travelling with a group that wants a private boat.</li></ul><h3>Choose Coron if</h3><ul><li>You snorkel or dive and want wrecks and clear lakes.</li><li>You prefer fewer crowds and lower prices.</li><li>You want a hot-spring soak after a boat day.</li></ul><h3>Doing both</h3><p>Allow six days: three in El Nido, a fast ferry morning, then three in Coron. Ask your consultant to pair our two Palawan packages into one trip.</p>` },
-    { id: 'family-travel-tips', category: 'Travel tips', title: 'Travelling with kids: what experienced families do differently', excerpt: 'Slow mornings, one anchor activity a day and a packing list that fits in a backpack.', image: '1469854523086-cc02fe5d8800', readTime: '4 min', date: 'June 2026',
+      body: `<p>El Nido is lagoons, limestone and beach bars. Coron is lakes, wrecks and a quieter town. Both have direct or near-direct flights from Manila, so the choice is about what you want from the water.</p><h3>Choose El Nido if</h3><ul><li>You want the postcard lagoons and kayaking.</li><li>You like a lively town with sunset spots and restaurants.</li><li>You are traveling with a group that wants a private boat.</li></ul><h3>Choose Coron if</h3><ul><li>You snorkel or dive and want wrecks and clear lakes.</li><li>You prefer fewer crowds and lower prices.</li><li>You want a hot-spring soak after a boat day.</li></ul><h3>Doing both</h3><p>Allow six days: three in El Nido, a fast ferry morning, then three in Coron. Ask your consultant to pair our two Palawan packages into one trip.</p>` },
+    { id: 'family-travel-tips', category: 'Travel tips', title: 'Traveling with kids: what experienced families do differently', excerpt: 'Slow mornings, one anchor activity a day and a packing list that fits in a backpack.', image: '1469854523086-cc02fe5d8800', readTime: '4 min', date: 'June 2026',
       body: `<p>Families who travel well do less per day and plan the gaps. These are the habits our consultants build into family packages.</p><ul><li><strong>One anchor activity per day.</strong> A theme park, a boat trip or a palace. Everything else is optional.</li><li><strong>Book family rooms, not two doubles.</strong> It is cheaper and nobody is alone.</li><li><strong>Eat early.</strong> Restaurants are empty at 5:30 PM and tired children are easier at 5:30 PM.</li><li><strong>Carry a day kit.</strong> Wipes, a change of clothes, snacks, a power bank and a printed hotel address card.</li><li><strong>Tell your consultant the ages.</strong> Pricing, car seats, strollers and activity suitability all change by age.</li></ul>` },
     { id: 'what-verified-means', category: 'Travel preparation', title: 'What “Dreamspree Verified” will mean on a listing', excerpt: 'A plain explanation of the partner-vetting standard we are proposing, and what you will be able to see before you book.', image: '1450101499163-c8848c66ca85', readTime: '3 min', date: 'October 2026',
       body: `<p>We believe every travel partner should be checked before they are listed, not after something goes wrong. We are proposing a written standard for doing that, and showing you the result.</p><h3>What a verified listing would show</h3><ul><li>That business permits and relevant accreditation were checked.</li><li>For transport partners, that vehicle registration and insurance were checked and drivers screened.</li><li>That Dreamspree made a test booking before listing the partner.</li><li>The month of the most recent re-audit.</li></ul><p class="small muted">The Dreamspree Verified programme is a proposed standard shown here as a concept. No partner inspection records are displayed in this prototype.</p>` }
@@ -437,7 +437,7 @@ window.DS = window.DS || {};
             { id: 'jp-hotel', label: 'Hotel bookings matching the itinerary', why: 'Prepared by your consultant.' },
             { id: 'jp-invite', label: 'Invitation letter and host documents', why: 'When visiting family or friends in Japan.', cond: a => a.purpose === 'family', review: true },
             { id: 'jp-biz', label: 'Company letter of guarantee and business invitation', why: 'For business visits.', cond: a => a.purpose === 'business', review: true },
-            { id: 'jp-minor', label: 'Documents for travelling minors: birth certificate, parental consent if one parent is not travelling', why: 'Applies to travellers under 18.', cond: a => a.minors, review: true }
+            { id: 'jp-minor', label: 'Documents for traveling minors: birth certificate, parental consent if one parent is not traveling', why: 'Applies to travelers under 18.', cond: a => a.minors, review: true }
           ] }
         ]
       },
@@ -472,7 +472,7 @@ window.DS = window.DS || {};
             { id: 'kr-hotel', label: 'Hotel booking', why: 'Prepared by your consultant.' },
             { id: 'kr-invite', label: 'Invitation letter and host’s ID or residence card', why: 'When visiting family or friends.', cond: a => a.purpose === 'family', review: true },
             { id: 'kr-biz', label: 'Business invitation and company letter', why: 'For business visits.', cond: a => a.purpose === 'business', review: true },
-            { id: 'kr-minor', label: 'Minor’s documents: birth certificate and parental consent', why: 'For travellers under 18.', cond: a => a.minors, review: true }
+            { id: 'kr-minor', label: 'Minor’s documents: birth certificate and parental consent', why: 'For travelers under 18.', cond: a => a.minors, review: true }
           ] }
         ]
       },
@@ -508,7 +508,7 @@ window.DS = window.DS || {};
             { id: 'sc-hotel', label: 'Accommodation bookings for every night', why: 'Prepared by your consultant.' },
             { id: 'sc-invite', label: 'Host invitation and proof of residence', why: 'When staying with family or friends.', cond: a => a.purpose === 'family', review: true },
             { id: 'sc-biz', label: 'Business invitation and employer letter', why: 'For business visits.', cond: a => a.purpose === 'business', review: true },
-            { id: 'sc-minor', label: 'Minor’s documents: birth certificate, parental consent, parents’ IDs', why: 'For travellers under 18.', cond: a => a.minors, review: true },
+            { id: 'sc-minor', label: 'Minor’s documents: birth certificate, parental consent, parents’ IDs', why: 'For travelers under 18.', cond: a => a.minors, review: true },
             { id: 'sc-biometrics', label: 'Biometrics appointment (fingerprints)', why: 'Required unless taken within the last 59 months.', cond: a => !a.visitedBefore }
           ] }
         ]
@@ -558,7 +558,7 @@ window.DS = window.DS || {};
   ];
 
   /* ---------- Airports and places (worldwide search for flights, hotels, insurance) ----------
-     Flights are an airfare-only quotation, so travellers can search any major airport by
+     Flights are an airfare-only quotation, so travelers can search any major airport by
      3-letter code, city or country. Format: CODE|City|Country|Airport. Add rows freely. */
   DS.airports = `
 MNL|Manila|Philippines|Ninoy Aquino International
@@ -723,7 +723,7 @@ SEZ|Mahé|Seychelles|Seychelles International`.trim().split('\n').map(r => { con
   DS.countries = ['Schengen area (Europe)', 'Multiple countries', ...[...new Set(DS.airports.map(a => a.country))].sort()].map(label => ({ label }));
 
   /* ---------- Travel Cart catalogue ----------
-     What a traveller can add to the Travel Cart besides packages. Every price is
+     What a traveler can add to the Travel Cart besides packages. Every price is
      optional: leave `fee` null and the item shows "Price on request", quoted by a
      consultant. Fees shown are SAMPLE DATA. */
   DS.cartCatalog = {
@@ -737,7 +737,7 @@ SEZ|Mahé|Seychelles|Seychelles International`.trim().split('\n').map(r => { con
       insurance: { label: 'Travel insurance', icon: 'shield', blurb: 'Cover explained in plain language before you fly.' },
       custom: { label: 'Custom trip', icon: 'sparkles', blurb: 'Tell us what to include and a consultant designs the trip.' }
     },
-    // What a custom trip can include (the traveller ticks what they want)
+    // What a custom trip can include (the traveler ticks what they want)
     customIncludes: [
       { id: 'flights', label: 'Flights', icon: 'plane' },
       { id: 'flight-reservation', label: 'Flight reservation (for visa)', icon: 'file' },
@@ -764,7 +764,17 @@ SEZ|Mahé|Seychelles|Seychelles International`.trim().split('\n').map(r => { con
     ],
     cabins: ['Economy', 'Premium economy', 'Business'],
     hotelClass: ['Any', '3-star', '4-star', '5-star'],
-    transport: ['Airport transfer', 'Day tour with driver', 'Multi-day private van'],
+    /* Transport services. dates: 'single' needs one date; 'range' needs a start and an end.
+       labels name the two date fields for that service. */
+    transportServices: [
+      { id: 'airport-transfer', label: 'Airport transfer', dates: 'single', labels: { depart: 'Pick-up date' }, blurb: 'Airport to hotel, or hotel to airport' },
+      { id: 'city-transfer', label: 'Intercity transfer', dates: 'single', labels: { depart: 'Travel date' }, blurb: 'A one-way private ride from one city to another' },
+      { id: 'day-tour', label: 'Day tour', legacy: ['Day tour with driver'], dates: 'single', labels: { depart: 'Tour date' }, blurb: 'A car or van with driver for a day of sightseeing' },
+      { id: 'private-car', label: 'Car with driver', dates: 'range', labels: { depart: 'Start date', ret: 'End date' }, blurb: 'A private car with driver, by the day' },
+      { id: 'rental-car', label: 'Self-drive rental', dates: 'range', labels: { depart: 'Pick-up date', ret: 'Drop-off date' }, blurb: 'Self-drive rental car. An international driving permit may be needed abroad' },
+      { id: 'private-van', label: 'Private van', legacy: ['Multi-day private van'], dates: 'range', labels: { depart: 'Start date', ret: 'End date' }, blurb: 'A van with driver, by the day, for families and small groups' },
+      { id: 'coach', label: 'Coach or bus', dates: 'range', labels: { depart: 'Start date', ret: 'End date' }, blurb: 'Tourist coaches with driver for large groups and events' }
+    ],
     cruiseRegions: ['Asia & Japan', 'Mediterranean', 'Caribbean', 'Alaska', 'Somewhere else'],
     cruiseCabins: ['Inside', 'Ocean view', 'Balcony', 'Suite'],
     insurancePlans: ['Standard cover', 'Comprehensive cover']
@@ -777,10 +787,12 @@ SEZ|Mahé|Seychelles|Seychelles International`.trim().split('\n').map(r => { con
   DS.addDays = (iso, n) => { if (!iso) return ''; const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
   DS.daysBetween = (a, b) => (a && b) ? Math.round((new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) / 864e5) : 0;
   DS.todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-  /* Departures a traveller can still book: not in the past and within the package validity.
+  /* Departures a traveler can still book: not in the past and within the package validity.
      Each comes back with its return date (departure + nights). */
   DS.departuresFor = p => p.departures.filter(d => d.date >= DS.todayISO() && (!p.validUntil || d.date <= p.validUntil)).map(d => ({ ...d, ret: DS.addDays(d.date, p.duration.nights) }));
   DS.getAirport = code => DS.airports.find(a => a.code === code);
+  // Older carts stored the service label ("Airport transfer"); newer ones store the id
+  DS.getTransport = v => DS.cartCatalog.transportServices.find(t => t.id === v || t.label === v || (t.legacy || []).includes(v)) || DS.cartCatalog.transportServices[0];
   DS.getPackage = id => DS.packages.find(p => p.id === id);
   DS.getDestination = id => DS.destinations.find(d => d.id === id);
   DS.packagesFor = destId => DS.packages.filter(p => p.destinationId === destId);

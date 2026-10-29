@@ -31,7 +31,7 @@
   .explore-layout { grid-template-columns: 250px minmax(0, 1fr); gap: var(--s-5); }
   .cart-layout { grid-template-columns: minmax(0, 1fr) minmax(280px, 320px); gap: var(--s-5); }
   .complete-trip__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .search-form { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); }
+  .search-form, .search-form--transport { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); }
   .search-form .search-form__submit { grid-column: 1 / -1; }
 }
 
@@ -78,7 +78,7 @@
   .cart-btn { width: 42px; height: 42px; padding: 0; justify-content: center; border-color: transparent; }
   .cart-btn svg { width: 22px; height: 22px; }
   .cart-btn__label { display: none; }
-  .cart-btn__count { position: absolute; top: 0; right: -2px; }
+  .cart-btn .cart-btn__count { position: absolute; top: 0; right: -2px; }
 }
 
 /* ---------- Mobile ---------- */
@@ -110,7 +110,7 @@
   .hero__ctas .btn { flex: 1 1 auto; }
   .search-widget--float { margin-top: calc(-1 * var(--s-12)); border-radius: var(--r-lg); }
   .search-panel { padding: var(--s-4); }
-  .search-form, .search-form--service { grid-template-columns: minmax(0, 1fr); }
+  .search-form, .search-form--service, .search-form--transport { grid-template-columns: minmax(0, 1fr); }
   .search-tabs { border-radius: var(--r-lg) var(--r-lg) 0 0; }
   .search-form .seg--type { width: 100%; }
   /* One benefit per row on phones: icon left, copy right, no cramped two-column wrapping */
@@ -213,11 +213,12 @@
   .search-form .when__pop, .search-form .when__pop--right { left: 0; right: 0; width: auto; }
   .search-form__alt { width: 100%; }
   .search-form__alt > span { flex: 1; }
-  .hotel-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding-top: 44px; }
-  .hotel-row__n { position: absolute; top: 10px; left: 12px; margin: 0; }
-  .hotel-row .combo, .hotel-row .field:last-of-type { grid-column: 1 / -1; }
-  .hotel-row__rm { position: absolute; top: 4px; right: 4px; margin: 0; }
-  .hotels-form__guests { grid-template-columns: minmax(0, 1fr); }
+  .multi-row, .multi-row--hotel, .multi-row--transport, .multi-row--visa, .multi-row--flight { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding-top: 44px; }
+  .multi-row__n { position: absolute; top: 10px; left: 12px; margin: 0; }
+  .multi-row .combo, .multi-row--hotel > .field:last-of-type, .multi-row--transport > .field:first-of-type, .multi-row--visa > .field:first-of-type { grid-column: 1 / -1; }
+  .multi-row__ret[hidden] { display: none; }
+  .multi-row__rm { position: absolute; top: 4px; right: 4px; margin: 0; }
+  .multi-form__shared { grid-template-columns: minmax(0, 1fr); }
   .incl-pick__grid, .custom-band__card .incl-pick__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .incl-chip span { font-size: var(--fs-xs); padding: 9px 10px; }
   .custom-band__card { padding: var(--s-4); }

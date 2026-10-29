@@ -28,7 +28,7 @@
 
     /* ----- Step 1: destination ----- */
     panels[1].innerHTML = `
-      <div class="visa-step__head"><p class="eyebrow">Step 1 of 3</p><h2 class="display">Where are you applying to go?</h2><p class="lede">The demo covers the three most requested visa routes for Filipino travellers. Other destinations go straight to a consultant.</p></div>
+      <div class="visa-step__head"><p class="eyebrow">Step 1 of 3</p><h2 class="display">Where are you applying to go?</h2><p class="lede">The demo covers the three most requested visa routes for Filipino travelers. Other destinations go straight to a consultant.</p></div>
       <div class="dest-choice" role="group" aria-label="Destination">${DS.visa.destinations.map(d => `<button type="button" class="dest-choice__btn" data-choose="${d.id}" aria-pressed="${state.dest === d.id}" data-step-item>${DS.picture(d.image, d.name, { w: 640, h: 480, label: d.name })}<span class="dest-choice__check">${DS.icon('check')}</span><div><strong>${esc(d.name)}</strong><span>${esc(d.note)}</span></div></button>`).join('')}</div>
       <p class="small muted" style="margin-top:1rem">Going somewhere else? <button type="button" class="btn btn--link" data-enquiry data-service="visa" data-title="Visa assistance for another destination">Ask a consultant about your destination</button>.</p>
       <div class="visa-step__foot"><span></span><button type="button" class="btn btn--primary btn--lg" data-next ${state.dest ? '' : 'disabled'}>Continue ${DS.icon('arrowRight', 'arrow')}</button></div>`;
@@ -50,9 +50,9 @@
             <div class="field" data-step-item><label class="field__label" for="v-nat">Passport country</label><select class="select" id="v-nat" name="nationality">${DS.visa.nationalities.map(n => `<option ${a.nationality === n ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select><span class="field__help">Checklists are written for Philippine passport holders.</span></div>
             <div class="field" data-step-item><label class="field__label" for="v-emp">Employment status</label><select class="select" id="v-emp" name="employment">${DS.visa.employment.map(e => `<option value="${e.id}" ${a.employment === e.id ? 'selected' : ''}>${esc(e.label)}</option>`).join('')}</select></div>
             <div class="field" data-step-item><span class="field__label">Travel circumstances</span>
-              <label class="checkbox"><input type="checkbox" name="visitedBefore" ${a.visitedBefore ? 'checked' : ''}><span>I have travelled to this destination (or an OECD country) before</span></label>
+              <label class="checkbox"><input type="checkbox" name="visitedBefore" ${a.visitedBefore ? 'checked' : ''}><span>I have traveled to this destination (or an OECD country) before</span></label>
               <label class="checkbox"><input type="checkbox" name="married" ${a.married ? 'checked' : ''}><span>I am married</span></label>
-              <label class="checkbox"><input type="checkbox" name="minors" ${a.minors ? 'checked' : ''}><span>Travelling with children under 18</span></label>
+              <label class="checkbox"><input type="checkbox" name="minors" ${a.minors ? 'checked' : ''}><span>Traveling with children under 18</span></label>
               <label class="checkbox"><input type="checkbox" name="sponsored" ${a.sponsored ? 'checked' : ''}><span>Someone else is funding my trip</span></label></div>
           </div>
           <div class="visa-step__foot"><button type="button" class="btn btn--ghost" data-back>${DS.icon('chevronLeft')} Back</button><button type="submit" class="btn btn--primary btn--lg">Build my checklist ${DS.icon('arrowRight', 'arrow')}</button></div>
@@ -75,7 +75,7 @@
       const periodLabel = a.period ? new Date(a.period + '-01T00:00:00').toLocaleDateString('en-PH', { month: 'long', year: 'numeric' }) : 'your travel period';
       const purposeLabel = DS.visa.purposes.find(p => p.id === a.purpose)?.label || a.purpose;
       panels[3].innerHTML = `
-        <div class="visa-step__head"><p class="eyebrow">Step 3 of 3 · ${esc(d.name)}</p><h2 class="display">Your preparation checklist</h2><p class="lede">${esc(purposeLabel)} trip in ${esc(periodLabel)}, ${esc(DS.visa.employment.find(e => e.id === a.employment)?.label.toLowerCase() || '')}${a.minors ? ', travelling with children' : ''}${a.sponsored ? ', sponsored' : ''}. Tick items as you gather them. Progress is saved on this device only.</p></div>
+        <div class="visa-step__head"><p class="eyebrow">Step 3 of 3 · ${esc(d.name)}</p><h2 class="display">Your preparation checklist</h2><p class="lede">${esc(purposeLabel)} trip in ${esc(periodLabel)}, ${esc(DS.visa.employment.find(e => e.id === a.employment)?.label.toLowerCase() || '')}${a.minors ? ', traveling with children' : ''}${a.sponsored ? ', sponsored' : ''}. Tick items as you gather them. Progress is saved on this device only.</p></div>
         <div class="notice notice--warn" style="margin-bottom:1.5rem" data-step-item>${DS.icon('alert')}<div><strong>Illustrative demo checklist.</strong> Visa requirements change frequently and vary by applicant. Confirm current requirements with the relevant embassy or official visa centre and with your Dreamspree consultant before preparing documents.</div></div>
         <div class="visa-summary" style="margin-bottom:1.5rem" data-step-item>
           <div class="stat"><strong data-stat-done>0</strong><span>of <span data-stat-total>${all.length}</span> items prepared</span></div>
@@ -102,7 +102,7 @@
       $('[data-visa-consult]', panels[3]).addEventListener('click', () => {
         const done = all.filter(i => state.checked.has(i.id)).length;
         const summary = `<div><span>Destination</span><strong>${esc(d.name)}</strong></div><div><span>Purpose</span><strong>${esc(purposeLabel)}</strong></div><div><span>Travel period</span><strong>${esc(periodLabel)}</strong></div><div><span>Checklist</span><strong>${done} of ${all.length} prepared · ${review.length} to review</strong></div>`;
-        DS.openEnquiry({ service: 'visa', destination: d.id === 'korea' ? 'South Korea' : d.id === 'japan' ? 'Japan' : 'Other', title: 'Request a visa consultation', subtitle: 'A consultant reviews your checklist and books the application appointment with you.', summary, cta: 'Request consultation', travellers: a.minors ? 3 : 1, message: `Visa consultation for ${d.name}, ${purposeLabel.toLowerCase()} trip in ${periodLabel}. Items to review: ${review.map(r => r.label).join('; ') || 'none flagged'}.` });
+        DS.openEnquiry({ service: 'visa', destination: d.id === 'korea' ? 'South Korea' : d.id === 'japan' ? 'Japan' : 'Other', title: 'Request a visa consultation', subtitle: 'A consultant reviews your checklist and books the application appointment with you.', summary, cta: 'Request consultation', travelers: a.minors ? 3 : 1, message: `Visa consultation for ${d.name}, ${purposeLabel.toLowerCase()} trip in ${periodLabel}. Items to review: ${review.map(r => r.label).join('; ') || 'none flagged'}.` });
       });
       $('[data-restart]', panels[3]).addEventListener('click', () => {
         const box = DS.modal.open(`<p class="muted">This clears your destination, answers and ticked items from this device.</p><div class="cluster" style="justify-content:flex-end;margin-top:1rem"><button type="button" class="btn btn--ghost" data-modal-close>Keep my progress</button><button type="button" class="btn btn--danger" data-confirm-restart>Start over</button></div>`, { title: 'Start over?' });

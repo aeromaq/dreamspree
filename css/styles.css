@@ -257,6 +257,9 @@ p:last-child { margin-bottom: 0; }
 .cart-btn svg { width: var(--icon-sm); height: var(--icon-sm); }
 .cart-btn__count { min-width: 20px; height: 20px; padding: 0 6px; display: inline-grid; place-items: center; border-radius: var(--r-pill); background: var(--color-accent); color: var(--color-text-primary); font-size: 11px; font-weight: 800; line-height: 1; }
 .cart-btn__count[data-count="0"] { display: none; }
+/* Count next to "Travel Cart" in the mobile menu: sits inline after the label, never pinned to a corner */
+.drawer__count { min-width: 24px; height: 24px; padding: 0 7px; display: inline-grid; place-items: center; border-radius: var(--r-pill); background: var(--color-accent); color: var(--color-text-primary); font-size: 12px; font-weight: 800; line-height: 1; margin-left: auto; }
+.drawer__count[data-count="0"] { display: none; }
 .nav-toggle { color: var(--color-text-on-dark); }
 .site-header--over:not(.is-scrolled) .cart-btn { color: var(--color-text-on-dark); border-color: rgba(255,255,255,0.4); background: rgba(var(--scrim-rgb),0.25); }
 .site-header--over:not(.is-scrolled) .btn--consult { --btn-bg: var(--color-cta); --btn-bd: var(--color-cta); --btn-fg: var(--color-text-on-dark); }
